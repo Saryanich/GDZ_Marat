@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>ГДЗ Марат — Проверка</title>
+
+    <link rel="icon" type="image/jpeg" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ГДЗ Марат">
+    <meta name="theme-color" content="#050e08">
+
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --bg-deep: #050e08;
+            --bg-card: rgba(10, 26, 17, 0.85);
+            --accent-green: #10b981;
+            --accent-bright: #34d399;
+            --accent-glow: rgba(52, 211, 153, 0.25);
+            --text-primary: #f0fdf4;
+            --text-secondary: #94a3b8;
+            --text-muted: #475569;
+            --border: rgba(52, 211, 153, 0.2);
+            --border-hover: rgba(52, 211, 153, 0.5);
+            --danger: #ef4444;
+            --radius-card: 28px;
+            --radius-btn: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-deep);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .glow-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(110px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        .orb-1 {
+            top: -10%; left: -10%;
+            width: 55vw; height: 55vw;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%);
+        }
+
+        .orb-2 {
+            bottom: -10%; right: -10%;
+            width: 50vw; height: 50vw;
+            background: radial-gradient(circle, rgba(5, 150, 105, 0.25) 0%, transparent 70%);
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 560px;
+        }
+
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            border-radius: var(--radius-card);
+            border: 1px solid var(--border);
+            box-shadow: 0 30px 80px -15px rgba(0, 0, 0, 0.8), 0 0 50px rgba(16, 185, 129, 0.15);
+            padding: 2.5rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 15%; right: 15%;
+            height: 1.5px;
+            background: linear-gradient(90deg, transparent, var(--accent-bright), transparent);
+            opacity: 0.9;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header-icon {
+            font-size: 3rem;
+            margin-bottom: 0.75rem;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 0.4rem;
+        }
+
+        h1 span {
+            background: linear-gradient(135deg, #ffffff 40%, var(--accent-bright) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(52, 211, 153, 0.1);
+            border-radius: 3px;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-bright));
+            border-radius: 3px;
+            transition: width 0.4s ease;
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .question-counter {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .option {
+            padding: 1rem 1.25rem;
+            background: rgba(3, 12, 7, 0.6);
+            border: 1.5px solid var(--border);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.95rem;
+        }
+
+        .option:hover {
+            border-color: var(--border-hover);
+            background: rgba(52, 211, 153, 0.06);
+            transform: translateX(4px);
+        }
+
+        .option.selected {
+            border-color: var(--accent-bright);
+            background: rgba(52, 211, 153, 0.12);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .option-letter {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--accent-bright);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .option.selected .option-letter {
+            background: var(--accent-bright);
+            color: #050e08;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.95rem 1.25rem;
+            border: none;
+            border-radius: var(--radius-btn);
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #ffffff;
+            box-shadow: 0 8px 24px -4px rgba(16, 185, 129, 0.45);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px -4px rgba(16, 185, 129, 0.65);
+        }
+
+        .result-screen {
+            text-align: center;
+        }
+
+        .result-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.75rem;
+        }
+
+        .result-text {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .result-score {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--accent-bright);
+            margin-bottom: 0.5rem;
+        }
+
+        .message {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            min-height: 1.4rem;
+        }
+
+        .error { color: #f87171; }
+        .success { color: var(--accent-bright); }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
+    <div class="container">
+        <div class="glass-card">
+            <!-- Экран загрузки -->
+            <div id="loadingScreen">
+                <div class="header">
+                    <div class="header-icon">⏳</div>
+                    <h1><span>Загрузка тестов...</span></h1>
+                    <div class="subtitle">Пожалуйста, подождите</div>
+                </div>
+            </div>
+
+            <!-- Экран теста -->
+            <div id="testScreen" class="hidden">
+                <div class="header">
+                    <div class="header-icon">🛡️</div>
+                    <h1><span>Проверка безопасности</span></h1>
+                    <div class="subtitle">Ответьте на вопросы, чтобы продолжить</div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+                </div>
+
+                <div class="question-counter" id="questionCounter">Вопрос 1 из 3</div>
+                <div class="question-text" id="questionText"></div>
+                <div class="options" id="optionsContainer"></div>
+
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" disabled>
+                    Далее →
+                </button>
+
+                <div id="testMessage" class="message"></div>
+            </div>
+
+            <!-- Экран результата -->
+            <div id="resultScreen" class="hidden result-screen">
+                <div class="result-icon" id="resultIcon">✅</div>
+                <div class="result-title" id="resultTitle">Проверка пройдена!</div>
+                <div class="result-score" id="resultScore"></div>
+                <div class="result-text" id="resultText"></div>
+                <button class="btn btn-primary" onclick="goNext()">Продолжить →</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== FIREBASE ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6GGJxAiao77U7_9mBUEjftmS_FnSWbIw",
+            authDomain: "glob-data.firebaseapp.com",
+            projectId: "glob-data",
+            storageBucket: "glob-data.firebasestorage.app",
+            messagingSenderId: "122757049174",
+            appId: "1:122757049174:web:ebb425edd0e1a8ea9a44f7"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ==================== ПЕРЕМЕННЫЕ ====================
+        let tests = [];
+        let currentQuestionIndex = 0;
+        let selectedAnswer = null;
+        let correctAnswers = 0;
+        let globalId = sessionStorage.getItem('gdz_globalId') || 'unknown';
+        let guestMode = sessionStorage.getItem('guestMode') === 'true';
+
+        // ==================== ГОСТЬ — сразу дальше ====================
+        if (guestMode) {
+            window.location.href = 'role.html?guest=1';
+        }
+
+        // ==================== ЗАГРУЗКА ТЕСТОВ ====================
+        async function loadTests() {
+            try {
+                const fileDoc = await db.collection('GDZ').doc('file').get();
+                if (!fileDoc.exists) {
+                    console.warn('GDZ/file не найден — пропускаем тест');
+                    goNext();
+                    return;
+                }
+
+                const data = fileDoc.data();
+                tests = Array.isArray(data.tests) ? data.tests : [];
+
+                if (tests.length === 0) {
+                    console.log('Тестов нет — пропускаем');
+                    goNext();
+                    return;
+                }
+
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('testScreen').classList.remove('hidden');
+                currentQuestionIndex = 0;
+                correctAnswers = 0;
+                renderQuestion();
+
+            } catch (error) {
+                console.error('Ошибка загрузки тестов:', error);
+                goNext();
+            }
+        }
+
+        // ==================== РЕНДЕР ВОПРОСА ====================
+        function renderQuestion() {
+            const q = tests[currentQuestionIndex];
+            if (!q) return;
+
+            selectedAnswer = null;
+            document.getElementById('nextBtn').disabled = true;
+
+            // Прогресс
+            const progress = ((currentQuestionIndex) / tests.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('questionCounter').textContent =
+                `Вопрос ${currentQuestionIndex + 1} из ${tests.length}`;
+
+            // Текст
+            document.getElementById('questionText').textContent = q.question || 'Вопрос';
+
+            // Варианты
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            const options = Array.isArray(q.options) ? q.options : [];
+
+            options.forEach((opt, idx) => {
+                const letter = String.fromCharCode(65 + idx); // A, B, C, D
+                const div = document.createElement('div');
+                div.className = 'option';
+                div.innerHTML = `
+                    <div class="option-letter">${letter}</div>
+                    <div>${opt}</div>
+                `;
+                div.onclick = () => selectAnswer(idx, div);
+                optionsContainer.appendChild(div);
+            });
+        }
+
+        function selectAnswer(idx, el) {
+            selectedAnswer = idx;
+            document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        // ==================== СЛЕДУЮЩИЙ ВОПРОС ====================
+        function nextQuestion() {
+            if (selectedAnswer === null) return;
+
+            const q = tests[currentQuestionIndex];
+            if (selectedAnswer === q.correct) {
+                correctAnswers++;
+            }
+
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex >= tests.length) {
+                showResult();
+            } else {
+                renderQuestion();
+            }
+        }
+
+        // ==================== РЕЗУЛЬТАТ ====================
+        async function showResult() {
+            document.getElementById('testScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+
+            const total = tests.length;
+            const score = Math.round((correctAnswers / total) * 100);
+            const passed = score >= 60;
+
+            document.getElementById('resultScore').textContent = `${correctAnswers} / ${total} (${score}%)`;
+
+            if (passed) {
+                document.getElementById('resultIcon').textContent = '✅';
+                document.getElementById('resultTitle').textContent = 'Проверка пройдена!';
+                document.getElementById('resultText').textContent =
+                    'Отлично! Вы успешно прошли проверку безопасности.';
+
+                // Снимаем подозрительность
+                try {
+                    const userRef = db.collection('GDZ').doc('users').collection('users').doc(globalId);
+                    await userRef.update({
+                        suspicious: false,
+                        testPassedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        testScore: score
+                    });
+                    sessionStorage.removeItem('gdz_suspicious');
+                } catch (e) {
+                    console.warn('Не удалось обновить статус:', e);
+                }
+            } else {
+                document.getElementById('resultIcon').textContent = '⚠️';
+                document.getElementById('resultTitle').textContent = 'Проверка не пройдена';
+                document.getElementById('resultText').textContent =
+                    'К сожалению, вы не набрали достаточно баллов. Попробуйте позже.';
+
+                try {
+                    const userRef = db.collection('GDZ').doc('users').collection('users').doc(globalId);
+                    await userRef.update({
+                        lastFailedTest: firebase.firestore.FieldValue.serverTimestamp(),
+                        testScore: score
+                    });
+                } catch (e) {
+                    console.warn('Не удалось обновить статус:', e);
+                }
+            }
+        }
+
+        // ==================== ДАЛЬШЕ ====================
+        function goNext() {
+            window.location.href = 'role.html';
+        }
+
+        // ==================== ПРОВЕРКА АВТОРИЗАЦИИ ====================
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                // Нет пользователя — на вход
+                window.location.href = 'index.html';
+                return;
+            }
+
+            if (!sessionStorage.getItem('gdz_suspicious')) {
+                // Не подозрительный — пропускаем тест
+                goNext();
+                return;
+            }
+
+            loadTests();
+        });
+    </script>
+</body>
+</html>
