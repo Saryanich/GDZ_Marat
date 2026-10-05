@@ -1,346 +1,587 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-<title>ГДЗ Марат — Вход</title>
-<link rel="icon" type="image/jpeg" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
-<link rel="apple-touch-icon" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ГДЗ Марат">
-<meta name="theme-color" content="#050e08">
-<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
-<style>
-:root{
-  --bg:#050e08;--card:rgba(10,26,17,0.85);--accent:#10b981;--accent-bright:#34d399;
-  --accent-glow:rgba(52,211,153,0.25);--text:#f0fdf4;--text-2:#94a3b8;--text-3:#475569;
-  --border:rgba(52,211,153,0.2);--danger:#ef4444;--radius:22px;
-  --shadow:0 20px 50px -12px rgba(0,0,0,0.7);--blur:blur(30px) saturate(180%);
-  --ease:cubic-bezier(.16,1,.3,1);
-}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{
-  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;
-  background:var(--bg);color:var(--text);min-height:100vh;
-  display:flex;align-items:center;justify-content:center;
-  padding:1.25rem;padding-top:calc(1.25rem + env(safe-area-inset-top));
-  padding-bottom:calc(1.25rem + env(safe-area-inset-bottom));
-  -webkit-font-smoothing:antialiased;overflow-x:hidden;
-}
-body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:
-    radial-gradient(circle at 15% 10%,rgba(16,185,129,0.22) 0%,transparent 45%),
-    radial-gradient(circle at 85% 90%,rgba(5,150,105,0.18) 0%,transparent 45%)}
-.container{position:relative;z-index:10;width:100%;max-width:420px;animation:cardIn .6s var(--ease)}
-@keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
-.glass-card{
-  background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
-  border-radius:var(--radius);border:1px solid var(--border);
-  box-shadow:var(--shadow),0 0 40px rgba(46,204,113,0.08);
-  padding:2.5rem 1.9rem;position:relative;overflow:hidden;
-}
-.glass-card::before{content:"";position:absolute;top:0;left:10%;right:10%;height:1px;
-  background:linear-gradient(90deg,transparent,var(--accent-bright),transparent);opacity:.7}
-.logo-container{display:flex;justify-content:center;margin-bottom:1.25rem}
-.logo-wrapper{padding:3px;border-radius:50%;
-  background:linear-gradient(135deg,var(--accent-bright),rgba(16,185,129,0.2));
-  box-shadow:0 0 30px var(--accent-glow)}
-.logo{width:96px;height:96px;border-radius:50%;object-fit:cover;display:block;background:#000}
-h1{font-size:2rem;font-weight:800;text-align:center;letter-spacing:-.5px;margin-bottom:.3rem}
-h1 span{background:linear-gradient(135deg,#fff 40%,var(--accent-bright));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.subtitle{text-align:center;color:var(--text-2);margin-bottom:1.6rem;font-size:.9rem}
-.input-group{margin-bottom:1.15rem}
-label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:1.2px;
-  color:var(--accent-bright);margin-bottom:.45rem;font-weight:700}
-.input-wrapper{position:relative;display:flex;align-items:center}
-input{width:100%;padding:.95rem 1.1rem;background:rgba(3,12,7,0.7);
-  border:1.5px solid var(--border);border-radius:14px;color:var(--text);
-  font-size:.95rem;outline:none;transition:all .25s var(--ease);-webkit-appearance:none;
-  font-family:inherit}
-input:focus{border-color:var(--accent-bright);background:rgba(3,12,7,0.95);
-  box-shadow:0 0 0 4px var(--accent-glow)}
-input::placeholder{color:var(--text-3)}
-.toggle-password{position:absolute;right:1rem;background:none;border:none;
-  color:var(--text-2);cursor:pointer;padding:4px;font-size:1rem;font-family:inherit}
-.btn{width:100%;padding:.95rem;border:none;border-radius:14px;font-weight:700;
-  font-size:.95rem;cursor:pointer;font-family:inherit;
-  transition:all .25s var(--ease);display:flex;align-items:center;justify-content:center;
-  gap:8px;position:relative;overflow:hidden}
-.btn::before{content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);
-  transition:left .6s var(--ease)}
-.btn:hover::before{left:100%}
-.btn-primary{background:linear-gradient(135deg,#10b981,#059669);color:#fff;
-  box-shadow:0 8px 24px -4px rgba(16,185,129,0.5);margin-top:.5rem}
-.btn-primary:hover:not(:disabled){transform:translateY(-2px);
-  box-shadow:0 14px 30px -4px rgba(16,185,129,0.7)}
-.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
-.divider{display:flex;align-items:center;gap:1rem;margin:1.4rem 0 .6rem;
-  color:var(--text-3);font-size:.72rem;text-transform:uppercase;letter-spacing:1.5px;font-weight:700}
-.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
-.role-box{
-  background:rgba(52,211,153,0.05);border:1px solid var(--border);
-  border-radius:16px;padding:1.1rem;margin-top:1.1rem;
-}
-.role-box h4{color:var(--accent-bright);font-size:.88rem;margin-bottom:.6rem;
-  display:flex;align-items:center;gap:8px}
-.role-box p{color:var(--text-2);font-size:.78rem;line-height:1.5;margin-bottom:.85rem}
-.role-btn{padding:.7rem 1rem;border-radius:12px;font-weight:700;font-size:.85rem;
-  cursor:pointer;font-family:inherit;display:flex;align-items:center;
-  justify-content:center;gap:8px;width:100%;transition:all .25s var(--ease);
-  text-decoration:none;border:none}
-.role-btn.user{background:linear-gradient(135deg,#10b981,#059669);color:#fff;
-  box-shadow:0 6px 18px -4px rgba(16,185,129,0.5)}
-.role-btn.user:hover{transform:translateY(-2px)}
-.message{text-align:center;margin-top:1rem;font-size:.9rem;min-height:1.4rem;
-  font-weight:500;border-radius:8px;padding:6px 12px;transition:all .25s}
-.error{color:#f87171;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.2)}
-.success{color:#34d399;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.2)}
-.disclaimer{margin-top:1.5rem;padding:.9rem;background:rgba(0,0,0,0.25);
-  border-radius:12px;font-size:.72rem;line-height:1.5;color:var(--text-3);text-align:center}
-.disclaimer a{color:var(--text-2);text-decoration:none;border-bottom:1px dotted var(--text-3)}
-.disclaimer a:hover{color:var(--accent-bright)}
-.footer-note{text-align:center;margin-top:1.3rem;font-size:.75rem;color:var(--text-3)}
-#loadingScreen{position:fixed;inset:0;z-index:9999;background:var(--bg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;
-  transition:opacity .5s var(--ease),visibility .5s var(--ease)}
-#loadingScreen.hide{opacity:0;visibility:hidden}
-.spinner{width:56px;height:56px;border-radius:50%;
-  border:3px solid rgba(52,211,153,0.15);border-top-color:var(--accent-bright);
-  border-right-color:var(--accent-bright);animation:spin .9s linear infinite;
-  box-shadow:0 0 30px rgba(52,211,153,0.3)}
-@keyframes spin{to{transform:rotate(360deg)}}
-.loading-text{color:var(--text-2);font-size:.9rem;animation:pulse 1.6s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:.55}50%{opacity:1}}
-.hidden{display:none!important}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>ГДЗ Марат — Панель сотрудника</title>
+
+    <link rel="icon" type="image/jpeg" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
+    <meta name="theme-color" content="#050e08">
+
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --bg-deep: #050e08;
+            --bg-card: rgba(10, 26, 17, 0.85);
+            --bg-input: rgba(3, 12, 7, 0.7);
+            --accent-green: #10b981;
+            --accent-bright: #34d399;
+            --accent-glow: rgba(52, 211, 153, 0.25);
+            --text-primary: #f0fdf4;
+            --text-secondary: #94a3b8;
+            --text-muted: #475569;
+            --border: rgba(52, 211, 153, 0.2);
+            --border-hover: rgba(52, 211, 153, 0.5);
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-deep);
+            min-height: 100vh;
+            color: var(--text-primary);
+            padding-bottom: 80px;
+        }
+        .glow-orb { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; opacity: 0.35; }
+        .orb-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(16,185,129,0.35) 0%, transparent 70%); }
+        .orb-2 { bottom: -10%; right: -10%; width: 45vw; height: 45vw; background: radial-gradient(circle, rgba(5,150,105,0.28) 0%, transparent 70%); }
+
+        .topbar { position: sticky; top: 0; z-index: 100; background: rgba(5,14,8,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 0.9rem 1.25rem; }
+        .topbar-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .admin-logo { display: flex; align-items: center; gap: 0.7rem; font-weight: 800; font-size: 1.05rem; flex-shrink: 0; }
+        .admin-logo img { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--accent-bright); }
+        .admin-logo .badge { font-size: 0.65rem; background: linear-gradient(135deg, #3b82f6, #1e40af); color: #fff; padding: 2px 8px; border-radius: 8px; font-weight: 700; margin-left: 4px; }
+        .tabs { display: flex; gap: 6px; flex: 1; overflow-x: auto; }
+        .tab-btn { padding: 0.55rem 1rem; border-radius: 10px; background: transparent; border: 1px solid transparent; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: inherit; }
+        .tab-btn:hover { background: rgba(52,211,153,0.08); color: var(--accent-bright); }
+        .tab-btn.active { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+        .btn-exit { padding: 0.55rem 1rem; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+        .btn-exit:hover { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.4); color: #f87171; }
+
+        .main { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1.25rem; position: relative; z-index: 10; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; margin-bottom: 1.25rem; }
+        .section-title { font-size: 1.05rem; font-weight: 700; color: var(--accent-bright); margin-bottom: 1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--border); }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+        @media (max-width: 640px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+        label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.1px; color: var(--accent-bright); margin-bottom: 0.35rem; font-weight: 700; }
+        input, textarea, select { width: 100%; padding: 0.7rem 0.9rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); font-size: 0.9rem; outline: none; font-family: inherit; }
+        input:focus, textarea:focus, select:focus { border-color: var(--accent-bright); box-shadow: 0 0 0 3px var(--accent-glow); }
+        textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+        .field { margin-bottom: 0.85rem; }
+
+        .btn { padding: 0.7rem 1.2rem; border: none; border-radius: 10px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #b91c1c); color: #fff; }
+        .btn-warn { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
+        .btn-ghost { background: rgba(255,255,255,0.04); color: var(--text-secondary); border: 1px solid var(--border); }
+        .btn-sm { padding: 0.45rem 0.8rem; font-size: 0.78rem; }
+        .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+        .list-item { background: rgba(3,12,7,0.5); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 0.6rem; }
+        .list-item-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+        .list-item-title { font-weight: 700; color: var(--text-primary); font-size: 0.95rem; }
+        .list-item-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+        .list-item-body { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-top: 0.4rem; white-space: pre-wrap; word-break: break-word; }
+
+        .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem; }
+        .stat-card { background: rgba(3,12,7,0.5); border: 1px solid var(--border); border-radius: 14px; padding: 1.2rem; text-align: center; }
+        .stat-value { font-size: 2rem; font-weight: 800; color: var(--accent-bright); line-height: 1; margin-bottom: 0.3rem; }
+        .stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 700; }
+
+        .read-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 0.5rem; }
+        .read-chip { font-size: 0.72rem; padding: 3px 9px; border-radius: 999px; background: rgba(52,211,153,0.12); color: var(--accent-bright); border: 1px solid rgba(52,211,153,0.3); font-weight: 600; }
+
+        .empty-state { text-align: center; color: var(--text-muted); padding: 2rem 1rem; font-size: 0.88rem; }
+
+        .hint { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; margin-top: 0.5rem; }
+        .hint code { background: rgba(0,0,0,0.4); padding: 1px 6px; border-radius: 6px; color: #a7f3d0; font-size: 0.75rem; }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: linear-gradient(135deg, #10b981, #059669); color: #fff; padding: 0.85rem 1.4rem; border-radius: 12px; font-size: 0.9rem; font-weight: 600; z-index: 9999; opacity: 0; transition: all 0.35s; pointer-events: none; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.error { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+
+        #loadingScreen { position: fixed; inset: 0; background: var(--bg-deep); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1.5rem; z-index: 9998; }
+        .spinner { width: 56px; height: 56px; border-radius: 50%; border: 3px solid rgba(52,211,153,0.15); border-top-color: var(--accent-bright); border-right-color: var(--accent-bright); animation: spin 0.9s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .hidden { display: none !important; }
+    </style>
 </head>
 <body>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
 
-<div id="loadingScreen">
-  <div class="spinner"></div>
-  <div class="loading-text">Проверка сессии...</div>
-</div>
-
-<div class="container">
-  <div id="loginScreen" class="glass-card hidden">
-    <div class="logo-container">
-      <div class="logo-wrapper">
-        <img src="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg" alt="ГДЗ Марат" class="logo">
-      </div>
-    </div>
-    <h1><span>ГДЗ Марат</span></h1>
-    <div class="subtitle">Войдите, чтобы продолжить учёбу</div>
-
-    <div class="input-group">
-      <label>Email или Global ID</label>
-      <input type="text" id="loginIdentifier" placeholder="email@example.com" autocomplete="email">
-    </div>
-    <div class="input-group">
-      <label>Пароль</label>
-      <div class="input-wrapper">
-        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
-        <button type="button" class="toggle-password" onclick="togglePassword()">👁</button>
-      </div>
+    <div id="loadingScreen">
+        <div class="spinner"></div>
+        <div style="color: var(--text-secondary); font-size: 0.9rem;">Проверка доступа...</div>
     </div>
 
-    <button class="btn btn-primary" id="loginBtn" onclick="login()">
-      <span>🚀</span><span>Войти</span>
-    </button>
+    <div id="staffApp" class="hidden">
+        <div class="topbar">
+            <div class="topbar-inner">
+                <div class="admin-logo">
+                    <img src="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg" alt="logo">
+                    <span>ГДЗ Марат</span>
+                    <span class="badge">STAFF</span>
+                </div>
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="answers" onclick="switchTab('answers')">📝 Ответы</button>
+                    <button class="tab-btn" data-tab="content" onclick="switchTab('content')">📰 Контент</button>
+                    <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">📊 Статистика</button>
+                </div>
+                <button class="btn-exit" onclick="exitToGdz()">← В обычный ГДЗ</button>
+            </div>
+        </div>
 
-    <div class="divider">или</div>
+        <div class="main">
+            <!-- ============ ВКЛАДКА ОТВЕТЫ ============ -->
+            <div class="panel active" id="panel-answers">
+                <div class="section">
+                    <div class="section-title">📚 Предметы</div>
+                    <div class="grid-3">
+                        <div class="field">
+                            <label>Название</label>
+                            <input type="text" id="subjectName" placeholder="Математика">
+                        </div>
+                        <div class="field">
+                            <label>Иконка (эмодзи)</label>
+                            <input type="text" id="subjectIcon" placeholder="📐" maxlength="4">
+                        </div>
+                        <div class="field" style="display:flex; align-items:flex-end;">
+                            <button class="btn btn-primary" style="width:100%;" onclick="addSubject()">➕ Добавить</button>
+                        </div>
+                    </div>
+                    <div id="subjectsList"></div>
+                </div>
 
-    <button class="btn btn-primary" style="background:rgba(255,255,255,0.04);color:var(--text-2);border:1px solid var(--border);box-shadow:none;" onclick="loginAsGuest()">
-      <span>👤</span><span>Войти как гость</span>
-    </button>
+                <div class="section">
+                    <div class="section-title">📝 Ответы (ДЗ)</div>
+                    <input type="hidden" id="answerEditId">
+                    <div class="grid-2">
+                        <div class="field">
+                            <label>Предмет</label>
+                            <select id="answerSubject"></select>
+                        </div>
+                        <div class="field">
+                            <label>Номер задания</label>
+                            <input type="text" id="answerNumber" placeholder="№5">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Дата (на какое число)</label>
+                        <input type="date" id="answerDate">
+                    </div>
+                    <div class="field">
+                        <label>Текст ответа</label>
+                        <textarea id="answerText" placeholder="Ответ... Можно вставить {photo:https://...} или {site:https://...}"></textarea>
+                        <div class="hint">💡 Вставляй фото: <code>{photo:https://...}</code> и сайт: <code>{site:https://...}</code></div>
+                    </div>
+                    <div class="row-actions">
+                        <button class="btn btn-primary" id="answerSaveBtn" onclick="saveAnswer()">💾 Сохранить ответ</button>
+                        <button class="btn btn-ghost hidden" id="answerCancelBtn" onclick="cancelAnswerEdit()">Отмена</button>
+                    </div>
+                    <div style="margin-top:1.25rem;" id="answersList"></div>
+                </div>
 
-    <div class="role-box">
-      <h4>🔐 Единая учётная запись</h4>
-      <p>Используйте Global ID для входа. Создайте аккаунт — получите доступ ко всем сервисам экосистемы.</p>
-      <a class="role-btn user" href="https://saryanich.github.io/Global-ID/" target="_blank" rel="noopener">
-        <span>✨</span><span>Создать аккаунт в Global ID</span>
-      </a>
+                <div class="section">
+                    <div class="section-title">🎯 Ответы (контрольные)</div>
+                    <input type="hidden" id="testAnswerEditId">
+                    <div class="grid-2">
+                        <div class="field">
+                            <label>Предмет</label>
+                            <select id="testAnswerSubject"></select>
+                        </div>
+                        <div class="field">
+                            <label>Название контрольной</label>
+                            <input type="text" id="testAnswerTitle" placeholder="Контрольная №2">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Дата</label>
+                        <input type="date" id="testAnswerDate">
+                    </div>
+                    <div class="field">
+                        <label>Текст ответа</label>
+                        <textarea id="testAnswerText" placeholder="Ответ... {photo:...} {site:...}"></textarea>
+                    </div>
+                    <div class="row-actions">
+                        <button class="btn btn-primary" id="testAnswerSaveBtn" onclick="saveTestAnswer()">💾 Сохранить</button>
+                        <button class="btn btn-ghost hidden" id="testAnswerCancelBtn" onclick="cancelTestAnswerEdit()">Отмена</button>
+                    </div>
+                    <div style="margin-top:1.25rem;" id="testAnswersList"></div>
+                </div>
+            </div>
+
+            <!-- ============ ВКЛАДКА КОНТЕНТ ============ -->
+            <div class="panel" id="panel-content">
+                <div class="section">
+                    <div class="section-title">📰 Новости</div>
+                    <input type="hidden" id="newsEditId">
+                    <div class="field">
+                        <label>Заголовок</label>
+                        <input type="text" id="newsTitle" placeholder="Заголовок новости">
+                    </div>
+                    <div class="field">
+                        <label>Текст</label>
+                        <textarea id="newsText" placeholder="Текст... {photo:...} {site:...}"></textarea>
+                    </div>
+                    <div class="row-actions">
+                        <button class="btn btn-primary" id="newsSaveBtn" onclick="saveNews()">💾 Сохранить</button>
+                        <button class="btn btn-ghost hidden" id="newsCancelBtn" onclick="cancelNewsEdit()">Отмена</button>
+                    </div>
+                    <div style="margin-top:1.25rem;" id="newsList"></div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">🎓 Подготовишка</div>
+                    <input type="hidden" id="prepEditId">
+                    <div class="field">
+                        <label>Название</label>
+                        <input type="text" id="prepTitle" placeholder="Название сайта">
+                    </div>
+                    <div class="field">
+                        <label>Описание</label>
+                        <textarea id="prepDesc" placeholder="Описание..."></textarea>
+                    </div>
+                    <div class="grid-2">
+                        <div class="field">
+                            <label>Ссылка на сайт</label>
+                            <input type="url" id="prepSite" placeholder="https://...">
+                        </div>
+                        <div class="field">
+                            <label>Ссылка на картинку</label>
+                            <input type="url" id="prepPhoto" placeholder="https://...">
+                        </div>
+                    </div>
+                    <div class="row-actions">
+                        <button class="btn btn-primary" id="prepSaveBtn" onclick="savePrep()">💾 Сохранить</button>
+                        <button class="btn btn-ghost hidden" id="prepCancelBtn" onclick="cancelPrepEdit()">Отмена</button>
+                    </div>
+                    <div style="margin-top:1.25rem;" id="prepList"></div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">📅 Расписание (JSON)</div>
+                    <div class="field">
+                        <label>JSON расписания</label>
+                        <textarea id="scheduleJson" placeholder='{"monday":["Математика","Русский"],"tuesday":["Физика"]}' style="min-height:140px; font-family: monospace;"></textarea>
+                        <div class="hint">💡 Вставь JSON. Пример: <code>{"monday":["Математика","Русский"],...}</code></div>
+                    </div>
+                    <div class="row-actions">
+                        <button class="btn btn-primary" onclick="saveSchedule()">💾 Сохранить расписание</button>
+                        <button class="btn btn-ghost" onclick="loadScheduleToEditor()">🔄 Загрузить текущее</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ ВКЛАДКА СТАТИСТИКА ============ -->
+            <div class="panel" id="panel-stats">
+                <div class="section">
+                    <div class="section-title">📊 Общая статистика GDZ</div>
+                    <div class="stat-cards">
+                        <div class="stat-card">
+                            <div class="stat-value" id="statTotal">—</div>
+                            <div class="stat-label">Зарегистрировано в GDZ</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statSubjects">—</div>
+                            <div class="stat-label">Предметов</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statAnswers">—</div>
+                            <div class="stat-label">Ответов ДЗ</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statTestAnswers">—</div>
+                            <div class="stat-label">Ответов контрольных</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">👥 Пользователи GDZ</div>
+                    <div id="usersList"></div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">📖 Кто читал ответы ДЗ</div>
+                    <div id="answersReadList"></div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">🎯 Кто читал ответы контрольных</div>
+                    <div id="testAnswersReadList"></div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">📰 Кто читал новости</div>
+                    <div id="newsReadList"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div id="authMessage" class="message"></div>
+    <div class="toast" id="toast"></div>
 
-    <div class="disclaimer">
-      Авторизуясь, вы принимаете
-      <a href="https://saryanich.github.io/TLC-services/" target="_blank" rel="noopener">условия использования</a>
-      и
-      <a href="https://saryanich.github.io/TLC-services/" target="_blank" rel="noopener">политику конфиденциальности</a>
-    </div>
-
-    <div class="footer-note">© 2026 IT Global</div>
-  </div>
-</div>
-
-<script>
-/* ==================== FIREBASE ==================== */
-const firebaseConfig={
-  apiKey:"AIzaSyA6GGJxAiao77U7_9mBUEjftmS_FnSWbIw",
-  authDomain:"glob-data.firebaseapp.com",
-  projectId:"glob-data",
-  storageBucket:"glob-data.firebasestorage.app",
-  messagingSenderId:"122757049174",
-  appId:"1:122757049174:web:ebb425edd0e1a8ea9a44f7"
-};
-if(!firebase.apps.length){
-  firebase.initializeApp(firebaseConfig);
-}
-const auth=firebase.auth();
-const db=firebase.firestore();
-
-let authResolved=false;
-let redirecting=false;
-
-/* ==================== УТИЛИТЫ ==================== */
-function showMessage(text,isError){
-  const el=document.getElementById('authMessage');
-  el.textContent=text;
-  el.className='message '+(isError?'error':'success');
-  setTimeout(function(){el.textContent='';el.className='message';},4000);
-}
-function hideLoading(){
-  const ls=document.getElementById('loadingScreen');
-  if(!ls)return;
-  ls.classList.add('hide');
-  setTimeout(function(){if(ls)ls.remove();},500);
-}
-function togglePassword(){
-  const p=document.getElementById('loginPassword');
-  p.type=p.type==='password'?'text':'password';
-}
-function showLoginScreen(){
-  document.getElementById('loginScreen').classList.remove('hidden');
-}
-
-/* ==================== БЕЗОПАСНЫЙ РЕДИРЕКТ ==================== */
-function safeRedirect(url){
-  if(redirecting)return;
-  redirecting=true;
-  setTimeout(function(){redirecting=false;},2000);
-  window.location.replace(url);
-}
-
-/* ==================== ПРОВЕРКА СЕССИИ (как в admin.html) ==================== */
-auth.onAuthStateChanged(async function(user){
-  if(authResolved)return;
-  authResolved=true;
-
-  if(!user){
-    hideLoading();
-    showLoginScreen();
-    return;
-  }
-
-  // Сессия есть — проверяем Global ID и роль
-  try{
-    const userDoc=await db.collection('users').doc(user.uid).get();
-    if(!userDoc.exists){
-      // Нет профиля — показываем форму, но не зацикливаемся
-      hideLoading();
-      showLoginScreen();
-      return;
+    <script>
+    // ==================== FIREBASE ====================
+    const firebaseConfig = {
+        apiKey: "AIzaSyA6GGJxAiao77U7_9mBUEjftmS_FnSWbIw",
+        authDomain: "glob-data.firebaseapp.com",
+        projectId: "glob-data",
+        storageBucket: "glob-data.firebasestorage.app",
+        messagingSenderId: "122757049174",
+        appId: "1:122757049174:web:ebb425edd0e1a8ea9a44f7"
+    };
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
     }
-    const globalId=userDoc.data().globalId||'';
-    if(!globalId){
-      hideLoading();
-      showLoginScreen();
-      return;
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // ==================== СОСТОЯНИЕ ====================
+    let currentUser = null;
+    let currentGlobalId = '';
+    let currentRole = '';
+    let subjectsCache = [];
+    let answersCache = [];
+    let testAnswersCache = [];
+    let newsCache = [];
+    let prepCache = [];
+    let usersCache = [];
+
+    // ==================== УТИЛИТЫ ====================
+    function toast(text, isError = false) {
+        const el = document.getElementById('toast');
+        el.textContent = text;
+        el.className = `toast show ${isError ? 'error' : ''}`;
+        setTimeout(() => el.className = 'toast', 2500);
     }
 
-    // Проверяем барьер
-    const barrierDoc=await db.collection('GDZ').doc('file').get();
-    if(barrierDoc.exists){
-      const bd=barrierDoc.data();
-      if(bd.barrier==='on'){
-        const target=bd.barrierTarget;
-        if(!target||target===globalId){
-          sessionStorage.setItem('barrier_back','staff.html');
-          safeRedirect('barrier.html');
-          return;
+    function escapeHtml(t) {
+        if (!t) return '';
+        const d = document.createElement('div');
+        d.textContent = t;
+        return d.innerHTML;
+    }
+
+    function formatTime(ts) {
+        if (!ts) return '—';
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleString('ru-RU');
+    }
+
+    // ==================== ПРОВЕРКА ДОСТУПА ====================
+    async function checkAccess() {
+        return new Promise((resolve) => {
+            const unsubscribe = auth.onAuthStateChanged(async (user) => {
+                unsubscribe();
+
+                if (!user) {
+                    window.location.replace('index.html');
+                    resolve(false);
+                    return;
+                }
+
+                currentUser = user;
+
+                try {
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    if (!userDoc.exists) {
+                        window.location.replace('index.html');
+                        resolve(false);
+                        return;
+                    }
+
+                    currentGlobalId = userDoc.data().globalId || '';
+                    if (!currentGlobalId) {
+                        window.location.replace('index.html');
+                        resolve(false);
+                        return;
+                    }
+
+                    const gdzDoc = await db.collection('GDZ')
+                        .doc('users')
+                        .collection('users')
+                        .doc(currentGlobalId)
+                        .get();
+
+                    currentRole = gdzDoc.exists ? (gdzDoc.data().role || 'user') : 'user';
+
+                    if (currentRole !== 'admin' && currentRole !== 'employee') {
+                        window.location.replace('gdz.html');
+                        resolve(false);
+                        return;
+                    }
+
+                    sessionStorage.setItem('gdz_globalId', currentGlobalId);
+                    resolve(true);
+
+                } catch (e) {
+                    console.error('Ошибка проверки доступа:', e);
+                    window.location.replace('index.html');
+                    resolve(false);
+                }
+            });
+        });
+    }
+
+    // ==================== ТАБЫ ====================
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+        document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === `panel-${tab}`));
+
+        if (tab === 'stats') loadStats();
+    }
+
+    function exitToGdz() {
+        window.location.href = 'gdz.html';
+    }
+
+    // ==================== ПРЕДМЕТЫ ====================
+    async function loadSubjects() {
+        const snap = await db.collection('GDZ').doc('subjects').collection('list').get();
+        subjectsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        const container = document.getElementById('subjectsList');
+        const selectA = document.getElementById('answerSubject');
+        const selectT = document.getElementById('testAnswerSubject');
+
+        if (subjectsCache.length === 0) {
+            container.innerHTML = '<div class="empty-state">Пока нет предметов</div>';
+        } else {
+            container.innerHTML = subjectsCache.map(s => `
+                <div class="list-item">
+                    <div class="list-item-head">
+                        <div>
+                            <div class="list-item-title">${s.icon || '📚'} ${escapeHtml(s.name)}</div>
+                            <div class="list-item-meta">ID: ${s.id}</div>
+                        </div>
+                        <button class="btn btn-danger btn-sm" onclick="deleteSubject('${s.id}')">🗑 Удалить</button>
+                    </div>
+                </div>
+            `).join('');
         }
-      }
+
+        const opts = subjectsCache.map(s => `<option value="${s.id}">${s.icon || ''} ${escapeHtml(s.name)}</option>`).join('');
+        selectA.innerHTML = opts || '<option value="">— нет предметов —</option>';
+        selectT.innerHTML = opts || '<option value="">— нет предметов —</option>';
     }
 
-    // Сохраняем в sessionStorage
-    sessionStorage.setItem('gdz_globalId',globalId);
-    sessionStorage.setItem('gdz_redirect_done','1');
+    async function addSubject() {
+        const name = document.getElementById('subjectName').value.trim();
+        const icon = document.getElementById('subjectIcon').value.trim() || '📚';
+        if (!name) return toast('Введи название', true);
 
-    // Обновляем онлайн
-    db.collection('GDZ').doc('users').collection('users').doc(globalId).set({
-      globalId:globalId,
-      displayName:userDoc.data().displayName||userDoc.data().nickname||userDoc.data().fullName||globalId,
-      online:true,
-      lastSeen:Date.now()
-    },{merge:true}).catch(function(){});
-
-    // Всегда идём в gdz.html — он сам разберётся с ролью
-    safeRedirect('gdz.html');
-
-  }catch(e){
-    console.error(e);
-    hideLoading();
-    showLoginScreen();
-    showMessage('Ошибка: '+e.message,true);
-  }
-});
-
-/* ==================== ВХОД ==================== */
-window.login=async function(){
-  const identifier=document.getElementById('loginIdentifier').value.trim();
-  const password=document.getElementById('loginPassword').value;
-  if(!identifier||!password){showMessage('Заполните все поля',true);return;}
-
-  const btn=document.getElementById('loginBtn');
-  btn.disabled=true;
-  btn.innerHTML='<span>⏳</span><span>Проверка...</span>';
-
-  try{
-    let email=identifier;
-
-    if(identifier.indexOf('@')===-1){
-      const q=await db.collection('users').where('globalId','==',identifier).get();
-      if(q.empty){
-        btn.disabled=false;
-        btn.innerHTML='<span>🚀</span><span>Войти</span>';
-        showMessage('Global ID не найден',true);
-        return;
-      }
-      email=q.docs[0].data().email;
+        try {
+            await db.collection('GDZ').doc('subjects').collection('list').add({
+                name, icon, createdAt: Date.now()
+            });
+            document.getElementById('subjectName').value = '';
+            document.getElementById('subjectIcon').value = '';
+            toast('Предмет добавлен');
+            loadSubjects();
+        } catch (e) {
+            toast('Ошибка: ' + e.message, true);
+        }
     }
 
-    await auth.signInWithEmailAndPassword(email,password);
-    // Дальше сработает onAuthStateChanged → редирект в gdz.html
-    // Ничего не делаем здесь.
-
-  }catch(e){
-    console.error(e);
-    btn.disabled=false;
-    btn.innerHTML='<span>🚀</span><span>Войти</span>';
-    if(e.code==='auth/user-not-found'||e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'){
-      showMessage('Неверный email или пароль',true);
-    }else if(e.code==='auth/invalid-email'){
-      showMessage('Некорректный email',true);
-    }else{
-      showMessage('Ошибка: '+e.message,true);
+    async function deleteSubject(id) {
+        if (!confirm('Удалить предмет?')) return;
+        await db.collection('GDZ').doc('subjects').collection('list').doc(id).delete();
+        toast('Удалено');
+        loadSubjects();
     }
-  }
-};
 
-/* ==================== ГОСТЬ ==================== */
-window.loginAsGuest=function(){
-  sessionStorage.setItem('guestMode','true');
-  sessionStorage.setItem('guestName','Гость');
-  sessionStorage.setItem('gdz_globalId','guest');
-  sessionStorage.setItem('gdz_redirect_done','1');
-  safeRedirect('gdz.html?guest=1');
-};
-</script>
-</body>
-</html>
+    // ==================== ОТВЕТЫ ДЗ ====================
+    async function loadAnswers() {
+        const snap = await db.collection('GDZ').doc('answer').collection('list').get();
+        answersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        const container = document.getElementById('answersList');
+        if (answersCache.length === 0) {
+            container.innerHTML = '<div class="empty-state">Пока нет ответов</div>';
+            return;
+        }
+        container.innerHTML = answersCache.map(a => {
+            const subj = subjectsCache.find(s => s.id === a.subjectId);
+            return `
+                <div class="list-item">
+                    <div class="list-item-head">
+                        <div>
+                            <div class="list-item-title">${subj?.icon || ''} ${escapeHtml(a.number || '')} — ${escapeHtml(subj?.name || '—')}</div>
+                            <div class="list-item-meta">${escapeHtml(a.date || '')} · read: ${(a.read || []).length}</div>
+                        </div>
+                        <div class="row-actions">
+                            <button class="btn btn-warn btn-sm" onclick="editAnswer('${a.id}')">✏️</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteAnswer('${a.id}')">🗑</button>
+                        </div>
+                    </div>
+                    <div class="list-item-body">${escapeHtml((a.text || '').substring(0, 200))}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function saveAnswer() {
+        const id = document.getElementById('answerEditId').value;
+        const subjectId = document.getElementById('answerSubject').value;
+        const number = document.getElementById('answerNumber').value.trim();
+        const date = document.getElementById('answerDate').value;
+        const text = document.getElementById('answerText').value;
+
+        if (!subjectId || !text) return toast('Заполни предмет и текст', true);
+
+        const data = { subjectId, number, date, text, updatedAt: Date.now() };
+
+        try {
+            if (id) {
+                await db.collection('GDZ').doc('answer').collection('list').doc(id).update(data);
+                toast('Обновлено');
+            } else {
+                data.createdAt = Date.now();
+                data.read = [];
+                await db.collection('GDZ').doc('answer').collection('list').add(data);
+                toast('Добавлено');
+            }
+            cancelAnswerEdit();
+            loadAnswers();
+        } catch (e) {
+            toast('Ошибка: ' + e.message, true);
+        }
+    }
+
+    function editAnswer(id) {
+        const a = answersCache.find(x => x.id === id);
+        if (!a) return;
+        document.getElementById('answerEditId').value = id;
+        document.getElementById('answerSubject').value = a.subjectId || '';
+        document.getElementById('answerNumber').value = a.number || '';
+        document.getElementById('answerDate').value = a.date || '';
+        document.getElementById('answerText').value = a.text || '';
+        document.getElementById('answerCancelBtn').classList.remove('hidden');
+        document.getElementById('answerSaveBtn').textContent = '💾 Обновить';
+    }
+
+    function cancelAnswerEdit() {
+        document.getElementById('answerEditId').value = '';
+        document.getElementById('answerSubject').value = '';
+        document.getElementById('answerNumber').value = '';
+        document.getElementById('answerDate').value = '';
+        document.getElementById('answerText').value = '';
+        document.getElementById('answerCancelBtn').classList.add('hidden');
+        document.getElementById('answerSaveBtn').textContent = '💾 Сохранить ответ';
+    }
+
+    async function deleteAnswer(id) {
+        if (!confirm('Удалить ответ?')) return;
+        await db.collection('GDZ').doc('answer').collection('list').doc(id).delete();
+        toast('Удалено');
+        loadAnswers();
+    }
+
+    // ==================== ОТВЕТЫ КОНТРОЛЬНЫХ ====================
+    async function loadTestAnswers
