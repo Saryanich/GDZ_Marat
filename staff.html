@@ -194,6 +194,7 @@ const auth=firebase.auth();
 const db=firebase.firestore();
 
 let authResolved=false;
+let redirecting=false;
 
 /* ==================== УТИЛИТЫ ==================== */
 function showMessage(text,isError){
@@ -212,6 +213,18 @@ function togglePassword(){
   const p=document.getElementById('loginPassword');
   p.type=p.type==='password'?'text':'password';
 }
+function showLoginScreen(){
+  document.getElementById('loginScreen').classList.remove('hidden');
+}
+
+/* ==================== БЕЗОПАСНЫЙ РЕДИРЕКТ ==================== */
+function safeRedirect(url){
+  if(redirecting)return;
+  redirecting=true;
+  // Сбрасываем флаг через 2 секунды, чтобы не залипнуть, если редирект не сработал
+  setTimeout(function(){redirecting=false;},2000);
+  window.location.replace(url);
+}
 
 /* ==================== ПРОВЕРКА БАРЬЕРА ==================== */
 async function checkBarrier(globalId){
@@ -222,8 +235,8 @@ async function checkBarrier(globalId){
     if(d.barrier!=='on')return false;
     const target=d.barrierTarget;
     if(!target||target===globalId){
-      sessionStorage.setItem('barrier_back','index.html');
-      window.location.replace('barrier.html');
+      sessionStorage.setItem('barrier_back','staff.html');
+      safeRedirect('barrier.html');
       return true;
     }
   }catch(e){}
@@ -236,12 +249,14 @@ async function handleUserLogin(user){
     const ud=await db.collection('users').doc(user.uid).get();
     if(!ud.exists){
       showMessage('Документ пользователя не найден',true);
+      showLoginScreen();
       return;
     }
     const u=ud.data();
     const globalId=u.globalId||'';
     if(!globalId){
       showMessage('Global ID не найден',true);
+      showLoginScreen();
       return;
     }
 
@@ -258,13 +273,16 @@ async function handleUserLogin(user){
 
     // Сохраняем в sessionStorage
     sessionStorage.setItem('gdz_globalId',globalId);
+    // Помечаем, что редирект в gdz уже был — чтобы gdz.html не отправлял обратно
+    sessionStorage.setItem('gdz_redirect_done','1');
 
     // → СРАЗУ В ГДЗ
-    window.location.replace('gdz.html');
+    safeRedirect('gdz.html');
 
   }catch(e){
     console.error(e);
     showMessage('Ошибка: '+e.message,true);
+    showLoginScreen();
   }
 }
 
@@ -314,7 +332,7 @@ window.loginAsGuest=function(){
   sessionStorage.setItem('guestMode','true');
   sessionStorage.setItem('guestName','Гость');
   sessionStorage.setItem('gdz_globalId','guest');
-  window.location.replace('gdz.html?guest=1');
+  safeRedirect('gdz.html?guest=1');
 };
 
 /* ==================== АВТОВХОД ==================== */
@@ -325,21 +343,29 @@ auth.onAuthStateChanged(async function(user){
   hideLoading();
 
   if(user){
+    // Если уже был редирект в gdz — не зацикливаемся
+    if(sessionStorage.getItem('gdz_redirect_done')==='1'){
+      // Пользователь уже был перенаправлен, но почему-то вернулся.
+      // Показываем экран входа, чтобы он мог войти заново.
+      sessionStorage.removeItem('gdz_redirect_done');
+      showLoginScreen();
+      return;
+    }
     // Сессия есть — сразу в gdz.html
     await handleUserLogin(user);
     return;
   }
 
   // Сессии нет — показываем вход
-  document.getElementById('loginScreen').classList.remove('hidden');
+  showLoginScreen();
 });
 
-// Страховка
+// Страховка: если Firebase не ответил за 3 секунды — показываем форму
 setTimeout(function(){
   if(!authResolved){
     authResolved=true;
     hideLoading();
-    document.getElementById('loginScreen').classList.remove('hidden');
+    showLoginScreen();
   }
 },3000);
 </script>
