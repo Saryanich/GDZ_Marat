@@ -1788,7 +1788,7 @@ async function sendGlobi(){
       for(const s of data.steps){
         if(s.type==='model_output'&&s.content){
           for(const c of s.content){
-            if(c.type==='text'&&';
+            if(c.type==='text'&&c.text)reply=reply+c.text;
 c.text)reply+=c.text;
           }
              }
