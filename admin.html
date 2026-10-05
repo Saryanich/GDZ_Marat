@@ -96,20 +96,6 @@ textarea{resize:vertical;min-height:90px;line-height:1.5}
 @keyframes spin{to{transform:rotate(360deg)}}
 .hidden{display:none!important}
 .count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#ef4444;color:#fff;font-size:0.7rem;font-weight:800;margin-left:6px}
-/* ===== МОДАЛКА ВЫБОРА ГРУППЫ ===== */
-.group-modal-overlay{position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:1.5rem}
-.group-modal-overlay.show{display:flex}
-.group-modal{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:1.75rem 1.5rem;max-width:440px;width:100%}
-.group-modal h2{font-size:1.2rem;font-weight:800;margin-bottom:0.5rem;text-align:center;color:var(--accent-bright)}
-.group-modal-sub{font-size:0.85rem;color:var(--text-secondary);text-align:center;margin-bottom:1.25rem;line-height:1.5}
-.group-options{display:flex;flex-direction:column;gap:10px}
-.group-option{padding:1rem 1.25rem;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--text-primary);font-size:0.95rem;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;display:flex;align-items:center;gap:12px}
-.group-option:hover{background:rgba(52,211,153,0.12);border-color:var(--accent-bright);color:var(--accent-bright)}
-.group-option .check{margin-left:auto;font-size:1.1rem;opacity:0}
-.group-option.selected .check{opacity:1}
-.group-modal-actions{display:flex;justify-content:center;margin-top:1.25rem}
-.group-modal-cancel{padding:0.75rem 1.5rem;border-radius:999px;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text-secondary);font-weight:600;font-size:0.88rem;cursor:pointer;font-family:inherit}
-.group-modal-cancel:hover{background:rgba(255,255,255,0.1);color:var(--text-primary)}
 .group-badge{display:inline-block;font-size:0.7rem;padding:2px 8px;border-radius:8px;background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.4);font-weight:700;margin-left:6px}
 </style>
 </head>
@@ -160,10 +146,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.5}
             <button class="btn btn-primary" style="width:100%;" onclick="addSubject()">➕ Добавить</button>
           </div>
         </div>
-        <div class="hint" style="margin-top:0.5rem;">
-          ID создаётся автоматически из названия. Для английского он должен быть <code>angliyskiy-yazyk</code> — проверь после добавления.
-        </div>
-        <div id="subjectsList" style="margin-top:1rem;"></div>
+        <div id="subjectsList"></div>
       </div>
 
       <div class="section">
@@ -394,18 +377,6 @@ textarea{resize:vertical;min-height:90px;line-height:1.5}
   </div>
 </div>
 
-<!-- МОДАЛКА ВЫБОРА ГРУППЫ -->
-<div class="group-modal-overlay" id="groupModalOverlay">
-  <div class="group-modal">
-    <h2>В какой группе вы находитесь?</h2>
-    <div class="group-modal-sub">Выберите группу английского языка — ответ будет показан только этой группе</div>
-    <div class="group-options" id="groupOptions"></div>
-    <div class="group-modal-actions">
-      <button class="group-modal-cancel" onclick="closeGroupModal()">Отмена</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>
@@ -422,29 +393,24 @@ if(!firebase.apps.length){firebase.initializeApp(firebaseConfig);}
 const auth=firebase.auth();
 const db=firebase.firestore();
 
-/* ==================== ГРУППЫ АНГЛИЙСКОГО ==================== */
-/* Базовый ID английского в базе. Суффиксы: _elvira, _zilya */
+/* ==================== АНГЛИЙСКИЙ — ГРУППЫ ==================== */
 const ENGLISH_BASE_ID = 'angliyskiy-yazyk';
 const ENGLISH_GROUPS = [
-  {value:'elvira', label:'у Эльвиры Исмагиловны', fullName:'Английский язык (у Эльвиры Исмагиловны)'},
-  {value:'zilya',  label:'у Зили Ринатовны',     fullName:'Английский язык (у Зили Ринатовны)'}
+  { value:'elvira', label:'у Эльвиры Исмагиловны' },
+  { value:'zilya',  label:'у Зили Ринатовны' }
 ];
-
-function isEnglishSubjectId(subjId){
-  if(!subjId)return false;
-  return subjId === ENGLISH_BASE_ID || subjId.startsWith(ENGLISH_BASE_ID + '_');
+function isEnglishSubjectId(id){
+  if(!id) return false;
+  return id === ENGLISH_BASE_ID || id.startsWith(ENGLISH_BASE_ID + '_');
 }
-function getEnglishGroupSuffix(subjId){
-  if(!subjId)return null;
-  if(subjId.startsWith(ENGLISH_BASE_ID + '_')){
-    return subjId.substring(ENGLISH_BASE_ID.length + 1);
-  }
+function getEnglishGroupSuffix(id){
+  if(id && id.startsWith(ENGLISH_BASE_ID + '_')) return id.substring(ENGLISH_BASE_ID.length + 1);
   return null;
 }
-function getEnglishGroupLabel(suffix){
-  if(!suffix)return '';
-  const g = ENGLISH_GROUPS.find(x=>x.value===suffix);
-  return g ? g.label : suffix;
+function getEnglishGroupLabel(sfx){
+  if(!sfx) return '';
+  const g = ENGLISH_GROUPS.find(x=>x.value===sfx);
+  return g ? g.label : sfx;
 }
 
 /* ==================== СОСТОЯНИЕ ==================== */
@@ -461,7 +427,6 @@ let moderationHistoryCache=[];
 let barrierCheckInterval=null;
 let isWritingBarrier=false;
 let pendingListener=null;
-let pendingGroupCallback=null;
 
 /* ==================== УТИЛИТЫ ==================== */
 function toast(text,isError=false){
@@ -480,40 +445,6 @@ function formatTime(ts){
   if(!ts)return '—';
   const d=ts.toDate?ts.toDate():new Date(ts);
   return d.toLocaleString('ru-RU');
-}
-/* Транслитерация названия предмета в ID (как в gdz.html) */
-function slugifySubject(name){
-  const map={
-    'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z','и':'i','й':'y',
-    'к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f',
-    'х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya',
-    ' ':'-'
-  };
-  return name.toLowerCase().split('').map(c=>map[c]!==undefined?map[c]:c)
-    .join('').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-').replace(/^-|-$/g,'');
-}
-
-/* ==================== МОДАЛКА ГРУППЫ ==================== */
-function openGroupModal(callback){
-  pendingGroupCallback=callback;
-  const overlay=document.getElementById('groupModalOverlay');
-  const opts=document.getElementById('groupOptions');
-  opts.innerHTML=ENGLISH_GROUPS.map(g=>`
-    <button class="group-option" onclick="selectGroup('${g.value}')">
-      <span>${escapeHtml(g.label)}</span>
-      <span class="check">✅</span>
-    </button>
-  `).join('');
-  overlay.classList.add('show');
-}
-function selectGroup(value){
-  const cb=pendingGroupCallback;
-  closeGroupModal();
-  if(cb)cb(value);
-}
-function closeGroupModal(){
-  document.getElementById('groupModalOverlay').classList.remove('show');
-  pendingGroupCallback=null;
 }
 
 /* ==================== ПРОВЕРКА ДОСТУПА ==================== */
@@ -597,20 +528,18 @@ async function loadSubjects(){
   const opts=subjectsCache.map(s=>`<option value="${s.id}">${s.icon||''} ${escapeHtml(s.name)}</option>`).join('');
   selectA.innerHTML=opts||'<option value="">— нет предметов —</option>';
   selectT.innerHTML=opts||'<option value="">— нет предметов —</option>';
+  onAnswerSubjectChange();
+  onTestAnswerSubjectChange();
 }
 async function addSubject(){
   const name=document.getElementById('subjectName').value.trim();
   const icon=document.getElementById('subjectIcon').value.trim()||'📚';
   if(!name)return toast('Введи название',true);
-  const id=slugifySubject(name);
-  if(!id)return toast('Не удалось создать ID',true);
   try{
-    await db.collection('GDZ').doc('subjects').collection('list').doc(id).set({
-      name,icon,createdAt:Date.now()
-    },{merge:true});
+    await db.collection('GDZ').doc('subjects').collection('list').add({name,icon,createdAt:Date.now()});
     document.getElementById('subjectName').value='';
     document.getElementById('subjectIcon').value='';
-    toast('Предмет добавлен: '+id);
+    toast('Предмет добавлен');
     loadSubjects();
   }catch(e){toast('Ошибка: '+e.message,true);}
 }
@@ -642,11 +571,10 @@ async function loadAnswers(){
     return;
   }
   container.innerHTML=answersCache.map(a=>{
-    const baseId=isEnglishSubjectId(a.subjectId)?ENGLISH_BASE_ID:a.subjectId;
+    const baseId = isEnglishSubjectId(a.subjectId) ? ENGLISH_BASE_ID : a.subjectId;
     const subj=subjectsCache.find(s=>s.id===baseId);
-    const groupSuffix=getEnglishGroupSuffix(a.subjectId);
-    const groupLabel=groupSuffix?getEnglishGroupLabel(groupSuffix):'';
-    const groupBadge=groupLabel?`<span class="group-badge">${escapeHtml(groupLabel)}</span>`:'';
+    const sfx = getEnglishGroupSuffix(a.subjectId);
+    const groupBadge = sfx ? ` <span class="group-badge">${escapeHtml(getEnglishGroupLabel(sfx))}</span>` : '';
     return `
       <div class="list-item">
         <div class="list-item-head">
@@ -673,25 +601,18 @@ async function saveAnswer(){
   const text=document.getElementById('answerText').value;
   if(!subjectId||!text)return toast('Заполни предмет и текст',true);
 
-  /* Если английский — обязательно выбираем группу */
+  /* Если английский — обязательно выбрать группу */
   if(isEnglishSubjectId(subjectId)){
-    let group=document.getElementById('answerGroup').value;
-    if(!group){
-      openGroupModal((value)=>{
-        document.getElementById('answerGroup').value=value;
-        saveAnswer();
-      });
-      return;
-    }
-    const finalSubjectId = subjectId.includes('_') ? subjectId : `${ENGLISH_BASE_ID}_${group}`;
-    const data={subjectId:finalSubjectId,number,date,text,updatedAt:Date.now()};
+    const group=document.getElementById('answerGroup').value;
+    if(!group)return toast('Выбери группу английского',true);
+    const finalId = subjectId.includes('_') ? subjectId : (ENGLISH_BASE_ID + '_' + group);
+    const data={subjectId:finalId,number,date,text,updatedAt:Date.now()};
     try{
       if(id){
         await db.collection('GDZ').doc('answer').collection('list').doc(id).update(data);
         toast('Обновлено');
       }else{
-        data.createdAt=Date.now();
-        data.read=[];
+        data.createdAt=Date.now();data.read=[];
         await db.collection('GDZ').doc('answer').collection('list').add(data);
         toast('Добавлено ('+getEnglishGroupLabel(group)+')');
       }
@@ -708,8 +629,7 @@ async function saveAnswer(){
       await db.collection('GDZ').doc('answer').collection('list').doc(id).update(data);
       toast('Обновлено');
     }else{
-      data.createdAt=Date.now();
-      data.read=[];
+      data.createdAt=Date.now();data.read=[];
       await db.collection('GDZ').doc('answer').collection('list').add(data);
       toast('Добавлено');
     }
@@ -723,17 +643,12 @@ function editAnswer(id){
   if(!a)return;
   document.getElementById('answerEditId').value=id;
 
-  /* Определяем базовый предмет и группу */
-  const baseId=isEnglishSubjectId(a.subjectId)?ENGLISH_BASE_ID:a.subjectId;
+  const baseId = isEnglishSubjectId(a.subjectId) ? ENGLISH_BASE_ID : a.subjectId;
   document.getElementById('answerSubject').value=baseId;
   onAnswerSubjectChange();
 
-  const groupSuffix=getEnglishGroupSuffix(a.subjectId);
-  if(groupSuffix){
-    document.getElementById('answerGroup').value=groupSuffix;
-  }else{
-    document.getElementById('answerGroup').value='';
-  }
+  const sfx = getEnglishGroupSuffix(a.subjectId);
+  document.getElementById('answerGroup').value = sfx || '';
 
   document.getElementById('answerNumber').value=a.number||'';
   document.getElementById('answerDate').value=a.date||'';
@@ -783,11 +698,10 @@ async function loadTestAnswers(){
     return;
   }
   container.innerHTML=testAnswersCache.map(a=>{
-    const baseId=isEnglishSubjectId(a.subjectId)?ENGLISH_BASE_ID:a.subjectId;
+    const baseId = isEnglishSubjectId(a.subjectId) ? ENGLISH_BASE_ID : a.subjectId;
     const subj=subjectsCache.find(s=>s.id===baseId);
-    const groupSuffix=getEnglishGroupSuffix(a.subjectId);
-    const groupLabel=groupSuffix?getEnglishGroupLabel(groupSuffix):'';
-    const groupBadge=groupLabel?`<span class="group-badge">${escapeHtml(groupLabel)}</span>`:'';
+    const sfx = getEnglishGroupSuffix(a.subjectId);
+    const groupBadge = sfx ? ` <span class="group-badge">${escapeHtml(getEnglishGroupLabel(sfx))}</span>` : '';
     return `
       <div class="list-item">
         <div class="list-item-head">
@@ -815,23 +729,16 @@ async function saveTestAnswer(){
   if(!subjectId||!title||!text)return toast('Заполни все поля',true);
 
   if(isEnglishSubjectId(subjectId)){
-    let group=document.getElementById('testAnswerGroup').value;
-    if(!group){
-      openGroupModal((value)=>{
-        document.getElementById('testAnswerGroup').value=value;
-        saveTestAnswer();
-      });
-      return;
-    }
-    const finalSubjectId = subjectId.includes('_') ? subjectId : `${ENGLISH_BASE_ID}_${group}`;
-    const data={subjectId:finalSubjectId,title,date,text,updatedAt:Date.now()};
+    const group=document.getElementById('testAnswerGroup').value;
+    if(!group)return toast('Выбери группу английского',true);
+    const finalId = subjectId.includes('_') ? subjectId : (ENGLISH_BASE_ID + '_' + group);
+    const data={subjectId:finalId,title,date,text,updatedAt:Date.now()};
     try{
       if(id){
         await db.collection('GDZ').doc('tests_answer').collection('list').doc(id).update(data);
         toast('Обновлено');
       }else{
-        data.createdAt=Date.now();
-        data.read=[];
+        data.createdAt=Date.now();data.read=[];
         await db.collection('GDZ').doc('tests_answer').collection('list').add(data);
         toast('Добавлено ('+getEnglishGroupLabel(group)+')');
       }
@@ -847,8 +754,7 @@ async function saveTestAnswer(){
       await db.collection('GDZ').doc('tests_answer').collection('list').doc(id).update(data);
       toast('Обновлено');
     }else{
-      data.createdAt=Date.now();
-      data.read=[];
+      data.createdAt=Date.now();data.read=[];
       await db.collection('GDZ').doc('tests_answer').collection('list').add(data);
       toast('Добавлено');
     }
@@ -862,16 +768,12 @@ function editTestAnswer(id){
   if(!a)return;
   document.getElementById('testAnswerEditId').value=id;
 
-  const baseId=isEnglishSubjectId(a.subjectId)?ENGLISH_BASE_ID:a.subjectId;
+  const baseId = isEnglishSubjectId(a.subjectId) ? ENGLISH_BASE_ID : a.subjectId;
   document.getElementById('testAnswerSubject').value=baseId;
   onTestAnswerSubjectChange();
 
-  const groupSuffix=getEnglishGroupSuffix(a.subjectId);
-  if(groupSuffix){
-    document.getElementById('testAnswerGroup').value=groupSuffix;
-  }else{
-    document.getElementById('testAnswerGroup').value='';
-  }
+  const sfx = getEnglishGroupSuffix(a.subjectId);
+  document.getElementById('testAnswerGroup').value = sfx || '';
 
   document.getElementById('testAnswerTitle').value=a.title||'';
   document.getElementById('testAnswerDate').value=a.date||'';
@@ -931,11 +833,11 @@ function renderPending(){
     return;
   }
   container.innerHTML=pending.map(p=>{
-    const baseId=isEnglishSubjectId(p.subjectId)?ENGLISH_BASE_ID:p.subjectId;
+    const baseId = isEnglishSubjectId(p.subjectId) ? ENGLISH_BASE_ID : p.subjectId;
     const subj=subjectsCache.find(s=>s.id===baseId);
     const isTest=p.type==='test';
-    const groupSuffix=getEnglishGroupSuffix(p.subjectId);
-    const groupBadge=groupSuffix?`<span class="group-badge">${escapeHtml(getEnglishGroupLabel(groupSuffix))}</span>`:'';
+    const sfx = getEnglishGroupSuffix(p.subjectId);
+    const groupBadge = sfx ? ` <span class="group-badge">${escapeHtml(getEnglishGroupLabel(sfx))}</span>` : '';
     const title=isTest
       ? `🎯 ${escapeHtml(p.title||'Контрольная')} — ${escapeHtml(subj?.name||'—')}${groupBadge}`
       : `${subj?.icon||'📝'} ${escapeHtml(p.number||'')} — ${escapeHtml(subj?.name||'—')}${groupBadge}`;
@@ -1015,11 +917,11 @@ async function loadModerationHistory(){
       return;
     }
     container.innerHTML=moderationHistoryCache.map(p=>{
-      const baseId=isEnglishSubjectId(p.subjectId)?ENGLISH_BASE_ID:p.subjectId;
+      const baseId = isEnglishSubjectId(p.subjectId) ? ENGLISH_BASE_ID : p.subjectId;
       const subj=subjectsCache.find(s=>s.id===baseId);
       const isTest=p.type==='test';
-      const groupSuffix=getEnglishGroupSuffix(p.subjectId);
-      const groupBadge=groupSuffix?`<span class="group-badge">${escapeHtml(getEnglishGroupLabel(groupSuffix))}</span>`:'';
+      const sfx = getEnglishGroupSuffix(p.subjectId);
+      const groupBadge = sfx ? ` <span class="group-badge">${escapeHtml(getEnglishGroupLabel(sfx))}</span>` : '';
       const title=isTest
         ? `🎯 ${escapeHtml(p.title||'')} — ${escapeHtml(subj?.name||'—')}${groupBadge}`
         : `${subj?.icon||'📝'} ${escapeHtml(p.number||'')} — ${escapeHtml(subj?.name||'—')}${groupBadge}`;
@@ -1284,10 +1186,10 @@ async function loadReadLists(){
   else{
     ansList.innerHTML=ansSnap.docs.map(d=>{
       const a=d.data();
-      const baseId=isEnglishSubjectId(a.subjectId)?ENGLISH_BASE_ID:a.subjectId;
+      const baseId = isEnglishSubjectId(a.subjectId) ? ENGLISH_BASE_ID : a.subjectId;
       const subj=subjectsCache.find(s=>s.id===baseId);
-      const groupSuffix=getEnglishGroupSuffix(a.subjectId);
-      const groupBadge=groupSuffix?`<span class="group-badge">${escapeHtml(getEnglishGroupLabel(groupSuffix))}</span>`:'';
+      const sfx = getEnglishGroupSuffix(a.subjectId);
+      const groupBadge = sfx ? ` <span class="group-badge">${escapeHtml(getEnglishGroupLabel(sfx))}</span>` : '';
       const reads=a.read||[];
       return `
         <div class="list-item">
@@ -1306,10 +1208,10 @@ async function loadReadLists(){
   else{
     tList.innerHTML=tSnap.docs.map(d=>{
       const a=d.data();
-      const baseId=isEnglishSubjectId(a.subjectId)?ENGLISH_BASE_ID:a.subjectId;
+      const baseId = isEnglishSubjectId(a.subjectId) ? ENGLISH_BASE_ID : a.subjectId;
       const subj=subjectsCache.find(s=>s.id===baseId);
-      const groupSuffix=getEnglishGroupSuffix(a.subjectId);
-      const groupBadge=groupSuffix?`<span class="group-badge">${escapeHtml(getEnglishGroupLabel(groupSuffix))}</span>`:'';
+      const sfx = getEnglishGroupSuffix(a.subjectId);
+      const groupBadge = sfx ? ` <span class="group-badge">${escapeHtml(getEnglishGroupLabel(sfx))}</span>` : '';
       const reads=a.read||[];
       return `
         <div class="list-item">
