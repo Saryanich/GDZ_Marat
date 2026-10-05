@@ -1,751 +1,446 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>ГДЗ Марат — Вход</title>
-
-    <link rel="icon" type="image/jpeg" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
-    <link rel="apple-touch-icon" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
-
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="ГДЗ Марат">
-    <meta name="theme-color" content="#050e08">
-
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
-
-    <style>
-        :root {
-            --bg-deep: #050e08;
-            --bg-card: rgba(10, 26, 17, 0.85);
-            --accent-green: #10b981;
-            --accent-bright: #34d399;
-            --accent-glow: rgba(52, 211, 153, 0.25);
-            --text-primary: #f0fdf4;
-            --text-secondary: #94a3b8;
-            --text-muted: #475569;
-            --border: rgba(52, 211, 153, 0.2);
-            --border-hover: rgba(52, 211, 153, 0.5);
-            --radius-card: 28px;
-            --radius-btn: 16px;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-deep);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1.25rem;
-            position: relative;
-            overflow-x: hidden;
-            color: var(--text-primary);
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* Фоновые пятна (лёгкие) */
-        .glow-orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(110px);
-            pointer-events: none;
-            z-index: 0;
-            opacity: 0.45;
-        }
-        .orb-1 {
-            top: -10%; left: -10%;
-            width: 55vw; height: 55vw;
-            background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%);
-        }
-        .orb-2 {
-            bottom: -10%; right: -10%;
-            width: 50vw; height: 50vw;
-            background: radial-gradient(circle, rgba(5, 150, 105, 0.25) 0%, transparent 70%);
-        }
-
-        /* ====== ОВЕРЛЕЙ ====== */
-        #loadingOverlay {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-deep);
-            gap: 1.5rem;
-            transition: opacity 0.35s ease, visibility 0.35s ease;
-        }
-        #loadingOverlay.fade-out { opacity: 0; visibility: hidden; }
-
-        .spinner {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            border: 3px solid rgba(52, 211, 153, 0.15);
-            border-top-color: var(--accent-bright);
-            border-right-color: var(--accent-bright);
-            animation: spin 0.85s linear infinite;
-            box-shadow: 0 0 35px rgba(52, 211, 153, 0.35);
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .loading-text {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            letter-spacing: 0.5px;
-            animation: pulse 1.4s ease-in-out infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 0.55; }
-            50% { opacity: 1; }
-        }
-
-        .container {
-            position: relative;
-            z-index: 10;
-            width: 100%;
-            max-width: 420px;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.35s ease;
-        }
-        .container.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .glass-card {
-            background: var(--bg-card);
-            backdrop-filter: blur(40px) saturate(180%);
-            -webkit-backdrop-filter: blur(40px) saturate(180%);
-            border-radius: var(--radius-card);
-            border: 1px solid var(--border);
-            box-shadow: 0 30px 80px -15px rgba(0, 0, 0, 0.8), 0 0 50px rgba(16, 185, 129, 0.15);
-            padding: 2.6rem 2.1rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .glass-card::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 15%; right: 15%;
-            height: 1.5px;
-            background: linear-gradient(90deg, transparent, var(--accent-bright), transparent);
-            opacity: 0.9;
-        }
-
-        .logo-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 1.1rem;
-        }
-        .logo-wrapper {
-            border-radius: 50%;
-            padding: 3px;
-            background: linear-gradient(135deg, var(--accent-bright), rgba(16, 185, 129, 0.2));
-            box-shadow: 0 0 30px var(--accent-glow);
-        }
-        .logo {
-            width: 96px;
-            height: 96px;
-            border-radius: 50%;
-            object-fit: cover;
-            display: block;
-            background: #000;
-        }
-
-        h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            text-align: center;
-            letter-spacing: -0.5px;
-            margin-bottom: 0.25rem;
-        }
-        h1 span {
-            background: linear-gradient(135deg, #ffffff 40%, var(--accent-bright) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .subtitle {
-            text-align: center;
-            color: var(--text-secondary);
-            margin-bottom: 1.6rem;
-            font-size: 0.9rem;
-        }
-
-        .input-group { margin-bottom: 1.1rem; }
-        label {
-            display: block;
-            font-size: 0.73rem;
-            text-transform: uppercase;
-            letter-spacing: 1.3px;
-            color: var(--accent-bright);
-            margin-bottom: 0.45rem;
-            font-weight: 700;
-        }
-        .input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        .input-icon {
-            position: absolute;
-            left: 1.1rem;
-            font-size: 1.05rem;
-            opacity: 0.55;
-            pointer-events: none;
-            transition: opacity 0.25s;
-        }
-        input {
-            width: 100%;
-            padding: 0.95rem 2.8rem 0.95rem 2.8rem;
-            background: rgba(3, 12, 7, 0.65);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            color: #fff;
-            font-size: 0.95rem;
-            outline: none;
-            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
-            -webkit-appearance: none;
-        }
-        input::placeholder { color: var(--text-muted); }
-        .input-wrapper:focus-within input {
-            border-color: var(--accent-bright);
-            background: rgba(3, 12, 7, 0.9);
-            box-shadow: 0 0 0 4px var(--accent-glow);
-        }
-        .input-wrapper:focus-within .input-icon { opacity: 1; }
-
-        .toggle-password {
-            position: absolute;
-            right: 1rem;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0.6;
-            transition: opacity 0.2s, transform 0.2s;
-        }
-        .toggle-password:hover { opacity: 1; transform: scale(1.1); }
-        .toggle-password svg { width: 20px; height: 20px; fill: currentColor; }
-
-        .btn {
-            width: 100%;
-            padding: 0.95rem 1.25rem;
-            border: none;
-            border-radius: var(--radius-btn);
-            font-weight: 700;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.25s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 0.6rem;
-            position: relative;
-            overflow: hidden;
-        }
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: #ffffff;
-            box-shadow: 0 8px 24px -4px rgba(16, 185, 129, 0.45);
-        }
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 28px -4px rgba(16, 185, 129, 0.65);
-            background: linear-gradient(135deg, #34d399, #059669);
-        }
-        .btn-guest {
-            background: rgba(255, 255, 255, 0.03);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-            margin-top: 0.9rem;
-        }
-        .btn-guest:hover {
-            background: rgba(52, 211, 153, 0.08);
-            border-color: var(--border-hover);
-            transform: translateY(-2px);
-        }
-        .btn-global {
-            background: rgba(16, 185, 129, 0.12);
-            color: var(--accent-bright);
-            border: 1px solid rgba(16, 185, 129, 0.35);
-            margin-top: 0.8rem;
-        }
-        .btn-global:hover {
-            background: rgba(16, 185, 129, 0.25);
-            border-color: var(--accent-bright);
-            transform: translateY(-2px);
-            color: #fff;
-        }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin: 1.4rem 0 0.5rem;
-            color: var(--text-muted);
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            font-weight: 700;
-        }
-        .divider::before, .divider::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        .registration-info {
-            background: rgba(16, 185, 129, 0.05);
-            border: 1px dashed rgba(16, 185, 129, 0.25);
-            border-radius: 16px;
-            padding: 1rem;
-            margin: 1.1rem 0 0.4rem;
-            text-align: center;
-        }
-        .registration-info h4 {
-            color: var(--accent-bright);
-            margin-bottom: 4px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        .registration-info p {
-            color: var(--text-secondary);
-            font-size: 0.78rem;
-            line-height: 1.5;
-        }
-
-        .message {
-            text-align: center;
-            margin-top: 1rem;
-            font-size: 0.88rem;
-            min-height: 1.3rem;
-            font-weight: 500;
-            border-radius: 8px;
-            padding: 6px 12px;
-            transition: all 0.25s;
-        }
-        .error { color: #f87171; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.2); }
-        .success { color: #34d399; background: rgba(52, 211, 153, 0.12); border: 1px solid rgba(52, 211, 153, 0.2); }
-
-        .disclaimer {
-            margin-top: 1.5rem;
-            padding: 0.9rem;
-            background: rgba(0, 0, 0, 0.25);
-            border-radius: 12px;
-            font-size: 0.73rem;
-            line-height: 1.5;
-            color: var(--text-muted);
-            text-align: center;
-        }
-        .disclaimer a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            border-bottom: 1px dotted var(--text-muted);
-            transition: color 0.2s, border-color 0.2s;
-        }
-        .disclaimer a:hover {
-            color: var(--accent-bright);
-            border-bottom-color: var(--accent-bright);
-        }
-
-        .footer-note {
-            text-align: center;
-            margin-top: 1.3rem;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>ГДЗ Марат — Вход</title>
+<link rel="icon" type="image/jpeg" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
+<link rel="apple-touch-icon" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ГДЗ Марат">
+<meta name="theme-color" content="#050e08">
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --bg:#050e08;--card:rgba(10,26,17,0.85);--accent:#10b981;--accent-bright:#34d399;
+  --accent-glow:rgba(52,211,153,0.25);--text:#f0fdf4;--text-2:#94a3b8;--text-3:#475569;
+  --border:rgba(52,211,153,0.2);--border-hover:rgba(52,211,153,0.5);
+  --danger:#ef4444;--warning:#f59e0b;--radius:22px;--radius-sm:14px;
+  --shadow:0 20px 50px -12px rgba(0,0,0,0.7);--blur:blur(30px) saturate(180%);
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:1.25rem;padding-top:calc(1.25rem + env(safe-area-inset-top));
+  padding-bottom:calc(1.25rem + env(safe-area-inset-bottom));
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 15% 10%,rgba(16,185,129,0.22) 0%,transparent 45%),
+    radial-gradient(circle at 85% 90%,rgba(5,150,105,0.18) 0%,transparent 45%)}
+.container{position:relative;z-index:10;width:100%;max-width:420px;animation:cardIn .6s var(--ease)}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
+.glass-card{
+  background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border-radius:var(--radius);border:1px solid var(--border);
+  box-shadow:var(--shadow),0 0 40px rgba(46,204,113,0.08);
+  padding:2.5rem 1.9rem;position:relative;overflow:hidden;
+}
+.glass-card::before{content:"";position:absolute;top:0;left:10%;right:10%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent-bright),transparent);opacity:.7}
+.logo-container{display:flex;justify-content:center;margin-bottom:1.25rem}
+.logo-wrapper{padding:3px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent-bright),rgba(16,185,129,0.2));
+  box-shadow:0 0 30px var(--accent-glow);transition:transform .4s var(--ease)}
+.glass-card:hover .logo-wrapper{transform:scale(1.05)}
+.logo{width:96px;height:96px;border-radius:50%;object-fit:cover;display:block;background:#000}
+h1{font-size:2rem;font-weight:800;text-align:center;letter-spacing:-.5px;margin-bottom:.3rem}
+h1 span{background:linear-gradient(135deg,#fff 40%,var(--accent-bright));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;color:var(--text-2);margin-bottom:1.6rem;font-size:.9rem}
+.input-group{margin-bottom:1.15rem}
+label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:1.2px;
+  color:var(--accent-bright);margin-bottom:.45rem;font-weight:700}
+input{width:100%;padding:.95rem 1.1rem;background:rgba(3,12,7,0.7);
+  border:1.5px solid var(--border);border-radius:14px;color:var(--text);
+  font-size:.95rem;outline:none;transition:all .25s var(--ease);-webkit-appearance:none;
+  font-family:inherit}
+input:focus{border-color:var(--accent-bright);background:rgba(3,12,7,0.95);
+  box-shadow:0 0 0 4px var(--accent-glow)}
+input::placeholder{color:var(--text-3)}
+.toggle-password{position:absolute;right:1rem;background:none;border:none;
+  color:var(--text-2);cursor:pointer;padding:4px;font-size:1rem;font-family:inherit}
+.input-wrapper{position:relative;display:flex;align-items:center}
+.btn{width:100%;padding:.95rem;border:none;border-radius:14px;font-weight:700;
+  font-size:.95rem;cursor:pointer;font-family:inherit;
+  transition:all .25s var(--ease);display:flex;align-items:center;justify-content:center;
+  gap:8px;position:relative;overflow:hidden}
+.btn::before{content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);
+  transition:left .6s var(--ease)}
+.btn:hover::before{left:100%}
+.btn-primary{background:linear-gradient(135deg,#10b981,#059669);color:#fff;
+  box-shadow:0 8px 24px -4px rgba(16,185,129,0.5);margin-top:.5rem}
+.btn-primary:hover:not(:disabled){transform:translateY(-2px);
+  box-shadow:0 14px 30px -4px rgba(16,185,129,0.7)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+.divider{display:flex;align-items:center;gap:1rem;margin:1.4rem 0 .6rem;
+  color:var(--text-3);font-size:.72rem;text-transform:uppercase;letter-spacing:1.5px;font-weight:700}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
+.role-box{
+  background:rgba(52,211,153,0.05);border:1px solid var(--border);
+  border-radius:16px;padding:1.1rem;margin-top:1.1rem;
+  animation:fadeInUp .6s var(--ease) both;
+}
+.role-box h4{color:var(--accent-bright);font-size:.88rem;margin-bottom:.6rem;
+  display:flex;align-items:center;gap:8px}
+.role-box p{color:var(--text-2);font-size:.78rem;line-height:1.5;margin-bottom:.85rem}
+.role-btn{padding:.7rem 1rem;border-radius:12px;font-weight:700;font-size:.85rem;
+  cursor:pointer;font-family:inherit;display:flex;align-items:center;
+  justify-content:center;gap:8px;width:100%;transition:all .25s var(--ease);
+  text-decoration:none;border:none}
+.role-btn.admin{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;
+  box-shadow:0 6px 18px -4px rgba(239,68,68,0.5)}
+.role-btn.admin:hover{transform:translateY(-2px);
+  box-shadow:0 10px 24px -4px rgba(239,68,68,0.7)}
+.role-btn.staff{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;
+  box-shadow:0 6px 18px -4px rgba(118,75,162,0.5);margin-top:.6rem}
+.role-btn.staff:hover{transform:translateY(-2px);
+  box-shadow:0 10px 24px -4px rgba(118,75,162,0.7)}
+.role-btn.user{background:linear-gradient(135deg,#10b981,#059669);color:#fff;
+  box-shadow:0 6px 18px -4px rgba(16,185,129,0.5);margin-top:.6rem}
+.role-btn.user:hover{transform:translateY(-2px);
+  box-shadow:0 10px 24px -4px rgba(16,185,129,0.7)}
+.message{text-align:center;margin-top:1rem;font-size:.9rem;min-height:1.4rem;
+  font-weight:500;border-radius:8px;padding:6px 12px;transition:all .25s}
+.error{color:#f87171;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.2)}
+.success{color:#34d399;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.2)}
+.disclaimer{margin-top:1.5rem;padding:.9rem;background:rgba(0,0,0,0.25);
+  border-radius:12px;font-size:.72rem;line-height:1.5;color:var(--text-3);text-align:center}
+.disclaimer a{color:var(--text-2);text-decoration:none;border-bottom:1px dotted var(--text-3)}
+.disclaimer a:hover{color:var(--accent-bright);border-bottom-color:var(--accent-bright)}
+.footer-note{text-align:center;margin-top:1.3rem;font-size:.75rem;color:var(--text-3)}
+#loadingScreen{position:fixed;inset:0;z-index:9999;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;
+  transition:opacity .5s var(--ease),visibility .5s var(--ease)}
+#loadingScreen.hide{opacity:0;visibility:hidden}
+.spinner{width:56px;height:56px;border-radius:50%;
+  border:3px solid rgba(52,211,153,0.15);border-top-color:var(--accent-bright);
+  border-right-color:var(--accent-bright);animation:spin .9s linear infinite;
+  box-shadow:0 0 30px rgba(52,211,153,0.3)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{color:var(--text-2);font-size:.9rem;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:none}}
+.hidden{display:none!important}
+</style>
 </head>
 <body>
-    <div class="glow-orb orb-1"></div>
-    <div class="glow-orb orb-2"></div>
 
-    <div id="loadingOverlay">
-        <div class="spinner"></div>
-        <div class="loading-text">Проверка сессии...</div>
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="loading-text">Проверка сессии...</div>
+</div>
+
+<div class="container">
+  <!-- ============ ЭКРАН ВХОДА ============ -->
+  <div id="loginScreen" class="glass-card hidden">
+    <div class="logo-container">
+      <div class="logo-wrapper">
+        <img src="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg" alt="ГДЗ Марат" class="logo">
+      </div>
+    </div>
+    <h1><span>ГДЗ Марат</span></h1>
+    <div class="subtitle">Войдите, чтобы продолжить учёбу</div>
+
+    <div class="input-group">
+      <label>Email или Global ID</label>
+      <input type="text" id="loginIdentifier" placeholder="email@example.com" autocomplete="email">
+    </div>
+    <div class="input-group">
+      <label>Пароль</label>
+      <div class="input-wrapper">
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+        <button type="button" class="toggle-password" onclick="togglePassword()">👁</button>
+      </div>
     </div>
 
-    <div class="container" id="mainContainer">
-        <div class="glass-card">
-            <div class="logo-container">
-                <div class="logo-wrapper">
-                    <img src="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg" alt="ГДЗ Марат" class="logo">
-                </div>
-            </div>
+    <button class="btn btn-primary" id="loginBtn" onclick="login()">
+      <span>🚀</span><span>Войти</span>
+    </button>
 
-            <h1><span>ГДЗ Марат</span></h1>
-            <div class="subtitle">Войдите, чтобы продолжить учёбу</div>
+    <div class="divider">или</div>
 
-            <div class="input-group">
-                <label>Email или Global ID</label>
-                <div class="input-wrapper">
-                    <span class="input-icon">👤</span>
-                    <input type="text" id="loginIdentifier" placeholder="email@example.com" autocomplete="email" autofocus>
-                </div>
-            </div>
+    <button class="btn btn-primary" style="background:rgba(255,255,255,0.04);color:var(--text-2);border:1px solid var(--border);box-shadow:none;" onclick="loginAsGuest()">
+      <span>👤</span><span>Войти как гость</span>
+    </button>
 
-            <div class="input-group">
-                <label>Пароль</label>
-                <div class="input-wrapper">
-                    <span class="input-icon">🔒</span>
-                    <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
-                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility()" title="Показать/скрыть пароль">
-                        <svg id="eyeIcon" viewBox="0 0 24 24">
-                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <button class="btn btn-primary" id="loginBtn" onclick="login()">
-                <span>Войти</span>
-                <span>🚀</span>
-            </button>
-
-            <div class="divider">или</div>
-
-            <button class="btn btn-guest" onclick="loginAsGuest()">
-                <span>👤</span>
-                <span>Войти как гость</span>
-            </button>
-
-            <div class="registration-info">
-                <h4>🔐 Единая учётная запись</h4>
-                <p>Используйте Global ID для быстрого и безопасного входа во все сервисы экосистемы.</p>
-            </div>
-
-            <button class="btn btn-global" onclick="redirectToGlobalID()">
-                <span>✨</span>
-                <span>Создать аккаунт в Global ID</span>
-            </button>
-
-            <div id="authMessage" class="message"></div>
-
-            <div class="disclaimer">
-                Авторизуясь, вы принимаете
-                <a href="https://saryanich.github.io/TLC-services/" target="_blank" rel="noopener noreferrer">условия использования</a>
-                и
-                <a href="https://saryanich.github.io/TLC-services/" target="_blank" rel="noopener noreferrer">политику конфиденциальности</a>
-            </div>
-
-            <div class="footer-note">© 2026 IT Global</div>
-        </div>
+    <div class="role-box">
+      <h4>🔐 Единая учётная запись</h4>
+      <p>Используйте Global ID для входа. Создайте аккаунт — получите доступ ко всем сервисам экосистемы.</p>
+      <a class="role-btn user" href="https://saryanich.github.io/Global-ID/" target="_blank" rel="noopener">
+        <span>✨</span><span>Создать аккаунт в Global ID</span>
+      </a>
     </div>
 
-    <script>
-        // ==================== FIREBASE ====================
-        const firebaseConfig = {
-            apiKey: "AIzaSyA6GGJxAiao77U7_9mBUEjftmS_FnSWbIw",
-            authDomain: "glob-data.firebaseapp.com",
-            projectId: "glob-data",
-            storageBucket: "glob-data.firebasestorage.app",
-            messagingSenderId: "122757049174",
-            appId: "1:122757049174:web:ebb425edd0e1a8ea9a44f7"
-        };
+    <div id="authMessage" class="message"></div>
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+    <div class="disclaimer">
+      Авторизуясь, вы принимаете
+      <a href="https://saryanich.github.io/TLC-services/" target="_blank" rel="noopener">условия использования</a>
+      и
+      <a href="https://saryanich.github.io/TLC-services/" target="_blank" rel="noopener">политику конфиденциальности</a>
+    </div>
 
-        // ==================== КОНСТАНТЫ ====================
-        const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-        const ROLE_CACHE_KEY = 'gdz_role_cache';
-        const ROLE_CACHE_TTL = 5 * 60 * 1000; // 5 минут
+    <div class="footer-note">© 2026 IT Global</div>
+  </div>
 
-        let deviceFingerprint = 'unknown';
-        let currentIP = 'pending';
-        let authResolved = false;
+  <!-- ============ ЭКРАН РОЛИ ============ -->
+  <div id="roleScreen" class="glass-card hidden">
+    <div class="logo-container">
+      <div class="logo-wrapper">
+        <img src="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg" alt="ГДЗ Марат" class="logo">
+      </div>
+    </div>
+    <h1><span>ГДЗ Марат</span></h1>
+    <div class="subtitle" id="welcomeText">Привет!</div>
 
-        // ==================== DEVICE ====================
-        // fingerprint — синхронно и мгновенно (кеш в localStorage)
-        (function initFingerprint() {
-            try {
-                let fp = localStorage.getItem('gdz_fp');
-                if (!fp) {
-                    fp = btoa(navigator.userAgent + '|' + screen.width + 'x' + screen.height + '|' + (navigator.language || '')).substring(0, 40);
-                    localStorage.setItem('gdz_fp', fp);
-                }
-                deviceFingerprint = fp;
-            } catch (e) {
-                deviceFingerprint = 'unknown';
-            }
-        })();
+    <a class="role-btn user" href="gdz.html">
+      <span>🎓</span><span>Открыть ГДЗ</span>
+    </a>
 
-        // IP — в фоне, не блокирует вход
-        (async function fetchIP() {
-            try {
-                const res = await fetch('https://api.ipify.org?format=json');
-                const data = await res.json();
-                currentIP = data.ip || 'unknown';
-            } catch (e) {
-                currentIP = 'unknown';
-            }
-        })();
+    <div id="adminBlock" class="hidden">
+      <a class="role-btn admin" href="admin.html">
+        <span>⚙️</span><span>Админ-панель</span>
+      </a>
+    </div>
 
-        // ==================== UI ====================
-        function togglePasswordVisibility() {
-            const p = document.getElementById('loginPassword');
-            const eye = document.getElementById('eyeIcon');
-            if (p.type === 'password') {
-                p.type = 'text';
-                eye.innerHTML = `<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.44-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.17c0-1.66-1.34-3-3-3l-.17.02z"/>`;
-            } else {
-                p.type = 'password';
-                eye.innerHTML = `<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>`;
-            }
-        }
+    <div id="staffBlock" class="hidden">
+      <a class="role-btn staff" href="staff.html">
+        <span>👨‍🏫</span><span>Панель сотрудника</span>
+      </a>
+    </div>
 
-        function showMessage(text, isError = false) {
-            const el = document.getElementById('authMessage');
-            el.textContent = text;
-            el.className = `message ${isError ? 'error' : 'success'}`;
-        }
+    <button class="btn btn-primary" style="background:rgba(255,255,255,0.04);color:var(--text-2);border:1px solid var(--border);box-shadow:none;margin-top:1.2rem;" onclick="logout()">
+      <span>🚪</span><span>Выйти</span>
+    </button>
 
-        function hideLoadingOverlay() {
-            const overlay = document.getElementById('loadingOverlay');
-            const container = document.getElementById('mainContainer');
-            if (!overlay) return;
-            overlay.classList.add('fade-out');
-            container.classList.add('show');
-            setTimeout(() => overlay.remove(), 400);
-        }
+    <div class="footer-note">© 2026 IT Global</div>
+  </div>
+</div>
 
-        // ==================== РОЛЬ (1 запрос) ====================
-        /**
-         * Читает роль из GDZ/users/{globalId}.
-         * Возвращает { role, globalId, displayName }.
-         * Если документ есть — берём его role (по умолчанию 'user').
-         * Если нет — 'user' и создаём документ (fire-and-forget).
-         */
-        async function resolveRole(user) {
-            // 1. Достаём globalId и displayName из users/{uid} — ОДИН запрос
-            let globalId = '';
-            let displayName = user.email?.split('@')[0] || 'Пользователь';
+<script>
+/* ==================== FIREBASE ==================== */
+const firebaseConfig={
+  apiKey:"AIzaSyA6GGJxAiao77U7_9mBUEjftmS_FnSWbIw",
+  authDomain:"glob-data.firebaseapp.com",
+  projectId:"glob-data",
+  storageBucket:"glob-data.firebasestorage.app",
+  messagingSenderId:"122757049174",
+  appId:"1:122757049174:web:ebb425edd0e1a8ea9a44f7"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
 
-            try {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists) {
-                    const ud = userDoc.data();
-                    globalId = ud.globalId || '';
-                    displayName = ud.displayName || ud.nickname || ud.fullName || globalId || displayName;
-                }
-            } catch (e) {
-                console.warn('users/{uid} read failed:', e);
-            }
+let authResolved=false;
+let currentUser=null;
+let currentGlobalId='';
+let currentName='';
+let currentRole='user';
 
-            // Если globalId нет — роль 'user' по умолчанию
-            if (!globalId) {
-                return { role: 'user', globalId: '', displayName };
-            }
+/* ==================== УТИЛИТЫ ==================== */
+function showMessage(text,isError){
+  const el=document.getElementById('authMessage');
+  el.textContent=text;
+  el.className='message '+(isError?'error':'success');
+  setTimeout(function(){el.textContent='';el.className='message';},4000);
+}
+function show(el){el.classList.remove('hidden');}
+function hide(el){el.classList.add('hidden');}
+function togglePassword(){
+  const p=document.getElementById('loginPassword');
+  p.type=p.type==='password'?'text':'password';
+}
 
-            // 2. Читаем роль из GDZ/users/{globalId} — ОДИН запрос
-            let role = 'user';
-            try {
-                const gdzDoc = await db.collection('GDZ')
-                    .doc('users')
-                    .collection('users')
-                    .doc(globalId)
-                    .get();
+/* ==================== ПРОВЕРКА БАРЬЕРА ==================== */
+async function checkBarrier(globalId,isGuest){
+  try{
+    const doc=await db.collection('GDZ').doc('file').get();
+    if(!doc.exists)return false;
+    const d=doc.data();
+    if(d.barrier!=='on')return false;
+    const target=d.barrierTarget;
+    if(!target||target===globalId){
+      sessionStorage.setItem('barrier_back','index.html');
+      window.location.replace('barrier.html');
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
 
-                if (gdzDoc.exists) {
-                    const gd = gdzDoc.data();
-                    role = gd.role || 'user';
+/* ==================== ОПРЕДЕЛЕНИЕ ПОЛЬЗОВАТЕЛЯ ==================== */
+async function determineUser(user){
+  currentUser=user;
 
-                    // Обновляем lastLogin в фоне — не ждём
-                    db.collection('GDZ').doc('users').collection('users').doc(globalId)
-                        .update({
-                            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                            suspicious: false
-                        })
-                        .catch(() => {});
-                } else {
-                    // Создаём документ с ролью 'user' — fire-and-forget
-                    db.collection('GDZ').doc('users').collection('users').doc(globalId)
-                        .set({
-                            globalId,
-                            role: 'user',
-                            suspicious: false,
-                            firstLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        })
-                        .catch(() => {});
-                }
-            } catch (e) {
-                console.warn('GDZ/users read failed:', e);
-                role = 'user';
-            }
+  const ud=await db.collection('users').doc(user.uid).get();
+  if(!ud.exists){
+    showMessage('Документ пользователя не найден',true);
+    return false;
+  }
+  const u=ud.data();
+  currentGlobalId=u.globalId||'';
+  currentName=u.displayName||u.nickname||u.fullName||currentGlobalId||'Пользователь';
 
-            return { role, globalId, displayName };
-        }
+  if(!currentGlobalId){
+    showMessage('Global ID не найден',true);
+    return false;
+  }
 
-        // ==================== ПЕРЕХОД ====================
-        function gotoByRole(role) {
-            if (role === 'admin' || role === 'employee') {
-                window.location.replace('admin.html');
-            } else {
-                window.location.replace('gdz.html');
-            }
-        }
+  // Проверка барьера
+  if(await checkBarrier(currentGlobalId,false))return false;
 
-        // ==================== АВТОВХОД ====================
-        auth.onAuthStateChanged(async (user) => {
-            if (authResolved) return;
-            authResolved = true;
+  // Роль из GDZ/users/{globalId}
+  const gd=await db.collection('GDZ').doc('users').collection('users').doc(currentGlobalId).get();
+  currentRole=gd.exists?(gd.data().role||'user'):'user';
 
-            if (!user) {
-                // Нет сессии — показываем вход
-                hideLoadingOverlay();
-                return;
-            }
+  // Обновляем онлайн (fire-and-forget)
+  db.collection('GDZ').doc('users').collection('users').doc(currentGlobalId).set({
+    globalId:currentGlobalId,
+    displayName:currentName,
+    online:true,
+    lastSeen:firebase.firestore.FieldValue.serverTimestamp()
+  },{merge:true}).catch(function(){});
 
-            if (sessionStorage.getItem('pending2FA')) {
-                hideLoadingOverlay();
-                return;
-            }
+  return true;
+}
 
-            // Есть сессия — определяем роль (1–2 быстрых запроса)
-            try {
-                const cached = sessionStorage.getItem(ROLE_CACHE_KEY);
-                if (cached) {
-                    const { role, ts } = JSON.parse(cached);
-                    if (Date.now() - ts < ROLE_CACHE_TTL) {
-                        gotoByRole(role);
-                        return;
-                    }
-                }
+/* ==================== ЭКРАН РОЛИ ==================== */
+function renderRoleScreen(){
+  hide(document.getElementById('loginScreen'));
+  show(document.getElementById('roleScreen'));
 
-                const { role, globalId, displayName } = await resolveRole(user);
+  const roleIcon=currentRole==='admin'?'👑':currentRole==='employee'?'👨‍🏫':'🎓';
+  document.getElementById('welcomeText').textContent='Привет, '+currentName+'!';
 
-                // Кешируем роль
-                sessionStorage.setItem(ROLE_CACHE_KEY, JSON.stringify({ role, ts: Date.now() }));
-                sessionStorage.setItem('gdz_globalId', globalId);
-                sessionStorage.setItem('gdz_displayName', displayName);
+  // Админ-панель: admin или employee
+  if(currentRole==='admin'){
+    show(document.getElementById('adminBlock'));
+    show(document.getElementById('staffBlock'));
+  }else if(currentRole==='employee'){
+    show(document.getElementById('staffBlock'));
+  }
+  // обычный пользователь — только кнопка "Открыть ГДЗ"
+}
 
-                // Fire-and-forget: обновляем online в фоне
-                db.collection('users').doc(user.uid).update({
-                    online: true,
-                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-                }).catch(() => {});
+/* ==================== ВХОД ==================== */
+window.login=async function(){
+  const identifier=document.getElementById('loginIdentifier').value.trim();
+  const password=document.getElementById('loginPassword').value;
+  if(!identifier||!password){showMessage('Заполните все поля',true);return;}
 
-                gotoByRole(role);
-            } catch (e) {
-                console.error('Автовход ошибка:', e);
-                hideLoadingOverlay();
-            }
-        });
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true;
+  btn.innerHTML='<span>⏳</span><span>Проверка...</span>';
 
-        // Страховка: 2 сек — если Firebase не ответил, показываем вход
-        setTimeout(() => {
-            if (!authResolved) {
-                authResolved = true;
-                hideLoadingOverlay();
-            }
-        }, 2000);
+  try{
+    let email=identifier;
 
-        // ==================== ВХОД ====================
-        window.login = async () => {
-            const identifier = document.getElementById('loginIdentifier').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            if (!identifier || !password) return showMessage('Заполните все поля', true);
+    // Если не email — ищем по Global ID
+    if(identifier.indexOf('@')===-1){
+      const q=await db.collection('users').where('globalId','==',identifier).get();
+      if(q.empty){
+        btn.disabled=false;
+        btn.innerHTML='<span>🚀</span><span>Войти</span>';
+        showMessage('Global ID не найден',true);
+        return;
+      }
+      email=q.docs[0].data().email;
+    }
 
-            const btn = document.getElementById('loginBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span>Проверка...</span>';
+    const userCred=await auth.signInWithEmailAndPassword(email,password);
+    const ok=await determineUser(userCred.user);
+    if(!ok)return;
 
-            try {
-                let email = identifier;
+    btn.disabled=false;
+    btn.innerHTML='<span>🚀</span><span>Войти</span>';
+    renderRoleScreen();
 
-                // Если введён Global ID — ищем email
-                if (!identifier.includes('@')) {
-                    const q = db.collection('users').where('globalId', '==', identifier);
-                    const snap = await q.get();
-                    if (snap.empty) {
-                        btn.disabled = false;
-                        btn.innerHTML = '<span>Войти</span><span>🚀</span>';
-                        return showMessage('Global ID не найден', true);
-                    }
-                    email = snap.docs[0].data().email;
-                }
+  }catch(e){
+    console.error(e);
+    btn.disabled=false;
+    btn.innerHTML='<span>🚀</span><span>Войти</span>';
+    if(e.code==='auth/user-not-found'||e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'){
+      showMessage('Неверный email или пароль',true);
+    }else if(e.code==='auth/invalid-email'){
+      showMessage('Некорректный email',true);
+    }else{
+      showMessage('Ошибка: '+e.message,true);
+    }
+  }
+};
 
-                const userCred = await auth.signInWithEmailAndPassword(email, password);
+/* ==================== ГОСТЬ ==================== */
+window.loginAsGuest=function(){
+  sessionStorage.setItem('guestMode','true');
+  sessionStorage.setItem('guestName','Гость');
+  sessionStorage.setItem('gdz_globalId','guest');
+  window.location.href='gdz.html?guest=1';
+};
 
-                // Всё дальше — в фоне, не блокирует редирект
-                const { role, globalId, displayName } = await resolveRole(userCred.user);
+/* ==================== ВЫХОД ==================== */
+window.logout=async function(){
+  try{
+    if(currentGlobalId&&currentGlobalId!=='guest'){
+      await db.collection('GDZ').doc('users').collection('users').doc(currentGlobalId).update({
+        online:false,
+        lastSeen:firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(function(){});
+    }
+    sessionStorage.clear();
+    await auth.signOut();
+    window.location.href='index.html';
+  }catch(e){
+    sessionStorage.clear();
+    window.location.href='index.html';
+  }
+};
 
-                sessionStorage.setItem(ROLE_CACHE_KEY, JSON.stringify({ role, ts: Date.now() }));
-                sessionStorage.setItem('gdz_globalId', globalId);
-                sessionStorage.setItem('gdz_displayName', displayName);
+/* ==================== АВТОВХОД ==================== */
+auth.onAuthStateChanged(async function(user){
+  if(authResolved)return;
+  authResolved=true;
 
-                // Fire-and-forget
-                db.collection('users').doc(userCred.user.uid).update({
-                    online: true,
-                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-                }).catch(() => {});
+  // Убираем загрузку
+  const ls=document.getElementById('loadingScreen');
+  if(ls)ls.classList.add('hide');
+  setTimeout(function(){if(ls)ls.remove();},500);
 
-                gotoByRole(role);
+  if(user){
+    // Пробуем восстановить сессию
+    try{
+      const ok=await determineUser(user);
+      if(ok){
+        renderRoleScreen();
+        return;
+      }
+    }catch(e){
+      console.error('Ошибка автовхода:',e);
+    }
+  }
 
-            } catch (error) {
-                console.error('Ошибка входа:', error);
-                btn.disabled = false;
-                btn.innerHTML = '<span>Войти</span><span>🚀</span>';
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                    showMessage('Неверный логин или пароль', true);
-                } else if (error.code === 'auth/invalid-email') {
-                    showMessage('Некорректный email', true);
-                } else {
-                    showMessage('Ошибка: ' + error.message, true);
-                }
-            }
-        };
+  // Иначе — экран входа
+  show(document.getElementById('loginScreen'));
+});
 
-        // ==================== ГОСТЬ ====================
-        window.loginAsGuest = () => {
-            sessionStorage.setItem('guestMode', 'true');
-            sessionStorage.setItem('guestName', 'Гость');
-            sessionStorage.setItem('gdz_globalId', 'guest');
-            sessionStorage.setItem('gdz_role_cache', JSON.stringify({ role: 'guest', ts: Date.now() }));
-            window.location.replace('gdz.html?guest=1');
-        };
-
-        // ==================== GLOBAL ID ====================
-        window.redirectToGlobalID = () => {
-            localStorage.setItem('gdz_referrer', window.location.href);
-            localStorage.setItem('gdz_app', 'true');
-            window.location.href = 'https://saryanich.github.io/Global-ID/';
-        };
-
-        // Возврат из Global ID
-        if (localStorage.getItem('gdz_app') === 'true') {
-            localStorage.removeItem('gdz_app');
-            localStorage.removeItem('gdz_referrer');
-            setTimeout(() => {
-                showMessage('✅ Аккаунт создан! Теперь войдите в систему', false);
-            }, 500);
-        }
-    </script>
+// Страховка: если Firebase не ответил за 3 сек — показываем вход
+setTimeout(function(){
+  if(!authResolved){
+    authResolved=true;
+    const ls=document.getElementById('loadingScreen');
+    if(ls)ls.classList.add('hide');
+    setTimeout(function(){if(ls)ls.remove();},500);
+    show(document.getElementById('loginScreen'));
+  }
+},3000);
+</script>
 </body>
 </html>
