@@ -1761,7 +1761,7 @@ async function sendGlobi(){
   sendBtn.disabled=true;
 
   const now=getMoscowDate();
-  const timeStr=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const timeStr=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
 
   globiHistory.push({role:'user',text,time:timeStr});
   renderGlobiMessages();
@@ -1783,27 +1783,35 @@ async function sendGlobi(){
       body:JSON.stringify({prompt:fullPrompt})
     });
     const data=await res.json();
+
     let reply='';
     if(data.steps){
       for(const s of data.steps){
         if(s.type==='model_output'&&s.content){
           for(const c of s.content){
-            if(c.type==='text'&&c.text)reply=reply+c.text;
-c.text)reply+=c.text;
+            if(c.type==='text'&&c.text){
+              reply=reply+c.text;
+            }
           }
-             }
+        }
       }
     }
+
     if(!reply){
       if(data.error){
-        }
- reply='⚠️ Ошибка: '+(data   .error.message||JSON.stringify(data.error));
-      } }
+        reply='Ошибка: '+(data.error.message||JSON.stringify(data.error));
+      }else{
+        reply='Не могу сейчас ответить, попробуй ещё раз.';
+      }
+    }
 
-else{
-        reply='Не могу сейчас ответить, попробуй ещё раз    const actions=buildActions(reply);
-    globiHistory.push({role:'globi',text:reply,
-      time:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}),actions});
+    const actions=buildActions(reply);
+    globiHistory.push({
+      role:'globi',
+      text:reply,
+      time:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}),
+      actions
+    });
 
     const typingEl=document.getElementById('typingIndicator');
     if(typingEl)typingEl.remove();
@@ -1814,7 +1822,7 @@ else{
       displayName:currentName,
       messages:globiHistory.slice(-50),
       updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-    },{merge:true}).catch(()=>{});
+    },{merge:true}).catch(function(){});
 
   }catch(e){
     console.error(e);
