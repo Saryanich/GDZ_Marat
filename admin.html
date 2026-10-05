@@ -1,1222 +1,1217 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>ГДЗ Марат — Админ-панель</title>
-
-    <link rel="icon" type="image/jpeg" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
-    <link rel="apple-touch-icon" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
-
-    <meta name="theme-color" content="#050e08">
-
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
-
-    <style>
-        :root {
-            --bg-deep: #050e08;
-            --bg-card: rgba(10, 26, 17, 0.85);
-            --bg-input: rgba(3, 12, 7, 0.7);
-            --accent-green: #10b981;
-            --accent-bright: #34d399;
-            --accent-glow: rgba(52, 211, 153, 0.25);
-            --text-primary: #f0fdf4;
-            --text-secondary: #94a3b8;
-            --text-muted: #475569;
-            --border: rgba(52, 211, 153, 0.2);
-            --border-hover: rgba(52, 211, 153, 0.5);
-            --danger: #ef4444;
-            --warning: #f59e0b;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-deep);
-            min-height: 100vh;
-            color: var(--text-primary);
-            padding-bottom: 80px;
-        }
-        .glow-orb { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; opacity: 0.35; }
-        .orb-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(16,185,129,0.35) 0%, transparent 70%); }
-        .orb-2 { bottom: -10%; right: -10%; width: 45vw; height: 45vw; background: radial-gradient(circle, rgba(5,150,105,0.28) 0%, transparent 70%); }
-
-        .topbar { position: sticky; top: 0; z-index: 100; background: rgba(5,14,8,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 0.9rem 1.25rem; }
-        .topbar-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-        .admin-logo { display: flex; align-items: center; gap: 0.7rem; font-weight: 800; font-size: 1.05rem; flex-shrink: 0; }
-        .admin-logo img { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--accent-bright); }
-        .admin-logo .badge { font-size: 0.65rem; background: linear-gradient(135deg, #ef4444, #b91c1c); color: #fff; padding: 2px 8px; border-radius: 8px; font-weight: 700; margin-left: 4px; }
-        .tabs { display: flex; gap: 6px; flex: 1; overflow-x: auto; }
-        .tab-btn { padding: 0.55rem 1rem; border-radius: 10px; background: transparent; border: 1px solid transparent; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: inherit; }
-        .tab-btn:hover { background: rgba(52,211,153,0.08); color: var(--accent-bright); }
-        .tab-btn.active { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
-        .btn-exit { padding: 0.55rem 1rem; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
-        .btn-exit:hover { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.4); color: #f87171; }
-
-        .main { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1.25rem; position: relative; z-index: 10; }
-        .panel { display: none; }
-        .panel.active { display: block; }
-
-        .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; margin-bottom: 1.25rem; }
-        .section-title { font-size: 1.05rem; font-weight: 700; color: var(--accent-bright); margin-bottom: 1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--border); }
-
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
-        @media (max-width: 640px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
-
-        label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.1px; color: var(--accent-bright); margin-bottom: 0.35rem; font-weight: 700; }
-        input, textarea, select { width: 100%; padding: 0.7rem 0.9rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); font-size: 0.9rem; outline: none; font-family: inherit; }
-        input:focus, textarea:focus, select:focus { border-color: var(--accent-bright); box-shadow: 0 0 0 3px var(--accent-glow); }
-        textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
-        .field { margin-bottom: 0.85rem; }
-
-        .btn { padding: 0.7rem 1.2rem; border: none; border-radius: 10px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-primary { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
-        .btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
-        .btn-danger { background: linear-gradient(135deg, #ef4444, #b91c1c); color: #fff; }
-        .btn-warn { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
-        .btn-ghost { background: rgba(255,255,255,0.04); color: var(--text-secondary); border: 1px solid var(--border); }
-        .btn-sm { padding: 0.45rem 0.8rem; font-size: 0.78rem; }
-        .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-
-        .list-item { background: rgba(3,12,7,0.5); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 0.6rem; }
-        .list-item-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
-        .list-item-title { font-weight: 700; color: var(--text-primary); font-size: 0.95rem; }
-        .list-item-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
-        .list-item-body { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-top: 0.4rem; white-space: pre-wrap; word-break: break-word; }
-
-        .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem; }
-        .stat-card { background: rgba(3,12,7,0.5); border: 1px solid var(--border); border-radius: 14px; padding: 1.2rem; text-align: center; }
-        .stat-value { font-size: 2rem; font-weight: 800; color: var(--accent-bright); line-height: 1; margin-bottom: 0.3rem; }
-        .stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 700; }
-
-        .read-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 0.5rem; }
-        .read-chip { font-size: 0.72rem; padding: 3px 9px; border-radius: 999px; background: rgba(52,211,153,0.12); color: var(--accent-bright); border: 1px solid rgba(52,211,153,0.3); font-weight: 600; }
-
-        .empty-state { text-align: center; color: var(--text-muted); padding: 2rem 1rem; font-size: 0.88rem; }
-
-        .test-question { background: rgba(3,12,7,0.5); border: 1px solid var(--border); border-radius: 14px; padding: 1.1rem; margin-bottom: 0.8rem; }
-        .test-option-row { display: flex; gap: 8px; align-items: center; margin-bottom: 0.5rem; }
-        .test-option-row input[type="radio"] { width: 18px; height: 18px; accent-color: var(--accent-bright); flex-shrink: 0; }
-
-        .barrier-box { border-radius: 16px; padding: 1.25rem; border: 2px solid; margin-bottom: 1rem; }
-        .barrier-box.on { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.5); }
-        .barrier-box.off { background: rgba(52,211,153,0.06); border-color: rgba(52,211,153,0.3); }
-        .barrier-status { font-size: 1.2rem; font-weight: 800; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 10px; }
-        .barrier-status.on { color: #f87171; }
-        .barrier-status.off { color: var(--accent-bright); }
-
-        .hint { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; margin-top: 0.5rem; }
-        .hint code { background: rgba(0,0,0,0.4); padding: 1px 6px; border-radius: 6px; color: #a7f3d0; font-size: 0.75rem; }
-
-        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: linear-gradient(135deg, #10b981, #059669); color: #fff; padding: 0.85rem 1.4rem; border-radius: 12px; font-size: 0.9rem; font-weight: 600; z-index: 9999; opacity: 0; transition: all 0.35s; pointer-events: none; }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-        .toast.error { background: linear-gradient(135deg, #ef4444, #b91c1c); }
-
-        #loadingScreen { position: fixed; inset: 0; background: var(--bg-deep); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1.5rem; z-index: 9998; }
-        .spinner { width: 56px; height: 56px; border-radius: 50%; border: 3px solid rgba(52,211,153,0.15); border-top-color: var(--accent-bright); border-right-color: var(--accent-bright); animation: spin 0.9s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .hidden { display: none !important; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>ГДЗ Марат — Админ-панель</title>
+<link rel="icon" type="image/jpeg" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
+<link rel="apple-touch-icon" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
+<meta name="theme-color" content="#050e08">
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+<style>
+:root{--bg-deep:#050e08;--bg-card:rgba(10,26,17,0.85);--bg-input:rgba(3,12,7,0.7);
+  --accent-green:#10b981;--accent-bright:#34d399;--accent-glow:rgba(52,211,153,0.25);
+  --text-primary:#f0fdf4;--text-secondary:#94a3b8;--text-muted:#475569;
+  --border:rgba(52,211,153,0.2);--border-hover:rgba(52,211,153,0.5);
+  --danger:#ef4444;--warning:#f59e0b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;
+  background:var(--bg-deep);min-height:100vh;color:var(--text-primary);padding-bottom:80px}
+.glow-orb{position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0;opacity:0.35}
+.orb-1{top:-10%;left:-10%;width:50vw;height:50vw;background:radial-gradient(circle,rgba(16,185,129,0.35) 0%,transparent 70%)}
+.orb-2{bottom:-10%;right:-10%;width:45vw;height:45vw;background:radial-gradient(circle,rgba(5,150,105,0.28) 0%,transparent 70%)}
+.topbar{position:sticky;top:0;z-index:100;background:rgba(5,14,8,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0.9rem 1.25rem}
+.topbar-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.admin-logo{display:flex;align-items:center;gap:0.7rem;font-weight:800;font-size:1.05rem;flex-shrink:0}
+.admin-logo img{width:38px;height:38px;border-radius:50%;border:2px solid var(--accent-bright)}
+.admin-logo .badge{font-size:0.65rem;background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;padding:2px 8px;border-radius:8px;font-weight:700;margin-left:4px}
+.tabs{display:flex;gap:6px;flex:1;overflow-x:auto}
+.tab-btn{padding:0.55rem 1rem;border-radius:10px;background:transparent;border:1px solid transparent;color:var(--text-secondary);font-size:0.85rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.tab-btn:hover{background:rgba(52,211,153,0.08);color:var(--accent-bright)}
+.tab-btn.active{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+.btn-exit{padding:0.55rem 1rem;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text-secondary);font-size:0.85rem;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-exit:hover{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.4);color:#f87171}
+.main{max-width:1200px;margin:0 auto;padding:1.5rem 1.25rem;position:relative;z-index:10}
+.panel{display:none}
+.panel.active{display:block}
+.section{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:1.5rem;margin-bottom:1.25rem}
+.section-title{font-size:1.05rem;font-weight:700;color:var(--accent-bright);margin-bottom:1rem;padding-bottom:0.7rem;border-bottom:1px solid var(--border)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem}
+@media(max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr}}
+label{display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:1.1px;color:var(--accent-bright);margin-bottom:0.35rem;font-weight:700}
+input,textarea,select{width:100%;padding:0.7rem 0.9rem;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text-primary);font-size:0.9rem;outline:none;font-family:inherit}
+input:focus,textarea:focus,select:focus{border-color:var(--accent-bright);box-shadow:0 0 0 3px var(--accent-glow)}
+textarea{resize:vertical;min-height:90px;line-height:1.5}
+.field{margin-bottom:0.85rem}
+.btn{padding:0.7rem 1.2rem;border:none;border-radius:10px;font-weight:700;font-size:0.88rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:inherit}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px)}
+.btn-success{background:linear-gradient(135deg,#22c55e,#15803d);color:#fff}
+.btn-success:hover:not(:disabled){transform:translateY(-1px)}
+.btn-danger{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff}
+.btn-danger:hover:not(:disabled){transform:translateY(-1px)}
+.btn-warn{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid var(--border)}
+.btn-sm{padding:0.45rem 0.8rem;font-size:0.78rem}
+.row-actions{display:flex;gap:6px;flex-wrap:wrap}
+.list-item{background:rgba(3,12,7,0.5);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:0.6rem}
+.list-item.pending{border-color:rgba(245,158,11,0.5);background:rgba(245,158,11,0.06)}
+.list-item.approved{border-color:rgba(34,197,94,0.5);background:rgba(34,197,94,0.06)}
+.list-item.rejected{border-color:rgba(239,68,68,0.5);background:rgba(239,68,68,0.06)}
+.list-item-head{display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;margin-bottom:0.5rem;flex-wrap:wrap}
+.list-item-title{font-weight:700;color:var(--text-primary);font-size:0.95rem}
+.list-item-meta{font-size:0.75rem;color:var(--text-muted);margin-top:2px}
+.list-item-body{font-size:0.85rem;color:var(--text-secondary);line-height:1.5;margin-top:0.4rem;white-space:pre-wrap;word-break:break-word}
+.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px}
+.status-pending{background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.4)}
+.status-approved{background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.4)}
+.status-rejected{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.4)}
+.stat-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;margin-bottom:1.25rem}
+.stat-card{background:rgba(3,12,7,0.5);border:1px solid var(--border);border-radius:14px;padding:1.2rem;text-align:center}
+.stat-value{font-size:2rem;font-weight:800;color:var(--accent-bright);line-height:1;margin-bottom:0.3rem}
+.stat-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700}
+.read-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:0.5rem}
+.read-chip{font-size:0.72rem;padding:3px 9px;border-radius:999px;background:rgba(52,211,153,0.12);color:var(--accent-bright);border:1px solid rgba(52,211,153,0.3);font-weight:600}
+.empty-state{text-align:center;color:var(--text-muted);padding:2rem 1rem;font-size:0.88rem}
+.test-question{background:rgba(3,12,7,0.5);border:1px solid var(--border);border-radius:14px;padding:1.1rem;margin-bottom:0.8rem}
+.test-option-row{display:flex;gap:8px;align-items:center;margin-bottom:0.5rem}
+.test-option-row input[type="radio"]{width:18px;height:18px;accent-color:var(--accent-bright);flex-shrink:0}
+.barrier-box{border-radius:16px;padding:1.25rem;border:2px solid;margin-bottom:1rem}
+.barrier-box.on{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.5)}
+.barrier-box.off{background:rgba(52,211,153,0.06);border-color:rgba(52,211,153,0.3)}
+.barrier-status{font-size:1.2rem;font-weight:800;margin-bottom:0.5rem;display:flex;align-items:center;gap:10px}
+.barrier-status.on{color:#f87171}
+.barrier-status.off{color:var(--accent-bright)}
+.hint{font-size:0.78rem;color:var(--text-muted);line-height:1.5;margin-top:0.5rem}
+.hint code{background:rgba(0,0,0,0.4);padding:1px 6px;border-radius:6px;color:#a7f3d0;font-size:0.75rem}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:0.85rem 1.4rem;border-radius:12px;font-size:0.9rem;font-weight:600;z-index:9999;opacity:0;transition:all 0.35s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.error{background:linear-gradient(135deg,#ef4444,#b91c1c)}
+#loadingScreen{position:fixed;inset:0;background:var(--bg-deep);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1.5rem;z-index:9998}
+.spinner{width:56px;height:56px;border-radius:50%;border:3px solid rgba(52,211,153,0.15);border-top-color:var(--accent-bright);border-right-color:var(--accent-bright);animation:spin 0.9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+.count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#ef4444;color:#fff;font-size:0.7rem;font-weight:800;margin-left:6px}
+</style>
 </head>
 <body>
-    <div class="glow-orb orb-1"></div>
-    <div class="glow-orb orb-2"></div>
+<div class="glow-orb orb-1"></div>
+<div class="glow-orb orb-2"></div>
 
-    <div id="loadingScreen">
-        <div class="spinner"></div>
-        <div style="color: var(--text-secondary); font-size: 0.9rem;">Проверка доступа...</div>
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <div style="color:var(--text-secondary);font-size:0.9rem;">Проверка доступа...</div>
+</div>
+
+<div id="adminApp" class="hidden">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="admin-logo">
+        <img src="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg" alt="logo">
+        <span>ГДЗ Марат</span>
+        <span class="badge">ADMIN</span>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="answers" onclick="switchTab('answers')">📝 Ответы</button>
+        <button class="tab-btn" data-tab="moderation" onclick="switchTab('moderation')">🛡️ Модерация <span class="count-badge hidden" id="moderationCount">0</span></button>
+        <button class="tab-btn" data-tab="staff" onclick="switchTab('staff')">👥 Сотрудники</button>
+        <button class="tab-btn" data-tab="content" onclick="switchTab('content')">📰 Контент</button>
+        <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">📊 Статистика</button>
+        <button class="tab-btn" data-tab="control" onclick="switchTab('control')">⚙️ Контроль</button>
+      </div>
+      <button class="btn-exit" onclick="exitToGdz()">← В обычный ГДЗ</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- ============ ВКЛАДКА ОТВЕТЫ ============ -->
+    <div class="panel active" id="panel-answers">
+      <div class="section">
+        <div class="section-title">📚 Предметы</div>
+        <div class="grid-3">
+          <div class="field">
+            <label>Название</label>
+            <input type="text" id="subjectName" placeholder="Математика">
+          </div>
+          <div class="field">
+            <label>Иконка (эмодзи)</label>
+            <input type="text" id="subjectIcon" placeholder="📐" maxlength="4">
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end;">
+            <button class="btn btn-primary" style="width:100%;" onclick="addSubject()">➕ Добавить</button>
+          </div>
+        </div>
+        <div id="subjectsList"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">📝 Ответы (ДЗ) — публикация сразу</div>
+        <input type="hidden" id="answerEditId">
+        <div class="grid-2">
+          <div class="field">
+            <label>Предмет</label>
+            <select id="answerSubject"></select>
+          </div>
+          <div class="field">
+            <label>Номер задания</label>
+            <input type="text" id="answerNumber" placeholder="№5">
+          </div>
+        </div>
+        <div class="field">
+          <label>Дата (на какое число)</label>
+          <input type="date" id="answerDate">
+        </div>
+        <div class="field">
+          <label>Текст ответа</label>
+          <textarea id="answerText" placeholder="Ответ... {photo:https://...} {site:https://...}"></textarea>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-primary" id="answerSaveBtn" onclick="saveAnswer()">💾 Сохранить ответ</button>
+          <button class="btn btn-ghost hidden" id="answerCancelBtn" onclick="cancelAnswerEdit()">Отмена</button>
+        </div>
+        <div style="margin-top:1.25rem;" id="answersList"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🎯 Ответы (контрольные) — публикация сразу</div>
+        <input type="hidden" id="testAnswerEditId">
+        <div class="grid-2">
+          <div class="field">
+            <label>Предмет</label>
+            <select id="testAnswerSubject"></select>
+          </div>
+          <div class="field">
+            <label>Название контрольной</label>
+            <input type="text" id="testAnswerTitle" placeholder="Контрольная №2">
+          </div>
+        </div>
+        <div class="field">
+          <label>Дата</label>
+          <input type="date" id="testAnswerDate">
+        </div>
+        <div class="field">
+          <label>Текст ответа</label>
+          <textarea id="testAnswerText" placeholder="Ответ..."></textarea>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-primary" id="testAnswerSaveBtn" onclick="saveTestAnswer()">💾 Сохранить</button>
+          <button class="btn btn-ghost hidden" id="testAnswerCancelBtn" onclick="cancelTestAnswerEdit()">Отмена</button>
+        </div>
+        <div style="margin-top:1.25rem;" id="testAnswersList"></div>
+      </div>
     </div>
 
-    <div id="adminApp" class="hidden">
-        <div class="topbar">
-            <div class="topbar-inner">
-                <div class="admin-logo">
-                    <img src="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg" alt="logo">
-                    <span>ГДЗ Марат</span>
-                    <span class="badge">ADMIN</span>
-                </div>
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="answers" onclick="switchTab('answers')">📝 Ответы</button>
-                    <button class="tab-btn" data-tab="content" onclick="switchTab('content')">📰 Контент</button>
-                    <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">📊 Статистика</button>
-                    <button class="tab-btn" data-tab="control" onclick="switchTab('control')">🛡️ Контроль</button>
-                </div>
-                <button class="btn-exit" onclick="exitToGdz()">← В обычный ГДЗ</button>
-            </div>
-        </div>
+    <!-- ============ ВКЛАДКА МОДЕРАЦИЯ ============ -->
+    <div class="panel" id="panel-moderation">
+      <div class="section">
+        <div class="section-title">🛡️ Заявки сотрудников на модерации</div>
+        <div class="hint" style="margin-bottom:1rem;">«Загрузить» — ответ сразу попадёт в ГДЗ. «Отклонить» — сотруднику покажется «Ответ отклонён».</div>
+        <div id="pendingList"></div>
+      </div>
 
-        <div class="main">
-            <!-- ============ ВКЛАДКА ОТВЕТЫ ============ -->
-            <div class="panel active" id="panel-answers">
-                <div class="section">
-                    <div class="section-title">📚 Предметы</div>
-                    <div class="grid-3">
-                        <div class="field">
-                            <label>Название</label>
-                            <input type="text" id="subjectName" placeholder="Математика">
-                        </div>
-                        <div class="field">
-                            <label>Иконка (эмодзи)</label>
-                            <input type="text" id="subjectIcon" placeholder="📐" maxlength="4">
-                        </div>
-                        <div class="field" style="display:flex; align-items:flex-end;">
-                            <button class="btn btn-primary" style="width:100%;" onclick="addSubject()">➕ Добавить</button>
-                        </div>
-                    </div>
-                    <div id="subjectsList"></div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">📝 Ответы (ДЗ)</div>
-                    <input type="hidden" id="answerEditId">
-                    <div class="grid-2">
-                        <div class="field">
-                            <label>Предмет</label>
-                            <select id="answerSubject"></select>
-                        </div>
-                        <div class="field">
-                            <label>Номер задания</label>
-                            <input type="text" id="answerNumber" placeholder="№5">
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Дата (на какое число)</label>
-                        <input type="date" id="answerDate">
-                    </div>
-                    <div class="field">
-                        <label>Текст ответа</label>
-                        <textarea id="answerText" placeholder="Ответ... Можно вставить {photo:https://...} или {site:https://...}"></textarea>
-                        <div class="hint">💡 Вставляй фото: <code>{photo:https://...}</code> и сайт: <code>{site:https://...}</code></div>
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn btn-primary" id="answerSaveBtn" onclick="saveAnswer()">💾 Сохранить ответ</button>
-                        <button class="btn btn-ghost hidden" id="answerCancelBtn" onclick="cancelAnswerEdit()">Отмена</button>
-                    </div>
-                    <div style="margin-top:1.25rem;" id="answersList"></div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">🎯 Ответы (контрольные)</div>
-                    <input type="hidden" id="testAnswerEditId">
-                    <div class="grid-2">
-                        <div class="field">
-                            <label>Предмет</label>
-                            <select id="testAnswerSubject"></select>
-                        </div>
-                        <div class="field">
-                            <label>Название контрольной</label>
-                            <input type="text" id="testAnswerTitle" placeholder="Контрольная №2">
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Дата</label>
-                        <input type="date" id="testAnswerDate">
-                    </div>
-                    <div class="field">
-                        <label>Текст ответа</label>
-                        <textarea id="testAnswerText" placeholder="Ответ... {photo:...} {site:...}"></textarea>
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn btn-primary" id="testAnswerSaveBtn" onclick="saveTestAnswer()">💾 Сохранить</button>
-                        <button class="btn btn-ghost hidden" id="testAnswerCancelBtn" onclick="cancelTestAnswerEdit()">Отмена</button>
-                    </div>
-                    <div style="margin-top:1.25rem;" id="testAnswersList"></div>
-                </div>
-            </div>
-
-            <!-- ============ ВКЛАДКА КОНТЕНТ ============ -->
-            <div class="panel" id="panel-content">
-                <div class="section">
-                    <div class="section-title">📰 Новости</div>
-                    <input type="hidden" id="newsEditId">
-                    <div class="field">
-                        <label>Заголовок</label>
-                        <input type="text" id="newsTitle" placeholder="Заголовок новости">
-                    </div>
-                    <div class="field">
-                        <label>Текст</label>
-                        <textarea id="newsText" placeholder="Текст... {photo:...} {site:...}"></textarea>
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn btn-primary" id="newsSaveBtn" onclick="saveNews()">💾 Сохранить</button>
-                        <button class="btn btn-ghost hidden" id="newsCancelBtn" onclick="cancelNewsEdit()">Отмена</button>
-                    </div>
-                    <div style="margin-top:1.25rem;" id="newsList"></div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">🎓 Подготовишка</div>
-                    <input type="hidden" id="prepEditId">
-                    <div class="field">
-                        <label>Название</label>
-                        <input type="text" id="prepTitle" placeholder="Название сайта">
-                    </div>
-                    <div class="field">
-                        <label>Описание</label>
-                        <textarea id="prepDesc" placeholder="Описание..."></textarea>
-                    </div>
-                    <div class="grid-2">
-                        <div class="field">
-                            <label>Ссылка на сайт</label>
-                            <input type="url" id="prepSite" placeholder="https://...">
-                        </div>
-                        <div class="field">
-                            <label>Ссылка на картинку</label>
-                            <input type="url" id="prepPhoto" placeholder="https://...">
-                        </div>
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn btn-primary" id="prepSaveBtn" onclick="savePrep()">💾 Сохранить</button>
-                        <button class="btn btn-ghost hidden" id="prepCancelBtn" onclick="cancelPrepEdit()">Отмена</button>
-                    </div>
-                    <div style="margin-top:1.25rem;" id="prepList"></div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">📅 Расписание (JSON)</div>
-                    <div class="field">
-                        <label>JSON расписания</label>
-                        <textarea id="scheduleJson" placeholder='{"monday":["Математика","Русский"],"tuesday":["Физика"]}' style="min-height:140px; font-family: monospace;"></textarea>
-                        <div class="hint">💡 Вставь JSON. Пример: <code>{"monday":["Математика","Русский"],...}</code></div>
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn btn-primary" onclick="saveSchedule()">💾 Сохранить расписание</button>
-                        <button class="btn btn-ghost" onclick="loadScheduleToEditor()">🔄 Загрузить текущее</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ============ ВКЛАДКА СТАТИСТИКА ============ -->
-            <div class="panel" id="panel-stats">
-                <div class="section">
-                    <div class="section-title">📊 Общая статистика GDZ</div>
-                    <div class="stat-cards">
-                        <div class="stat-card">
-                            <div class="stat-value" id="statTotal">—</div>
-                            <div class="stat-label">Зарегистрировано в GDZ</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="statSubjects">—</div>
-                            <div class="stat-label">Предметов</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="statAnswers">—</div>
-                            <div class="stat-label">Ответов ДЗ</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="statTestAnswers">—</div>
-                            <div class="stat-label">Ответов контрольных</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">👥 Пользователи GDZ</div>
-                    <div id="usersList"></div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">📖 Кто читал ответы ДЗ</div>
-                    <div id="answersReadList"></div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">🎯 Кто читал ответы контрольных</div>
-                    <div id="testAnswersReadList"></div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">📰 Кто читал новости</div>
-                    <div id="newsReadList"></div>
-                </div>
-            </div>
-
-            <!-- ============ ВКЛАДКА КОНТРОЛЬ ============ -->
-            <div class="panel" id="panel-control">
-                <div class="section">
-                    <div class="section-title">🔐 Входной тест (3 вопроса)</div>
-                    <div id="testEditor"></div>
-                    <div class="row-actions" style="margin-top:1rem;">
-                        <button class="btn btn-primary" onclick="saveTest()">💾 Сохранить тест</button>
-                    </div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">⚠️ Подозрительные пользователи</div>
-                    <div id="suspiciousList"></div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">🚧 Режим Барьер</div>
-                    <div class="barrier-box off" id="barrierBox">
-                        <div class="barrier-status off" id="barrierStatus">
-                            <span>✅</span>
-                            <span>Барьер выключен</span>
-                        </div>
-                        <div class="hint">Когда включён — все пользователи перенаправляются на красный экран. Разблокировка только через Firebase Console: <code>GDZ/file → barrier: "off"</code></div>
-                    </div>
-                    <div class="grid-2">
-                        <div class="field">
-                            <label>Global ID (оставь пустым для всех)</label>
-                            <input type="text" id="barrierTarget" placeholder="KXjJ96R1DUA7HQ92Hms6H3" maxlength="20">
-                        </div>
-                        <div class="field" style="display:flex; align-items:flex-end;">
-                            <button class="btn btn-danger" style="width:100%;" onclick="enableBarrier()">🚧 Включить барьер</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      <div class="section">
+        <div class="section-title">📜 История модерации (последние)</div>
+        <div id="moderationHistory"></div>
+      </div>
     </div>
 
-    <div class="toast" id="toast"></div>
+    <!-- ============ ВКЛАДКА СОТРУДНИКИ ============ -->
+    <div class="panel" id="panel-staff">
+      <div class="section">
+        <div class="section-title">👥 Назначение сотрудников</div>
+        <div class="hint" style="margin-bottom:1rem;">Пользователи с ролью «Сотрудник» получают доступ к панели сотрудника (staff.html).</div>
+        <div id="staffList"></div>
+      </div>
+    </div>
 
-    <script>
-    // ==================== FIREBASE ====================
-    const firebaseConfig = {
-        apiKey: "AIzaSyA6GGJxAiao77U7_9mBUEjftmS_FnSWbIw",
-        authDomain: "glob-data.firebaseapp.com",
-        projectId: "glob-data",
-        storageBucket: "glob-data.firebasestorage.app",
-        messagingSenderId: "122757049174",
-        appId: "1:122757049174:web:ebb425edd0e1a8ea9a44f7"
+    <!-- ============ ВКЛАДКА КОНТЕНТ ============ -->
+    <div class="panel" id="panel-content">
+      <div class="section">
+        <div class="section-title">📰 Новости</div>
+        <input type="hidden" id="newsEditId">
+        <div class="field">
+          <label>Заголовок</label>
+          <input type="text" id="newsTitle" placeholder="Заголовок новости">
+        </div>
+        <div class="field">
+          <label>Текст</label>
+          <textarea id="newsText" placeholder="Текст..."></textarea>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-primary" id="newsSaveBtn" onclick="saveNews()">💾 Сохранить</button>
+          <button class="btn btn-ghost hidden" id="newsCancelBtn" onclick="cancelNewsEdit()">Отмена</button>
+        </div>
+        <div style="margin-top:1.25rem;" id="newsList"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🎓 Подготовишка</div>
+        <input type="hidden" id="prepEditId">
+        <div class="field">
+          <label>Название</label>
+          <input type="text" id="prepTitle" placeholder="Название сайта">
+        </div>
+        <div class="field">
+          <label>Описание</label>
+          <textarea id="prepDesc" placeholder="Описание..."></textarea>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Ссылка на сайт</label>
+            <input type="url" id="prepSite" placeholder="https://...">
+          </div>
+          <div class="field">
+            <label>Ссылка на картинку</label>
+            <input type="url" id="prepPhoto" placeholder="https://...">
+          </div>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-primary" id="prepSaveBtn" onclick="savePrep()">💾 Сохранить</button>
+          <button class="btn btn-ghost hidden" id="prepCancelBtn" onclick="cancelPrepEdit()">Отмена</button>
+        </div>
+        <div style="margin-top:1.25rem;" id="prepList"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">📅 Расписание (JSON)</div>
+        <div class="field">
+          <label>JSON расписания</label>
+          <textarea id="scheduleJson" placeholder='{"monday":["Математика","Русский"]}' style="min-height:140px;font-family:monospace;"></textarea>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-primary" onclick="saveSchedule()">💾 Сохранить расписание</button>
+          <button class="btn btn-ghost" onclick="loadScheduleToEditor()">🔄 Загрузить текущее</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ВКЛАДКА СТАТИСТИКА ============ -->
+    <div class="panel" id="panel-stats">
+      <div class="section">
+        <div class="section-title">📊 Общая статистика GDZ</div>
+        <div class="stat-cards">
+          <div class="stat-card"><div class="stat-value" id="statTotal">—</div><div class="stat-label">Зарегистрировано</div></div>
+          <div class="stat-card"><div class="stat-value" id="statSubjects">—</div><div class="stat-label">Предметов</div></div>
+          <div class="stat-card"><div class="stat-value" id="statAnswers">—</div><div class="stat-label">Ответов ДЗ</div></div>
+          <div class="stat-card"><div class="stat-value" id="statTestAnswers">—</div><div class="stat-label">Контрольных</div></div>
+          <div class="stat-card"><div class="stat-value" id="statPending">—</div><div class="stat-label">На модерации</div></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">👥 Пользователи GDZ</div>
+        <div id="usersList"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">📖 Кто читал ответы ДЗ</div>
+        <div id="answersReadList"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">🎯 Кто читал ответы контрольных</div>
+        <div id="testAnswersReadList"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">📰 Кто читал новости</div>
+        <div id="newsReadList"></div>
+      </div>
+    </div>
+
+    <!-- ============ ВКЛАДКА КОНТРОЛЬ ============ -->
+    <div class="panel" id="panel-control">
+      <div class="section">
+        <div class="section-title">🔐 Входной тест (3 вопроса)</div>
+        <div id="testEditor"></div>
+        <div class="row-actions" style="margin-top:1rem;">
+          <button class="btn btn-primary" onclick="saveTest()">💾 Сохранить тест</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">⚠️ Подозрительные пользователи</div>
+        <div id="suspiciousList"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🚧 Режим Барьер</div>
+        <div class="barrier-box off" id="barrierBox">
+          <div class="barrier-status off" id="barrierStatus">
+            <span>✅</span><span>Барьер выключен</span>
+          </div>
+          <div class="hint">Разблокировка только через Firebase Console: <code>GDZ/file → barrier: "off"</code></div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Global ID (пусто = для всех)</label>
+            <input type="text" id="barrierTarget" placeholder="KXjJ96R1DUA7HQ92Hms6H3" maxlength="20">
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end;">
+            <button class="btn btn-danger" style="width:100%;" onclick="enableBarrier()">🚧 Включить барьер</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==================== FIREBASE ==================== */
+const firebaseConfig={
+  apiKey:"AIzaSyA6GGJxAiao77U7_9mBUEjftmS_FnSWbIw",
+  authDomain:"glob-data.firebaseapp.com",
+  projectId:"glob-data",
+  storageBucket:"glob-data.firebasestorage.app",
+  messagingSenderId:"122757049174",
+  appId:"1:122757049174:web:ebb425edd0e1a8ea9a44f7"
+};
+if(!firebase.apps.length){firebase.initializeApp(firebaseConfig);}
+const auth=firebase.auth();
+const db=firebase.firestore();
+
+/* ==================== СОСТОЯНИЕ ==================== */
+let currentUser=null;
+let currentGlobalId='';
+let subjectsCache=[];
+let answersCache=[];
+let testAnswersCache=[];
+let newsCache=[];
+let prepCache=[];
+let usersCache=[];
+let pendingCache=[];
+let moderationHistoryCache=[];
+let barrierCheckInterval=null;
+let isWritingBarrier=false;
+let pendingListener=null;
+
+/* ==================== УТИЛИТЫ ==================== */
+function toast(text,isError=false){
+  const el=document.getElementById('toast');
+  el.textContent=text;
+  el.className=`toast show ${isError?'error':''}`;
+  setTimeout(()=>el.className='toast',2500);
+}
+function escapeHtml(t){
+  if(!t)return '';
+  const d=document.createElement('div');
+  d.textContent=t;
+  return d.innerHTML;
+}
+function formatTime(ts){
+  if(!ts)return '—';
+  const d=ts.toDate?ts.toDate():new Date(ts);
+  return d.toLocaleString('ru-RU');
+}
+
+/* ==================== ПРОВЕРКА ДОСТУПА ==================== */
+async function checkAccess(){
+  return new Promise((resolve)=>{
+    const unsub=auth.onAuthStateChanged(async(user)=>{
+      unsub();
+      if(!user){window.location.replace('index.html');resolve(false);return;}
+      currentUser=user;
+      try{
+        const userDoc=await db.collection('users').doc(user.uid).get();
+        if(!userDoc.exists){window.location.replace('index.html');resolve(false);return;}
+        currentGlobalId=userDoc.data().globalId||'';
+        if(!currentGlobalId){window.location.replace('index.html');resolve(false);return;}
+        const gdzDoc=await db.collection('GDZ').doc('users').collection('users').doc(currentGlobalId).get();
+        const role=gdzDoc.exists?(gdzDoc.data().role||'user'):'user';
+        if(role!=='admin'){window.location.replace('gdz.html');resolve(false);return;}
+        sessionStorage.setItem('gdz_globalId',currentGlobalId);
+        resolve(true);
+      }catch(e){
+        console.error(e);
+        window.location.replace('index.html');
+        resolve(false);
+      }
+    });
+  });
+}
+
+/* ==================== БАРЬЕР ==================== */
+async function checkBarrier(){
+  if(isWritingBarrier)return;
+  try{
+    const doc=await db.collection('GDZ').doc('file').get();
+    if(!doc.exists)return;
+    const data=doc.data();
+    if(data.barrier!=='on')return;
+    const target=data.barrierTarget;
+    const forMe=!target||target===currentGlobalId;
+    if(forMe){
+      sessionStorage.setItem('barrier_back','admin.html');
+      window.location.replace('barrier.html');
+    }
+  }catch(e){}
+}
+
+/* ==================== ТАБЫ ==================== */
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===`panel-${tab}`));
+  if(tab==='stats')loadStats();
+  if(tab==='control')loadControl();
+  if(tab==='moderation')loadPending();
+  if(tab==='staff')loadStaff();
+}
+function exitToGdz(){window.location.href='gdz.html';}
+
+/* ==================== ПРЕДМЕТЫ ==================== */
+async function loadSubjects(){
+  const snap=await db.collection('GDZ').doc('subjects').collection('list').get();
+  subjectsCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+
+  const container=document.getElementById('subjectsList');
+  const selectA=document.getElementById('answerSubject');
+  const selectT=document.getElementById('testAnswerSubject');
+
+  if(subjectsCache.length===0){
+    container.innerHTML='<div class="empty-state">Пока нет предметов</div>';
+  }else{
+    container.innerHTML=subjectsCache.map(s=>`
+      <div class="list-item">
+        <div class="list-item-head">
+          <div>
+            <div class="list-item-title">${s.icon||'📚'} ${escapeHtml(s.name)}</div>
+            <div class="list-item-meta">ID: ${s.id}</div>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="deleteSubject('${s.id}')">🗑 Удалить</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  const opts=subjectsCache.map(s=>`<option value="${s.id}">${s.icon||''} ${escapeHtml(s.name)}</option>`).join('');
+  selectA.innerHTML=opts||'<option value="">— нет предметов —</option>';
+  selectT.innerHTML=opts||'<option value="">— нет предметов —</option>';
+}
+async function addSubject(){
+  const name=document.getElementById('subjectName').value.trim();
+  const icon=document.getElementById('subjectIcon').value.trim()||'📚';
+  if(!name)return toast('Введи название',true);
+  try{
+    await db.collection('GDZ').doc('subjects').collection('list').add({name,icon,createdAt:Date.now()});
+    document.getElementById('subjectName').value='';
+    document.getElementById('subjectIcon').value='';
+    toast('Предмет добавлен');
+    loadSubjects();
+  }catch(e){toast('Ошибка: '+e.message,true);}
+}
+async function deleteSubject(id){
+  if(!confirm('Удалить предмет?'))return;
+  await db.collection('GDZ').doc('subjects').collection('list').doc(id).delete();
+  toast('Удалено');
+  loadSubjects();
+}
+
+/* ==================== ОТВЕТЫ ДЗ ==================== */
+async function loadAnswers(){
+  const snap=await db.collection('GDZ').doc('answer').collection('list').get();
+  answersCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const container=document.getElementById('answersList');
+  if(answersCache.length===0){
+    container.innerHTML='<div class="empty-state">Пока нет ответов</div>';
+    return;
+  }
+  container.innerHTML=answersCache.map(a=>{
+    const subj=subjectsCache.find(s=>s.id===a.subjectId);
+    return `
+      <div class="list-item">
+        <div class="list-item-head">
+          <div>
+            <div class="list-item-title">${subj?.icon||''} ${escapeHtml(a.number||'')} — ${escapeHtml(subj?.name||'—')}</div>
+            <div class="list-item-meta">${escapeHtml(a.date||'')} · read: ${(a.read||[]).length}</div>
+          </div>
+          <div class="row-actions">
+            <button class="btn btn-warn btn-sm" onclick="editAnswer('${a.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteAnswer('${a.id}')">🗑</button>
+          </div>
+        </div>
+        <div class="list-item-body">${escapeHtml((a.text||'').substring(0,200))}</div>
+      </div>
+    `;
+  }).join('');
+}
+async function saveAnswer(){
+  const id=document.getElementById('answerEditId').value;
+  const subjectId=document.getElementById('answerSubject').value;
+  const number=document.getElementById('answerNumber').value.trim();
+  const date=document.getElementById('answerDate').value;
+  const text=document.getElementById('answerText').value;
+  if(!subjectId||!text)return toast('Заполни предмет и текст',true);
+  const data={subjectId,number,date,text,updatedAt:Date.now()};
+  try{
+    if(id){
+      await db.collection('GDZ').doc('answer').collection('list').doc(id).update(data);
+      toast('Обновлено');
+    }else{
+      data.createdAt=Date.now();
+      data.read=[];
+      await db.collection('GDZ').doc('answer').collection('list').add(data);
+      toast('Добавлено');
+    }
+    cancelAnswerEdit();
+    loadAnswers();
+  }catch(e){toast('Ошибка: '+e.message,true);}
+}
+function editAnswer(id){
+  const a=answersCache.find(x=>x.id===id);
+  if(!a)return;
+  document.getElementById('answerEditId').value=id;
+  document.getElementById('answerSubject').value=a.subjectId||'';
+  document.getElementById('answerNumber').value=a.number||'';
+  document.getElementById('answerDate').value=a.date||'';
+  document.getElementById('answerText').value=a.text||'';
+  document.getElementById('answerCancelBtn').classList.remove('hidden');
+  document.getElementById('answerSaveBtn').textContent='💾 Обновить';
+}
+function cancelAnswerEdit(){
+  document.getElementById('answerEditId').value='';
+  document.getElementById('answerSubject').value='';
+  document.getElementById('answerNumber').value='';
+  document.getElementById('answerDate').value='';
+  document.getElementById('answerText').value='';
+  document.getElementById('answerCancelBtn').classList.add('hidden');
+  document.getElementById('answerSaveBtn').textContent='💾 Сохранить ответ';
+}
+async function deleteAnswer(id){
+  if(!confirm('Удалить ответ?'))return;
+  await db.collection('GDZ').doc('answer').collection('list').doc(id).delete();
+  toast('Удалено');
+  loadAnswers();
+}
+
+/* ==================== ОТВЕТЫ КОНТРОЛЬНЫХ ==================== */
+async function loadTestAnswers(){
+  const snap=await db.collection('GDZ').doc('tests_answer').collection('list').get();
+  testAnswersCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const container=document.getElementById('testAnswersList');
+  if(testAnswersCache.length===0){
+    container.innerHTML='<div class="empty-state">Пока нет ответов</div>';
+    return;
+  }
+  container.innerHTML=testAnswersCache.map(a=>{
+    const subj=subjectsCache.find(s=>s.id===a.subjectId);
+    return `
+      <div class="list-item">
+        <div class="list-item-head">
+          <div>
+            <div class="list-item-title">${subj?.icon||''} ${escapeHtml(a.title||'')}</div>
+            <div class="list-item-meta">${escapeHtml(subj?.name||'—')} · ${escapeHtml(a.date||'')} · read: ${(a.read||[]).length}</div>
+          </div>
+          <div class="row-actions">
+            <button class="btn btn-warn btn-sm" onclick="editTestAnswer('${a.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTestAnswer('${a.id}')">🗑</button>
+          </div>
+        </div>
+        <div class="list-item-body">${escapeHtml((a.text||'').substring(0,200))}</div>
+      </div>
+    `;
+  }).join('');
+}
+async function saveTestAnswer(){
+  const id=document.getElementById('testAnswerEditId').value;
+  const subjectId=document.getElementById('testAnswerSubject').value;
+  const title=document.getElementById('testAnswerTitle').value.trim();
+  const date=document.getElementById('testAnswerDate').value;
+  const text=document.getElementById('testAnswerText').value;
+  if(!subjectId||!title||!text)return toast('Заполни все поля',true);
+  const data={subjectId,title,date,text,updatedAt:Date.now()};
+  try{
+    if(id){
+      await db.collection('GDZ').doc('tests_answer').collection('list').doc(id).update(data);
+      toast('Обновлено');
+    }else{
+      data.createdAt=Date.now();
+      data.read=[];
+      await db.collection('GDZ').doc('tests_answer').collection('list').add(data);
+      toast('Добавлено');
+    }
+    cancelTestAnswerEdit();
+    loadTestAnswers();
+  }catch(e){toast('Ошибка: '+e.message,true);}
+}
+function editTestAnswer(id){
+  const a=testAnswersCache.find(x=>x.id===id);
+  if(!a)return;
+  document.getElementById('testAnswerEditId').value=id;
+  document.getElementById('testAnswerSubject').value=a.subjectId||'';
+  document.getElementById('testAnswerTitle').value=a.title||'';
+  document.getElementById('testAnswerDate').value=a.date||'';
+  document.getElementById('testAnswerText').value=a.text||'';
+  document.getElementById('testAnswerCancelBtn').classList.remove('hidden');
+  document.getElementById('testAnswerSaveBtn').textContent='💾 Обновить';
+}
+function cancelTestAnswerEdit(){
+  document.getElementById('testAnswerEditId').value='';
+  document.getElementById('testAnswerSubject').value='';
+  document.getElementById('testAnswerTitle').value='';
+  document.getElementById('testAnswerDate').value='';
+  document.getElementById('testAnswerText').value='';
+  document.getElementById('testAnswerCancelBtn').classList.add('hidden');
+  document.getElementById('testAnswerSaveBtn').textContent='💾 Сохранить';
+}
+async function deleteTestAnswer(id){
+  if(!confirm('Удалить?'))return;
+  await db.collection('GDZ').doc('tests_answer').collection('list').doc(id).delete();
+  toast('Удалено');
+  loadTestAnswers();
+}
+
+/* ==================== МОДЕРАЦИЯ ==================== */
+function listenPending(){
+  if(pendingListener)return;
+  pendingListener=db.collection('GDZ').doc('pending_answers').collection('list')
+    .onSnapshot(snap=>{
+      pendingCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+      updateModerationBadge();
+      const panel=document.getElementById('panel-moderation');
+      if(panel&&panel.classList.contains('active'))renderPending();
+    },err=>console.warn('pending listener error',err));
+}
+function updateModerationBadge(){
+  const pending=pendingCache.filter(p=>p.status==='pending');
+  const badge=document.getElementById('moderationCount');
+  if(!badge)return;
+  if(pending.length===0){badge.classList.add('hidden');}
+  else{badge.classList.remove('hidden');badge.textContent=pending.length;}
+}
+async function loadPending(){
+  listenPending();
+  await loadModerationHistory();
+  renderPending();
+}
+function renderPending(){
+  const container=document.getElementById('pendingList');
+  const pending=pendingCache.filter(p=>p.status==='pending');
+  if(pending.length===0){
+    container.innerHTML='<div class="empty-state">Нет заявок на модерации</div>';
+    return;
+  }
+  container.innerHTML=pending.map(p=>{
+    const subj=subjectsCache.find(s=>s.id===p.subjectId);
+    const isTest=p.type==='test';
+    const title=isTest
+      ? `🎯 ${escapeHtml(p.title||'Контрольная')} — ${escapeHtml(subj?.name||'—')}`
+      : `${subj?.icon||'📝'} ${escapeHtml(p.number||'')} — ${escapeHtml(subj?.name||'—')}`;
+    return `
+      <div class="list-item pending">
+        <div class="list-item-head">
+          <div>
+            <div class="list-item-title">${title}</div>
+            <div class="list-item-meta">
+              От: ${escapeHtml(p.authorName||p.authorId||'—')}<br>
+              Дата: ${escapeHtml(p.date||'—')} · Создано: ${formatTime(p.createdAt)}
+            </div>
+          </div>
+          <span class="status-badge status-pending">⏳ На модерации</span>
+        </div>
+        <div class="list-item-body">${escapeHtml((p.text||'').substring(0,400))}</div>
+        <div class="row-actions" style="margin-top:0.75rem;">
+          <button class="btn btn-success btn-sm" onclick="approvePending('${p.id}')">✅ Загрузить в ГДЗ</button>
+          <button class="btn btn-danger btn-sm" onclick="rejectPending('${p.id}')">❌ Отклонить</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+async function approvePending(id){
+  const p=pendingCache.find(x=>x.id===id);
+  if(!p)return;
+  if(!confirm('Загрузить этот ответ в ГДЗ?'))return;
+  try{
+    const isTest=p.type==='test';
+    const targetColl=isTest?'tests_answer':'answer';
+    const data={
+      subjectId:p.subjectId,
+      date:p.date||'',
+      text:p.text||'',
+      read:[],
+      createdAt:Date.now(),
+      updatedAt:Date.now(),
+      publishedBy:currentGlobalId,
+      originalAuthor:p.authorId||''
     };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    if(isTest){data.title=p.title||'';}
+    else{data.number=p.number||'';}
 
-    // ==================== СОСТОЯНИЕ ====================
-    let currentUser = null;
-    let currentGlobalId = '';
-    let subjectsCache = [];
-    let answersCache = [];
-    let testAnswersCache = [];
-    let newsCache = [];
-    let prepCache = [];
-    let usersCache = [];
-    let barrierCheckInterval = null;
-    let isWritingBarrier = false;   // ← защита от гонки
-
-    // ==================== УТИЛИТЫ ====================
-    function toast(text, isError = false) {
-        const el = document.getElementById('toast');
-        el.textContent = text;
-        el.className = `toast show ${isError ? 'error' : ''}`;
-        setTimeout(() => el.className = 'toast', 2500);
+    await db.collection('GDZ').doc(targetColl).collection('list').add(data);
+    await db.collection('GDZ').doc('pending_answers').collection('list').doc(id).update({
+      status:'approved',
+      approvedAt:Date.now(),
+      approvedBy:currentGlobalId
+    });
+    toast('✅ Ответ загружен в ГДЗ');
+    if(isTest)loadTestAnswers();else loadAnswers();
+  }catch(e){toast('Ошибка: '+e.message,true);}
+}
+async function rejectPending(id){
+  const reason=prompt('Причина отклонения (необязательно):')||'';
+  try{
+    await db.collection('GDZ').doc('pending_answers').collection('list').doc(id).update({
+      status:'rejected',
+      rejectedAt:Date.now(),
+      rejectedBy:currentGlobalId,
+      rejectReason:reason
+    });
+    toast('❌ Ответ отклонён');
+  }catch(e){toast('Ошибка: '+e.message,true);}
+}
+async function loadModerationHistory(){
+  try{
+    const snap=await db.collection('GDZ').doc('pending_answers').collection('list').get();
+    moderationHistoryCache=snap.docs.map(d=>({id:d.id,...d.data()}))
+      .filter(p=>p.status==='approved'||p.status==='rejected')
+      .sort((a,b)=>(b.approvedAt||b.rejectedAt||0)-(a.approvedAt||a.rejectedAt||0))
+      .slice(0,20);
+    const container=document.getElementById('moderationHistory');
+    if(moderationHistoryCache.length===0){
+      container.innerHTML='<div class="empty-state">История пуста</div>';
+      return;
     }
-
-    function escapeHtml(t) {
-        if (!t) return '';
-        const d = document.createElement('div');
-        d.textContent = t;
-        return d.innerHTML;
-    }
-
-    function formatTime(ts) {
-        if (!ts) return '—';
-        const d = ts.toDate ? ts.toDate() : new Date(ts);
-        return d.toLocaleString('ru-RU');
-    }
-
-    // ==================== ПРОВЕРКА ДОСТУПА ====================
-    async function checkAccess() {
-        return new Promise((resolve) => {
-            const unsubscribe = auth.onAuthStateChanged(async (user) => {
-                unsubscribe();
-
-                if (!user) {
-                    window.location.replace('index.html');
-                    resolve(false);
-                    return;
-                }
-
-                currentUser = user;
-
-                try {
-                    const userDoc = await db.collection('users').doc(user.uid).get();
-                    if (!userDoc.exists) {
-                        window.location.replace('index.html');
-                        resolve(false);
-                        return;
-                    }
-
-                    currentGlobalId = userDoc.data().globalId || '';
-                    if (!currentGlobalId) {
-                        window.location.replace('index.html');
-                        resolve(false);
-                        return;
-                    }
-
-                    const gdzDoc = await db.collection('GDZ')
-                        .doc('users')
-                        .collection('users')
-                        .doc(currentGlobalId)
-                        .get();
-
-                    const role = gdzDoc.exists ? (gdzDoc.data().role || 'user') : 'user';
-
-                    if (role !== 'admin' && role !== 'employee') {
-                        window.location.replace('gdz.html');
-                        resolve(false);
-                        return;
-                    }
-
-                    sessionStorage.setItem('gdz_globalId', currentGlobalId);
-                    resolve(true);
-
-                } catch (e) {
-                    console.error('Ошибка проверки доступа:', e);
-                    window.location.replace('index.html');
-                    resolve(false);
-                }
-            });
-        });
-    }
-
-    // ==================== БАРЬЕР (проверка) ====================
-    async function checkBarrier() {
-        if (isWritingBarrier) return; // ← не проверяем, пока пишем
-
-        try {
-            const doc = await db.collection('GDZ').doc('file').get();
-            if (!doc.exists) return;
-            const data = doc.data();
-            if (data.barrier !== 'on') return;
-
-            const target = data.barrierTarget;
-            const forMe = !target || target === currentGlobalId;
-
-            if (forMe) {
-                sessionStorage.setItem('barrier_back', 'admin.html');
-                window.location.replace('barrier.html');
-            }
-        } catch (e) { /* игнор */ }
-    }
-
-    // ==================== ТАБЫ ====================
-    function switchTab(tab) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-        document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === `panel-${tab}`));
-
-        if (tab === 'stats') loadStats();
-        if (tab === 'control') loadControl();
-    }
-
-    function exitToGdz() {
-        window.location.href = 'gdz.html';
-    }
-
-    // ==================== ПРЕДМЕТЫ ====================
-    async function loadSubjects() {
-        const snap = await db.collection('GDZ').doc('subjects').collection('list').get();
-        subjectsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-        const container = document.getElementById('subjectsList');
-        const selectA = document.getElementById('answerSubject');
-        const selectT = document.getElementById('testAnswerSubject');
-
-        if (subjectsCache.length === 0) {
-            container.innerHTML = '<div class="empty-state">Пока нет предметов</div>';
-        } else {
-            container.innerHTML = subjectsCache.map(s => `
-                <div class="list-item">
-                    <div class="list-item-head">
-                        <div>
-                            <div class="list-item-title">${s.icon || '📚'} ${escapeHtml(s.name)}</div>
-                            <div class="list-item-meta">ID: ${s.id}</div>
-                        </div>
-                        <button class="btn btn-danger btn-sm" onclick="deleteSubject('${s.id}')">🗑 Удалить</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        const opts = subjectsCache.map(s => `<option value="${s.id}">${s.icon || ''} ${escapeHtml(s.name)}</option>`).join('');
-        selectA.innerHTML = opts || '<option value="">— нет предметов —</option>';
-        selectT.innerHTML = opts || '<option value="">— нет предметов —</option>';
-    }
-
-    async function addSubject() {
-        const name = document.getElementById('subjectName').value.trim();
-        const icon = document.getElementById('subjectIcon').value.trim() || '📚';
-        if (!name) return toast('Введи название', true);
-
-        try {
-            await db.collection('GDZ').doc('subjects').collection('list').add({
-                name, icon, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            document.getElementById('subjectName').value = '';
-            document.getElementById('subjectIcon').value = '';
-            toast('Предмет добавлен');
-            loadSubjects();
-        } catch (e) {
-            toast('Ошибка: ' + e.message, true);
-        }
-    }
-
-    async function deleteSubject(id) {
-        if (!confirm('Удалить предмет?')) return;
-        await db.collection('GDZ').doc('subjects').collection('list').doc(id).delete();
-        toast('Удалено');
-        loadSubjects();
-    }
-
-    // ==================== ОТВЕТЫ ДЗ ====================
-    async function loadAnswers() {
-        const snap = await db.collection('GDZ').doc('answer').collection('list').get();
-        answersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-        const container = document.getElementById('answersList');
-        if (answersCache.length === 0) {
-            container.innerHTML = '<div class="empty-state">Пока нет ответов</div>';
-            return;
-        }
-        container.innerHTML = answersCache.map(a => {
-            const subj = subjectsCache.find(s => s.id === a.subjectId);
-            return `
-                <div class="list-item">
-                    <div class="list-item-head">
-                        <div>
-                            <div class="list-item-title">${subj?.icon || ''} ${escapeHtml(a.number || '')} — ${escapeHtml(subj?.name || '—')}</div>
-                            <div class="list-item-meta">${escapeHtml(a.date || '')} · read: ${(a.read || []).length}</div>
-                        </div>
-                        <div class="row-actions">
-                            <button class="btn btn-warn btn-sm" onclick="editAnswer('${a.id}')">✏️</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteAnswer('${a.id}')">🗑</button>
-                        </div>
-                    </div>
-                    <div class="list-item-body">${escapeHtml((a.text || '').substring(0, 200))}</div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    async function saveAnswer() {
-        const id = document.getElementById('answerEditId').value;
-        const subjectId = document.getElementById('answerSubject').value;
-        const number = document.getElementById('answerNumber').value.trim();
-        const date = document.getElementById('answerDate').value;
-        const text = document.getElementById('answerText').value;
-
-        if (!subjectId || !text) return toast('Заполни предмет и текст', true);
-
-        const data = { subjectId, number, date, text, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-
-        try {
-            if (id) {
-                await db.collection('GDZ').doc('answer').collection('list').doc(id).update(data);
-                toast('Обновлено');
-            } else {
-                data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                data.read = [];
-                await db.collection('GDZ').doc('answer').collection('list').add(data);
-                toast('Добавлено');
-            }
-            cancelAnswerEdit();
-            loadAnswers();
-        } catch (e) {
-            toast('Ошибка: ' + e.message, true);
-        }
-    }
-
-    function editAnswer(id) {
-        const a = answersCache.find(x => x.id === id);
-        if (!a) return;
-        document.getElementById('answerEditId').value = id;
-        document.getElementById('answerSubject').value = a.subjectId || '';
-        document.getElementById('answerNumber').value = a.number || '';
-        document.getElementById('answerDate').value = a.date || '';
-        document.getElementById('answerText').value = a.text || '';
-        document.getElementById('answerCancelBtn').classList.remove('hidden');
-        document.getElementById('answerSaveBtn').textContent = '💾 Обновить';
-    }
-
-    function cancelAnswerEdit() {
-        document.getElementById('answerEditId').value = '';
-        document.getElementById('answerSubject').value = '';
-        document.getElementById('answerNumber').value = '';
-        document.getElementById('answerDate').value = '';
-        document.getElementById('answerText').value = '';
-        document.getElementById('answerCancelBtn').classList.add('hidden');
-        document.getElementById('answerSaveBtn').textContent = '💾 Сохранить ответ';
-    }
-
-    async function deleteAnswer(id) {
-        if (!confirm('Удалить ответ?')) return;
-        await db.collection('GDZ').doc('answer').collection('list').doc(id).delete();
-        toast('Удалено');
-        loadAnswers();
-    }
-
-    // ==================== ОТВЕТЫ КОНТРОЛЬНЫХ ====================
-    async function loadTestAnswers() {
-        const snap = await db.collection('GDZ').doc('tests_answer').collection('list').get();
-        testAnswersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-        const container = document.getElementById('testAnswersList');
-        if (testAnswersCache.length === 0) {
-            container.innerHTML = '<div class="empty-state">Пока нет ответов</div>';
-            return;
-        }
-        container.innerHTML = testAnswersCache.map(a => {
-            const subj = subjectsCache.find(s => s.id === a.subjectId);
-            return `
-                <div class="list-item">
-                    <div class="list-item-head">
-                        <div>
-                            <div class="list-item-title">${subj?.icon || ''} ${escapeHtml(a.title || '')}</div>
-                            <div class="list-item-meta">${escapeHtml(subj?.name || '—')} · ${escapeHtml(a.date || '')} · read: ${(a.read || []).length}</div>
-                        </div>
-                        <div class="row-actions">
-                            <button class="btn btn-warn btn-sm" onclick="editTestAnswer('${a.id}')">✏️</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteTestAnswer('${a.id}')">🗑</button>
-                        </div>
-                    </div>
-                    <div class="list-item-body">${escapeHtml((a.text || '').substring(0, 200))}</div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    async function saveTestAnswer() {
-        const id = document.getElementById('testAnswerEditId').value;
-        const subjectId = document.getElementById('testAnswerSubject').value;
-        const title = document.getElementById('testAnswerTitle').value.trim();
-        const date = document.getElementById('testAnswerDate').value;
-        const text = document.getElementById('testAnswerText').value;
-
-        if (!subjectId || !title || !text) return toast('Заполни все поля', true);
-
-        const data = { subjectId, title, date, text, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-
-        try {
-            if (id) {
-                await db.collection('GDZ').doc('tests_answer').collection('list').doc(id).update(data);
-                toast('Обновлено');
-            } else {
-                data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                data.read = [];
-                await db.collection('GDZ').doc('tests_answer').collection('list').add(data);
-                toast('Добавлено');
-            }
-            cancelTestAnswerEdit();
-            loadTestAnswers();
-        } catch (e) {
-            toast('Ошибка: ' + e.message, true);
-        }
-    }
-
-    function editTestAnswer(id) {
-        const a = testAnswersCache.find(x => x.id === id);
-        if (!a) return;
-        document.getElementById('testAnswerEditId').value = id;
-        document.getElementById('testAnswerSubject').value = a.subjectId || '';
-        document.getElementById('testAnswerTitle').value = a.title || '';
-        document.getElementById('testAnswerDate').value = a.date || '';
-        document.getElementById('testAnswerText').value = a.text || '';
-        document.getElementById('testAnswerCancelBtn').classList.remove('hidden');
-        document.getElementById('testAnswerSaveBtn').textContent = '💾 Обновить';
-    }
-
-    function cancelTestAnswerEdit() {
-        document.getElementById('testAnswerEditId').value = '';
-        document.getElementById('testAnswerSubject').value = '';
-        document.getElementById('testAnswerTitle').value = '';
-        document.getElementById('testAnswerDate').value = '';
-        document.getElementById('testAnswerText').value = '';
-        document.getElementById('testAnswerCancelBtn').classList.add('hidden');
-        document.getElementById('testAnswerSaveBtn').textContent = '💾 Сохранить';
-    }
-
-    async function deleteTestAnswer(id) {
-        if (!confirm('Удалить?')) return;
-        await db.collection('GDZ').doc('tests_answer').collection('list').doc(id).delete();
-        toast('Удалено');
-        loadTestAnswers();
-    }
-
-    // ==================== НОВОСТИ ====================
-    async function loadNews() {
-        const snap = await db.collection('GDZ').doc('news').collection('list').get();
-        newsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-        const container = document.getElementById('newsList');
-        if (newsCache.length === 0) {
-            container.innerHTML = '<div class="empty-state">Пока нет новостей</div>';
-            return;
-        }
-        container.innerHTML = newsCache.map(n => `
-            <div class="list-item">
-                <div class="list-item-head">
-                    <div>
-                        <div class="list-item-title">${escapeHtml(n.title || '')}</div>
-                        <div class="list-item-meta">read: ${(n.read || []).length}</div>
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn btn-warn btn-sm" onclick="editNews('${n.id}')">✏️</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteNews('${n.id}')">🗑</button>
-                    </div>
-                </div>
-                <div class="list-item-body">${escapeHtml((n.text || '').substring(0, 200))}</div>
+    container.innerHTML=moderationHistoryCache.map(p=>{
+      const subj=subjectsCache.find(s=>s.id===p.subjectId);
+      const isTest=p.type==='test';
+      const title=isTest
+        ? `🎯 ${escapeHtml(p.title||'')} — ${escapeHtml(subj?.name||'—')}`
+        : `${subj?.icon||'📝'} ${escapeHtml(p.number||'')} — ${escapeHtml(subj?.name||'—')}`;
+      const status=p.status==='approved'
+        ? '<span class="status-badge status-approved">✅ Одобрено</span>'
+        : '<span class="status-badge status-rejected">❌ Отклонено</span>';
+      const ts=p.status==='approved'?p.approvedAt:p.rejectedAt;
+      return `
+        <div class="list-item">
+          <div class="list-item-head">
+            <div>
+              <div class="list-item-title">${title}</div>
+              <div class="list-item-meta">От: ${escapeHtml(p.authorName||p.authorId||'—')} · ${formatTime(ts)}</div>
             </div>
-        `).join('');
+            ${status}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }catch(e){console.warn(e);}
+}
+
+/* ==================== СОТРУДНИКИ ==================== */
+async function loadStaff(){
+  const snap=await db.collection('GDZ').doc('users').collection('users').get();
+  usersCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const container=document.getElementById('staffList');
+  if(usersCache.length===0){
+    container.innerHTML='<div class="empty-state">Нет пользователей</div>';
+    return;
+  }
+  usersCache.sort((a,b)=>{
+    const order={admin:0,employee:1,user:2};
+    return (order[a.role||'user']||2)-(order[b.role||'user']||2);
+  });
+  container.innerHTML=usersCache.map(u=>{
+    const role=u.role||'user';
+    const icon=role==='admin'?'👑':role==='employee'?'🛡️':'👤';
+    const roleLabel=role==='admin'?'Администратор':role==='employee'?'Сотрудник':'Пользователь';
+    let actions='';
+    if(role==='user'){
+      actions=`<button class="btn btn-success btn-sm" onclick="setRole('${u.id}','employee')">⬆️ Сделать сотрудником</button>`;
+    }else if(role==='employee'){
+      actions=`<button class="btn btn-warn btn-sm" onclick="setRole('${u.id}','user')">⬇️ Снять сотрудника</button>`;
+    }else{
+      actions=`<span class="hint">Администратора нельзя изменить</span>`;
     }
-
-    async function saveNews() {
-        const id = document.getElementById('newsEditId').value;
-        const title = document.getElementById('newsTitle').value.trim();
-        const text = document.getElementById('newsText').value;
-        if (!title || !text) return toast('Заполни заголовок и текст', true);
-
-        const data = { title, text, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-        try {
-            if (id) {
-                await db.collection('GDZ').doc('news').collection('list').doc(id).update(data);
-                toast('Обновлено');
-            } else {
-                data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                data.read = [];
-                await db.collection('GDZ').doc('news').collection('list').add(data);
-                toast('Добавлено');
-            }
-            cancelNewsEdit();
-            loadNews();
-        } catch (e) {
-            toast('Ошибка: ' + e.message, true);
-        }
-    }
-
-    function editNews(id) {
-        const n = newsCache.find(x => x.id === id);
-        if (!n) return;
-        document.getElementById('newsEditId').value = id;
-        document.getElementById('newsTitle').value = n.title || '';
-        document.getElementById('newsText').value = n.text || '';
-        document.getElementById('newsCancelBtn').classList.remove('hidden');
-        document.getElementById('newsSaveBtn').textContent = '💾 Обновить';
-    }
-
-    function cancelNewsEdit() {
-        document.getElementById('newsEditId').value = '';
-        document.getElementById('newsTitle').value = '';
-        document.getElementById('newsText').value = '';
-        document.getElementById('newsCancelBtn').classList.add('hidden');
-        document.getElementById('newsSaveBtn').textContent = '💾 Сохранить';
-    }
-
-    async function deleteNews(id) {
-        if (!confirm('Удалить новость?')) return;
-        await db.collection('GDZ').doc('news').collection('list').doc(id).delete();
-        toast('Удалено');
-        loadNews();
-    }
-
-    // ==================== ПОДГОТОВИШКА ====================
-    async function loadPrep() {
-        const snap = await db.collection('GDZ').doc('prep').collection('list').get();
-        prepCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-        const container = document.getElementById('prepList');
-        if (prepCache.length === 0) {
-            container.innerHTML = '<div class="empty-state">Пока нет сайтов</div>';
-            return;
-        }
-        container.innerHTML = prepCache.map(p => `
-            <div class="list-item">
-                <div class="list-item-head">
-                    <div>
-                        <div class="list-item-title">${escapeHtml(p.title || '')}</div>
-                        <div class="list-item-meta">${escapeHtml(p.site || '')}</div>
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn btn-warn btn-sm" onclick="editPrep('${p.id}')">✏️</button>
-                        <button class="btn btn-danger btn-sm" onclick="deletePrep('${p.id}')">🗑</button>
-                    </div>
-                </div>
-                <div class="list-item-body">${escapeHtml(p.description || '')}</div>
+    return `
+      <div class="list-item">
+        <div class="list-item-head">
+          <div>
+            <div class="list-item-title">${icon} ${escapeHtml(u.displayName||u.globalId||u.id)}</div>
+            <div class="list-item-meta">
+              Global ID: ${escapeHtml(u.globalId||u.id)}<br>
+              Роль: ${roleLabel}<br>
+              Последний вход: ${formatTime(u.lastSeen)}
             </div>
-        `).join('');
+          </div>
+          <div class="row-actions">${actions}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+async function setRole(globalId,role){
+  try{
+    await db.collection('GDZ').doc('users').collection('users').doc(globalId).set({
+      role:role,
+      roleUpdatedAt:Date.now(),
+      roleUpdatedBy:currentGlobalId
+    },{merge:true});
+    toast(role==='employee'?'✅ Назначен сотрудником':'✅ Снят с сотрудника');
+    loadStaff();
+  }catch(e){toast('Ошибка: '+e.message,true);}
+}
+
+/* ==================== НОВОСТИ ==================== */
+async function loadNews(){
+  const snap=await db.collection('GDZ').doc('news').collection('list').get();
+  newsCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const container=document.getElementById('newsList');
+  if(newsCache.length===0){container.innerHTML='<div class="empty-state">Пока нет новостей</div>';return;}
+  container.innerHTML=newsCache.map(n=>`
+    <div class="list-item">
+      <div class="list-item-head">
+        <div>
+          <div class="list-item-title">${escapeHtml(n.title||'')}</div>
+          <div class="list-item-meta">read: ${(n.read||[]).length}</div>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-warn btn-sm" onclick="editNews('${n.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteNews('${n.id}')">🗑</button>
+        </div>
+      </div>
+      <div class="list-item-body">${escapeHtml((n.text||'').substring(0,200))}</div>
+    </div>
+  `).join('');
+}
+async function saveNews(){
+  const id=document.getElementById('newsEditId').value;
+  const title=document.getElementById('newsTitle').value.trim();
+  const text=document.getElementById('newsText').value;
+  if(!title||!text)return toast('Заполни заголовок и текст',true);
+  const data={title,text,updatedAt:Date.now()};
+  try{
+    if(id){
+      await db.collection('GDZ').doc('news').collection('list').doc(id).update(data);
+      toast('Обновлено');
+    }else{
+      data.createdAt=Date.now();data.read=[];
+      await db.collection('GDZ').doc('news').collection('list').add(data);
+      toast('Добавлено');
     }
+    cancelNewsEdit();loadNews();
+  }catch(e){toast('Ошибка: '+e.message,true);}
+}
+function editNews(id){
+  const n=newsCache.find(x=>x.id===id);if(!n)return;
+  document.getElementById('newsEditId').value=id;
+  document.getElementById('newsTitle').value=n.title||'';
+  document.getElementById('newsText').value=n.text||'';
+  document.getElementById('newsCancelBtn').classList.remove('hidden');
+  document.getElementById('newsSaveBtn').textContent='💾 Обновить';
+}
+function cancelNewsEdit(){
+  document.getElementById('newsEditId').value='';
+  document.getElementById('newsTitle').value='';
+  document.getElementById('newsText').value='';
+  document.getElementById('newsCancelBtn').classList.add('hidden');
+  document.getElementById('newsSaveBtn').textContent='💾 Сохранить';
+}
+async function deleteNews(id){
+  if(!confirm('Удалить новость?'))return;
+  await db.collection('GDZ').doc('news').collection('list').doc(id).delete();
+  toast('Удалено');loadNews();
+}
 
-    async function savePrep() {
-        const id = document.getElementById('prepEditId').value;
-        const title = document.getElementById('prepTitle').value.trim();
-        const description = document.getElementById('prepDesc').value;
-        const site = document.getElementById('prepSite').value.trim();
-        const photo = document.getElementById('prepPhoto').value.trim();
-        if (!title) return toast('Введи название', true);
-
-        const data = { title, description, site, photo, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-        try {
-            if (id) {
-                await db.collection('GDZ').doc('prep').collection('list').doc(id).update(data);
-                toast('Обновлено');
-            } else {
-                data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                await db.collection('GDZ').doc('prep').collection('list').add(data);
-                toast('Добавлено');
-            }
-            cancelPrepEdit();
-            loadPrep();
-        } catch (e) {
-            toast('Ошибка: ' + e.message, true);
-        }
+/* ==================== ПОДГОТОВИШКА ==================== */
+async function loadPrep(){
+  const snap=await db.collection('GDZ').doc('prep').collection('list').get();
+  prepCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const container=document.getElementById('prepList');
+  if(prepCache.length===0){container.innerHTML='<div class="empty-state">Пока нет сайтов</div>';return;}
+  container.innerHTML=prepCache.map(p=>`
+    <div class="list-item">
+      <div class="list-item-head">
+        <div>
+          <div class="list-item-title">${escapeHtml(p.title||'')}</div>
+          <div class="list-item-meta">${escapeHtml(p.site||'')}</div>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-warn btn-sm" onclick="editPrep('${p.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePrep('${p.id}')">🗑</button>
+        </div>
+      </div>
+      <div class="list-item-body">${escapeHtml(p.description||'')}</div>
+    </div>
+  `).join('');
+}
+async function savePrep(){
+  const id=document.getElementById('prepEditId').value;
+  const title=document.getElementById('prepTitle').value.trim();
+  const description=document.getElementById('prepDesc').value;
+  const site=document.getElementById('prepSite').value.trim();
+  const photo=document.getElementById('prepPhoto').value.trim();
+  if(!title)return toast('Введи название',true);
+  const data={title,description,site,photo,updatedAt:Date.now()};
+  try{
+    if(id){
+      await db.collection('GDZ').doc('prep').collection('list').doc(id).update(data);
+      toast('Обновлено');
+    }else{
+      data.createdAt=Date.now();
+      await db.collection('GDZ').doc('prep').collection('list').add(data);
+      toast('Добавлено');
     }
+    cancelPrepEdit();loadPrep();
+  }catch(e){toast('Ошибка: '+e.message,true);}
+}
+function editPrep(id){
+  const p=prepCache.find(x=>x.id===id);if(!p)return;
+  document.getElementById('prepEditId').value=id;
+  document.getElementById('prepTitle').value=p.title||'';
+  document.getElementById('prepDesc').value=p.description||'';
+  document.getElementById('prepSite').value=p.site||'';
+  document.getElementById('prepPhoto').value=p.photo||'';
+  document.getElementById('prepCancelBtn').classList.remove('hidden');
+  document.getElementById('prepSaveBtn').textContent='💾 Обновить';
+}
+function cancelPrepEdit(){
+  document.getElementById('prepEditId').value='';
+  document.getElementById('prepTitle').value='';
+  document.getElementById('prepDesc').value='';
+  document.getElementById('prepSite').value='';
+  document.getElementById('prepPhoto').value='';
+  document.getElementById('prepCancelBtn').classList.add('hidden');
+  document.getElementById('prepSaveBtn').textContent='💾 Сохранить';
+}
+async function deletePrep(id){
+  if(!confirm('Удалить?'))return;
+  await db.collection('GDZ').doc('prep').collection('list').doc(id).delete();
+  toast('Удалено');loadPrep();
+}
 
-    function editPrep(id) {
-        const p = prepCache.find(x => x.id === id);
-        if (!p) return;
-        document.getElementById('prepEditId').value = id;
-        document.getElementById('prepTitle').value = p.title || '';
-        document.getElementById('prepDesc').value = p.description || '';
-        document.getElementById('prepSite').value = p.site || '';
-        document.getElementById('prepPhoto').value = p.photo || '';
-        document.getElementById('prepCancelBtn').classList.remove('hidden');
-        document.getElementById('prepSaveBtn').textContent = '💾 Обновить';
-    }
+/* ==================== РАСПИСАНИЕ ==================== */
+async function loadScheduleToEditor(){
+  const doc=await db.collection('GDZ').doc('file').get();
+  if(doc.exists&&doc.data().schedule){
+    document.getElementById('scheduleJson').value=JSON.stringify(doc.data().schedule,null,2);
+    toast('Загружено');
+  }else{toast('Расписания нет',true);}
+}
+async function saveSchedule(){
+  const raw=document.getElementById('scheduleJson').value.trim();
+  if(!raw)return toast('Введи JSON',true);
+  let parsed;
+  try{parsed=JSON.parse(raw);}catch(e){return toast('Некорректный JSON',true);}
+  try{
+    await db.collection('GDZ').doc('file').set({schedule:parsed},{merge:true});
+    toast('Расписание сохранено');
+  }catch(e){toast('Ошибка: '+e.message,true);}
+}
 
-    function cancelPrepEdit() {
-        document.getElementById('prepEditId').value = '';
-        document.getElementById('prepTitle').value = '';
-        document.getElementById('prepDesc').value = '';
-        document.getElementById('prepSite').value = '';
-        document.getElementById('prepPhoto').value = '';
-        document.getElementById('prepCancelBtn').classList.add('hidden');
-        document.getElementById('prepSaveBtn').textContent = '💾 Сохранить';
-    }
+/* ==================== СТАТИСТИКА ==================== */
+async function loadStats(){
+  const snap=await db.collection('GDZ').doc('users').collection('users').get();
+  usersCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  document.getElementById('statTotal').textContent=usersCache.length;
+  document.getElementById('statSubjects').textContent=subjectsCache.length;
+  document.getElementById('statAnswers').textContent=answersCache.length;
+  document.getElementById('statTestAnswers').textContent=testAnswersCache.length;
+  document.getElementById('statPending').textContent=pendingCache.filter(p=>p.status==='pending').length;
 
-    async function deletePrep(id) {
-        if (!confirm('Удалить?')) return;
-        await db.collection('GDZ').doc('prep').collection('list').doc(id).delete();
-        toast('Удалено');
-        loadPrep();
-    }
-
-    // ==================== РАСПИСАНИЕ ====================
-    async function loadScheduleToEditor() {
-        const doc = await db.collection('GDZ').doc('file').get();
-        if (doc.exists && doc.data().schedule) {
-            document.getElementById('scheduleJson').value = JSON.stringify(doc.data().schedule, null, 2);
-            toast('Загружено');
-        } else {
-            toast('Расписания нет', true);
-        }
-    }
-
-    async function saveSchedule() {
-        const raw = document.getElementById('scheduleJson').value.trim();
-        if (!raw) return toast('Введи JSON', true);
-        let parsed;
-        try {
-            parsed = JSON.parse(raw);
-        } catch (e) {
-            return toast('Некорректный JSON', true);
-        }
-        try {
-            await db.collection('GDZ').doc('file').set({ schedule: parsed }, { merge: true });
-            toast('Расписание сохранено');
-        } catch (e) {
-            toast('Ошибка: ' + e.message, true);
-        }
-    }
-
-    // ==================== СТАТИСТИКА ====================
-    async function loadStats() {
-        const snap = await db.collection('GDZ').doc('users').collection('users').get();
-        usersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-        document.getElementById('statTotal').textContent = usersCache.length;
-        document.getElementById('statSubjects').textContent = subjectsCache.length;
-        document.getElementById('statAnswers').textContent = answersCache.length;
-        document.getElementById('statTestAnswers').textContent = testAnswersCache.length;
-
-        const usersList = document.getElementById('usersList');
-        if (usersCache.length === 0) {
-            usersList.innerHTML = '<div class="empty-state">Нет пользователей в GDZ</div>';
-        } else {
-            usersList.innerHTML = usersCache.map(u => `
-                <div class="list-item">
-                    <div class="list-item-head">
-                        <div>
-                            <div class="list-item-title">
-                                ${u.role === 'admin' ? '👑' : u.role === 'employee' ? '🛡️' : '👤'}
-                                ${escapeHtml(u.displayName || u.globalId || u.id)}
-                            </div>
-                            <div class="list-item-meta">
-                                Global ID: ${escapeHtml(u.globalId || u.id)}<br>
-                                Роль: ${escapeHtml(u.role || 'user')}<br>
-                                Подозрительный: ${u.suspicious ? '⚠️ да' : '✅ нет'}<br>
-                                Последний вход: ${formatTime(u.lastLogin)}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        await loadReadLists();
-    }
-
-    async function loadReadLists() {
-        const ansSnap = await db.collection('GDZ').doc('answer').collection('list').get();
-        const ansList = document.getElementById('answersReadList');
-        if (ansSnap.empty) {
-            ansList.innerHTML = '<div class="empty-state">Нет ответов</div>';
-        } else {
-            ansList.innerHTML = ansSnap.docs.map(d => {
-                const a = d.data();
-                const subj = subjectsCache.find(s => s.id === a.subjectId);
-                const reads = a.read || [];
-                return `
-                    <div class="list-item">
-                        <div class="list-item-title">${subj?.icon || ''} ${escapeHtml(a.number || '')} — ${escapeHtml(subj?.name || '—')}</div>
-                        <div class="list-item-meta">Прочитано: ${reads.length}</div>
-                        <div class="read-chips">
-                            ${reads.length ? reads.map(r => `<span class="read-chip">${escapeHtml(r.displayName || r.globalId || '—')}</span>`).join('') : '<span class="list-item-meta">Никто не читал</span>'}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        const tSnap = await db.collection('GDZ').doc('tests_answer').collection('list').get();
-        const tList = document.getElementById('testAnswersReadList');
-        if (tSnap.empty) {
-            tList.innerHTML = '<div class="empty-state">Нет ответов</div>';
-        } else {
-            tList.innerHTML = tSnap.docs.map(d => {
-                const a = d.data();
-                const subj = subjectsCache.find(s => s.id === a.subjectId);
-                const reads = a.read || [];
-                return `
-                    <div class="list-item">
-                        <div class="list-item-title">${subj?.icon || ''} ${escapeHtml(a.title || '')}</div>
-                        <div class="list-item-meta">Прочитано: ${reads.length}</div>
-                        <div class="read-chips">
-                            ${reads.length ? reads.map(r => `<span class="read-chip">${escapeHtml(r.displayName || r.globalId || '—')}</span>`).join('') : '<span class="list-item-meta">Никто не читал</span>'}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        const nSnap = await db.collection('GDZ').doc('news').collection('list').get();
-        const nList = document.getElementById('newsReadList');
-        if (nSnap.empty) {
-            nList.innerHTML = '<div class="empty-state">Нет новостей</div>';
-        } else {
-            nList.innerHTML = nSnap.docs.map(d => {
-                const n = d.data();
-                const reads = n.read || [];
-                return `
-                    <div class="list-item">
-                        <div class="list-item-title">📰 ${escapeHtml(n.title || '')}</div>
-                        <div class="list-item-meta">Прочитано: ${reads.length}</div>
-                        <div class="read-chips">
-                            ${reads.length ? reads.map(r => `<span class="read-chip">${escapeHtml(r.displayName || r.globalId || '—')}</span>`).join('') : '<span class="list-item-meta">Никто не читал</span>'}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-    }
-
-    // ==================== КОНТРОЛЬ ====================
-    async function loadControl() {
-        await loadTestEditor();
-        await loadSuspicious();
-        await loadBarrierStatus();
-    }
-
-    async function loadTestEditor() {
-        const doc = await db.collection('GDZ').doc('file').get();
-        const tests = (doc.exists && doc.data().tests) || [];
-
-        const container = document.getElementById('testEditor');
-        const questions = [0, 1, 2].map(i => tests[i] || { question: '', options: ['', '', '', ''], correct: 0 });
-
-        container.innerHTML = questions.map((q, qi) => `
-            <div class="test-question">
-                <div class="field">
-                    <label>Вопрос ${qi + 1}</label>
-                    <input type="text" id="q${qi}" value="${escapeHtml(q.question || '')}" placeholder="Текст вопроса">
-                </div>
-                ${[0, 1, 2, 3].map(oi => `
-                    <div class="test-option-row">
-                        <input type="radio" name="correct${qi}" value="${oi}" ${q.correct === oi ? 'checked' : ''}>
-                        <input type="text" id="q${qi}o${oi}" value="${escapeHtml(q.options?.[oi] || '')}" placeholder="Вариант ${oi + 1}">
-                    </div>
-                `).join('')}
-                <div class="hint">Выбери правильный вариант радиокнопкой слева</div>
+  const usersList=document.getElementById('usersList');
+  if(usersCache.length===0){
+    usersList.innerHTML='<div class="empty-state">Нет пользователей в GDZ</div>';
+  }else{
+    usersList.innerHTML=usersCache.map(u=>`
+      <div class="list-item">
+        <div class="list-item-head">
+          <div>
+            <div class="list-item-title">
+              ${u.role==='admin'?'👑':u.role==='employee'?'🛡️':'👤'}
+              ${escapeHtml(u.displayName||u.globalId||u.id)}
             </div>
-        `).join('');
-    }
-
-    async function saveTest() {
-        const tests = [];
-        for (let qi = 0; qi < 3; qi++) {
-            const question = document.getElementById(`q${qi}`).value.trim();
-            const options = [0, 1, 2, 3].map(oi => document.getElementById(`q${qi}o${oi}`).value.trim());
-            const correctEl = document.querySelector(`input[name="correct${qi}"]:checked`);
-            const correct = correctEl ? parseInt(correctEl.value) : 0;
-
-            if (!question || options.some(o => !o)) {
-                return toast(`Заполни вопрос ${qi + 1} полностью`, true);
-            }
-            tests.push({ question, options, correct });
-        }
-
-        try {
-            await db.collection('GDZ').doc('file').set({ tests }, { merge: true });
-            toast('Тест сохранён');
-        } catch (e) {
-            toast('Ошибка: ' + e.message, true);
-        }
-    }
-
-    async function loadSuspicious() {
-        const snap = await db.collection('GDZ').doc('users').collection('users').get();
-        const suspicious = snap.docs
-            .map(d => ({ id: d.id, ...d.data() }))
-            .filter(u => u.suspicious === true);
-
-        const container = document.getElementById('suspiciousList');
-        if (suspicious.length === 0) {
-            container.innerHTML = '<div class="empty-state">Нет подозрительных пользователей</div>';
-            return;
-        }
-        container.innerHTML = suspicious.map(u => `
-            <div class="list-item">
-                <div class="list-item-head">
-                    <div>
-                        <div class="list-item-title">⚠️ ${escapeHtml(u.globalId || u.id)}</div>
-                        <div class="list-item-meta">
-                            Имя: ${escapeHtml(u.displayName || '—')}<br>
-                            Роль: ${escapeHtml(u.role || 'user')}<br>
-                            Первый вход: ${formatTime(u.firstLogin)}<br>
-                            Последний: ${formatTime(u.lastLogin)}
-                        </div>
-                    </div>
-                </div>
+            <div class="list-item-meta">
+              Global ID: ${escapeHtml(u.globalId||u.id)}<br>
+              Роль: ${escapeHtml(u.role||'user')}<br>
+              Последний вход: ${formatTime(u.lastSeen)}
             </div>
-        `).join('');
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+  await loadReadLists();
+}
+async function loadReadLists(){
+  const ansSnap=await db.collection('GDZ').doc('answer').collection('list').get();
+  const ansList=document.getElementById('answersReadList');
+  if(ansSnap.empty){ansList.innerHTML='<div class="empty-state">Нет ответов</div>';}
+  else{
+    ansList.innerHTML=ansSnap.docs.map(d=>{
+      const a=d.data();
+      const subj=subjectsCache.find(s=>s.id===a.subjectId);
+      const reads=a.read||[];
+      return `
+        <div class="list-item">
+          <div class="list-item-title">${subj?.icon||''} ${escapeHtml(a.number||'')} — ${escapeHtml(subj?.name||'—')}</div>
+          <div class="list-item-meta">Прочитано: ${reads.length}</div>
+          <div class="read-chips">
+            ${reads.length?reads.map(r=>`<span class="read-chip">${escapeHtml(r.displayName||r.globalId||'—')}</span>`).join(''):'<span class="list-item-meta">Никто не читал</span>'}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  const tSnap=await db.collection('GDZ').doc('tests_answer').collection('list').get();
+  const tList=document.getElementById('testAnswersReadList');
+  if(tSnap.empty){tList.innerHTML='<div class="empty-state">Нет ответов</div>';}
+  else{
+    tList.innerHTML=tSnap.docs.map(d=>{
+      const a=d.data();
+      const subj=subjectsCache.find(s=>s.id===a.subjectId);
+      const reads=a.read||[];
+      return `
+        <div class="list-item">
+          <div class="list-item-title">${subj?.icon||''} ${escapeHtml(a.title||'')}</div>
+          <div class="list-item-meta">Прочитано: ${reads.length}</div>
+          <div class="read-chips">
+            ${reads.length?reads.map(r=>`<span class="read-chip">${escapeHtml(r.displayName||r.globalId||'—')}</span>`).join(''):'<span class="list-item-meta">Никто не читал</span>'}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  const nSnap=await db.collection('GDZ').doc('news').collection('list').get();
+  const nList=document.getElementById('newsReadList');
+  if(nSnap.empty){nList.innerHTML='<div class="empty-state">Нет новостей</div>';}
+  else{
+    nList.innerHTML=nSnap.docs.map(d=>{
+      const n=d.data();
+      const reads=n.read||[];
+      return `
+        <div class="list-item">
+          <div class="list-item-title">📰 ${escapeHtml(n.title||'')}</div>
+          <div class="list-item-meta">Прочитано: ${reads.length}</div>
+          <div class="read-chips">
+            ${reads.length?reads.map(r=>`<span class="read-chip">${escapeHtml(r.displayName||r.globalId||'—')}</span>`).join(''):'<span class="list-item-meta">Никто не читал</span>'}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+/* ==================== КОНТРОЛЬ ==================== */
+async function loadControl(){
+  await loadTestEditor();
+  await loadSuspicious();
+  await loadBarrierStatus();
+}
+async function loadTestEditor(){
+  const doc=await db.collection('GDZ').doc('file').get();
+  const tests=(doc.exists&&doc.data().tests)||[];
+  const container=document.getElementById('testEditor');
+  const questions=[0,1,2].map(i=>tests[i]||{question:'',options:['','','',''],correct:0});
+  container.innerHTML=questions.map((q,qi)=>`
+    <div class="test-question">
+      <div class="field">
+        <label>Вопрос ${qi+1}</label>
+        <input type="text" id="q${qi}" value="${escapeHtml(q.question||'')}" placeholder="Текст вопроса">
+      </div>
+      ${[0,1,2,3].map(oi=>`
+        <div class="test-option-row">
+          <input type="radio" name="correct${qi}" value="${oi}" ${q.correct===oi?'checked':''}>
+          <input type="text" id="q${qi}o${oi}" value="${escapeHtml(q.options?.[oi]||'')}" placeholder="Вариант ${oi+1}">
+        </div>
+      `).join('')}
+      <div class="hint">Выбери правильный вариант радиокнопкой слева</div>
+    </div>
+  `).join('');
+}
+async function saveTest(){
+  const tests=[];
+  for(let qi=0;qi<3;qi++){
+    const question=document.getElementById(`q${qi}`).value.trim();
+    const options=[0,1,2,3].map(oi=>document.getElementById(`q${qi}o${oi}`).value.trim());
+    const correctEl=document.querySelector(`input[name="correct${qi}"]:checked`);
+    const correct=correctEl?parseInt(correctEl.value):0;
+    if(!question||options.some(o=>!o)){
+      return toast(`Заполни вопрос ${qi+1} полностью`,true);
     }
+    tests.push({question,options,correct});
+  }
+  try{
+    await db.collection('GDZ').doc('file').set({tests},{merge:true});
+    toast('Тест сохранён');
+  }catch(e){toast('Ошибка: '+e.message,true);}
+}
+async function loadSuspicious(){
+  const snap=await db.collection('GDZ').doc('users').collection('users').get();
+  const suspicious=snap.docs.map(d=>({id:d.id,...d.data()})).filter(u=>u.suspicious===true);
+  const container=document.getElementById('suspiciousList');
+  if(suspicious.length===0){
+    container.innerHTML='<div class="empty-state">Нет подозрительных пользователей</div>';
+    return;
+  }
+  container.innerHTML=suspicious.map(u=>`
+    <div class="list-item">
+      <div class="list-item-head">
+        <div>
+          <div class="list-item-title">⚠️ ${escapeHtml(u.globalId||u.id)}</div>
+          <div class="list-item-meta">
+            Имя: ${escapeHtml(u.displayName||'—')}<br>
+            Роль: ${escapeHtml(u.role||'user')}<br>
+            Последний: ${formatTime(u.lastSeen)}
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+async function loadBarrierStatus(){
+  const doc=await db.collection('GDZ').doc('file').get();
+  const data=doc.exists?doc.data():{};
+  const box=document.getElementById('barrierBox');
+  const status=document.getElementById('barrierStatus');
+  if(data.barrier==='on'){
+    box.className='barrier-box on';
+    status.className='barrier-status on';
+    status.innerHTML=`<span>🚧</span><span>Барьер ВКЛЮЧЁН ${data.barrierTarget?'→ '+escapeHtml(data.barrierTarget):'(для всех)'}</span>`;
+  }else{
+    box.className='barrier-box off';
+    status.className='barrier-status off';
+    status.innerHTML=`<span>✅</span><span>Барьер выключен</span>`;
+  }
+}
+async function enableBarrier(){
+  if(!confirm('Включить режим Барьер? Через 5 секунд все будут перенаправлены на красный экран.'))return;
+  isWritingBarrier=true;
+  if(barrierCheckInterval){clearInterval(barrierCheckInterval);barrierCheckInterval=null;}
+  const target=document.getElementById('barrierTarget').value.trim()||null;
+  const btn=event?.target;
+  if(btn){btn.disabled=true;btn.textContent='⏳ Запись...';}
+  try{
+    await db.collection('GDZ').doc('file').set({barrier:'on',barrierTarget:target},{merge:true});
+    toast('✅ Барьер включён. Редирект через 5 сек...');
+    loadBarrierStatus();
+    if(btn){btn.textContent='🚧 Барьер включён';}
+    setTimeout(()=>{
+      sessionStorage.setItem('barrier_back','admin.html');
+      window.location.replace('barrier.html');
+    },5000);
+  }catch(e){
+    toast('Ошибка: '+e.message,true);
+    isWritingBarrier=false;
+    barrierCheckInterval=setInterval(checkBarrier,1000);
+    if(btn){btn.disabled=false;btn.textContent='🚧 Включить барьер';}
+  }
+}
 
-    async function loadBarrierStatus() {
-        const doc = await db.collection('GDZ').doc('file').get();
-        const data = doc.exists ? doc.data() : {};
-        const box = document.getElementById('barrierBox');
-        const status = document.getElementById('barrierStatus');
-
-        if (data.barrier === 'on') {
-            box.className = 'barrier-box on';
-            status.className = 'barrier-status on';
-            status.innerHTML = `<span>🚧</span><span>Барьер ВКЛЮЧЁН ${data.barrierTarget ? '→ ' + escapeHtml(data.barrierTarget) : '(для всех)'}</span>`;
-        } else {
-            box.className = 'barrier-box off';
-            status.className = 'barrier-status off';
-            status.innerHTML = `<span>✅</span><span>Барьер выключен</span>`;
-        }
-    }
-
-    // ==================== ВКЛЮЧИТЬ БАРЬЕР (с защитой от гонки) ====================
-    async function enableBarrier() {
-        if (!confirm('Включить режим Барьер? Через 5 секунд все (включая вас) будут перенаправлены на красный экран.')) return;
-
-        // 1. Защита: checkBarrier не сработает, пока пишем
-        isWritingBarrier = true;
-
-        // 2. Стопаем авто-проверку, чтобы не выкинуло раньше времени
-        if (barrierCheckInterval) {
-            clearInterval(barrierCheckInterval);
-            barrierCheckInterval = null;
-        }
-
-        const target = document.getElementById('barrierTarget').value.trim() || null;
-
-        // 3. Меняем UI кнопки, чтобы было видно, что процесс идёт
-        const btn = event?.target;
-        if (btn) {
-            btn.disabled = true;
-            btn.textContent = '⏳ Запись...';
-        }
-
-        try {
-            // 4. Пишем в Firebase и ЖДЁМ завершения
-            await db.collection('GDZ').doc('file').set({
-                barrier: 'on',
-                barrierTarget: target
-            }, { merge: true });
-
-            console.log('✅ Барьер записан в Firebase');
-            toast('✅ Барьер включён. Редирект через 5 сек...');
-            loadBarrierStatus();
-
-            // 5. Обновляем кнопку
-            if (btn) {
-                btn.textContent = '🚧 Барьер включён';
-                btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-            }
-
-            // 6. Таймер 5 секунд — чтобы ты успел посмотреть в Firebase Console
-            let secondsLeft = 5;
-            const countdownEl = document.createElement('div');
-            countdownEl.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(239,68,68,0.95);color:#fff;padding:12px 24px;border-radius:12px;font-weight:700;font-size:1rem;z-index:9999;box-shadow:0 10px 30px rgba(239,68,68,0.5);';
-            countdownEl.textContent = `🚧 Редирект через ${secondsLeft} сек...`;
-            document.body.appendChild(countdownEl);
-
-            const countdownInterval = setInterval(() => {
-                secondsLeft--;
-                if (secondsLeft > 0) {
-                    countdownEl.textContent = `🚧 Редирект через ${secondsLeft} сек...`;
-                } else {
-                    clearInterval(countdownInterval);
-                    countdownEl.textContent = '🚧 Переход...';
-                }
-            }, 1000);
-
-            // 7. Через 5 секунд — редирект
-            setTimeout(() => {
-                sessionStorage.setItem('barrier_back', 'admin.html');
-                window.location.replace('barrier.html');
-            }, 5000);
-
-        } catch (e) {
-            console.error('❌ Ошибка записи барьера:', e);
-            toast('Ошибка: ' + e.message, true);
-            isWritingBarrier = false;
-
-            // Перезапускаем проверку
-            barrierCheckInterval = setInterval(checkBarrier, 1000);
-
-            if (btn) {
-                btn.disabled = false;
-                btn.textContent = '🚧 Включить барьер';
-            }
-        }
-    }
-
-    // ==================== СТАРТ ====================
-    (async () => {
-        const ok = await checkAccess();
-        if (!ok) return;
-
-        document.getElementById('loadingScreen').classList.add('hidden');
-        document.getElementById('adminApp').classList.remove('hidden');
-
-        await loadSubjects();
-        await loadAnswers();
-        await loadTestAnswers();
-        await loadNews();
-        await loadPrep();
-
-        barrierCheckInterval = setInterval(checkBarrier, 1000);
-        checkBarrier();
-    })();
+/* ==================== СТАРТ ==================== */
+(async()=>{
+  const ok=await checkAccess();
+  if(!ok)return;
+  document.getElementById('loadingScreen').classList.add('hidden');
+  document.getElementById('adminApp').classList.remove('hidden');
+  await loadSubjects();
+  await loadAnswers();
+  await loadTestAnswers();
+  await loadNews();
+  await loadPrep();
+  listenPending();
+  barrierCheckInterval=setInterval(checkBarrier,1000);
+  checkBarrier();
+})();
 </script>
 </body>
 </html>
