@@ -227,61 +227,69 @@ function safeRedirect(url){
   window.location.replace(url);
 }
 
-/* ==================== ПРОВЕРКА БАРЬЕРА ==================== */
-async function checkBarrier(globalId){
-  try{
-    const doc=await db.collection('GDZ').doc('file').get();
-    if(!doc.exists)return false;
-    const d=doc.data();
-    if(d.barrier!=='on')return false;
-    const target=d.barrierTarget;
-    if(!target||target===globalId){
-      sessionStorage.setItem('barrier_back','staff.html');
-      sessionStorage.setItem('gdz_redirect_done','1');
-      safeRedirect('barrier.html');
-      return true;
-    }
-  }catch(e){}
-  return false;
-}
+/* ==================== ПРОВЕРКА СЕССИИ (как в admin.html) ==================== */
+auth.onAuthStateChanged(async function(user){
+  if(authResolved)return;
+  authResolved=true;
 
-/* ==================== ВХОД → СРАЗУ НА gdz.html ==================== */
-async function handleUserLogin(user){
+  if(!user){
+    hideLoading();
+    showLoginScreen();
+    return;
+  }
+
+  // Сессия есть — проверяем Global ID и роль
   try{
-    const ud=await db.collection('users').doc(user.uid).get();
-    if(!ud.exists){
-      showMessage('Документ пользователя не найден',true);
+    const userDoc=await db.collection('users').doc(user.uid).get();
+    if(!userDoc.exists){
+      // Нет профиля — показываем форму, но не зацикливаемся
+      hideLoading();
       showLoginScreen();
       return;
     }
-    const u=ud.data();
-    const globalId=u.globalId||'';
+    const globalId=userDoc.data().globalId||'';
     if(!globalId){
-      showMessage('Global ID не найден',true);
+      hideLoading();
       showLoginScreen();
       return;
     }
 
-    if(await checkBarrier(globalId))return;
+    // Проверяем барьер
+    const barrierDoc=await db.collection('GDZ').doc('file').get();
+    if(barrierDoc.exists){
+      const bd=barrierDoc.data();
+      if(bd.barrier==='on'){
+        const target=bd.barrierTarget;
+        if(!target||target===globalId){
+          sessionStorage.setItem('barrier_back','staff.html');
+          safeRedirect('barrier.html');
+          return;
+        }
+      }
+    }
 
+    // Сохраняем в sessionStorage
+    sessionStorage.setItem('gdz_globalId',globalId);
+    sessionStorage.setItem('gdz_redirect_done','1');
+
+    // Обновляем онлайн
     db.collection('GDZ').doc('users').collection('users').doc(globalId).set({
       globalId:globalId,
-      displayName:u.displayName||u.nickname||u.fullName||globalId,
+      displayName:userDoc.data().displayName||userDoc.data().nickname||userDoc.data().fullName||globalId,
       online:true,
       lastSeen:Date.now()
     },{merge:true}).catch(function(){});
 
-    sessionStorage.setItem('gdz_globalId',globalId);
-    sessionStorage.setItem('gdz_redirect_done','1');
-
+    // Всегда идём в gdz.html — он сам разберётся с ролью
     safeRedirect('gdz.html');
 
   }catch(e){
     console.error(e);
-    showMessage('Ошибка: '+e.message,true);
+    hideLoading();
     showLoginScreen();
+    showMessage('Ошибка: '+e.message,true);
   }
-}
+});
 
 /* ==================== ВХОД ==================== */
 window.login=async function(){
@@ -307,8 +315,9 @@ window.login=async function(){
       email=q.docs[0].data().email;
     }
 
-    const userCred=await auth.signInWithEmailAndPassword(email,password);
-    await handleUserLogin(userCred.user);
+    await auth.signInWithEmailAndPassword(email,password);
+    // Дальше сработает onAuthStateChanged → редирект в gdz.html
+    // Ничего не делаем здесь.
 
   }catch(e){
     console.error(e);
@@ -332,34 +341,6 @@ window.loginAsGuest=function(){
   sessionStorage.setItem('gdz_redirect_done','1');
   safeRedirect('gdz.html?guest=1');
 };
-
-/* ==================== АВТОВХОД ==================== */
-auth.onAuthStateChanged(async function(user){
-  if(authResolved)return;
-  authResolved=true;
-
-  hideLoading();
-
-  if(user){
-    if(sessionStorage.getItem('gdz_redirect_done')==='1'){
-      sessionStorage.removeItem('gdz_redirect_done');
-      showLoginScreen();
-      return;
-    }
-    await handleUserLogin(user);
-    return;
-  }
-
-  showLoginScreen();
-});
-
-setTimeout(function(){
-  if(!authResolved){
-    authResolved=true;
-    hideLoading();
-    showLoginScreen();
-  }
-},3000);
 </script>
 </body>
 </html>
