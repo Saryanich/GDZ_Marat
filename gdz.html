@@ -40,7 +40,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
   100%{background-position:100% 100%}
 }
 
-/* ================= SPLASH ================= */
+/* SPLASH */
 #splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:1.5rem;
   transition:opacity .6s var(--ease),visibility .6s var(--ease)}
@@ -74,7 +74,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 
 .layout{display:flex;min-height:100vh}
 
-/* ================= SIDEBAR ================= */
+/* SIDEBAR */
 .sidebar{display:none;width:var(--sidebar-w);flex-shrink:0;
   background:rgba(5,14,8,0.88);backdrop-filter:var(--blur);
   border-right:1px solid var(--border);padding:1.5rem 1rem;
@@ -140,7 +140,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 .sidebar-logout-btn:hover{background:rgba(239,68,68,0.12);
   border-color:rgba(239,68,68,0.4);color:#f87171;transform:translateY(-1px)}
 
-/* ================= MOBILE HEADER ================= */
+/* MOBILE HEADER */
 .mobile-header{display:flex;position:sticky;top:0;z-index:100;
   background:rgba(5,14,8,0.85);backdrop-filter:var(--blur);
   border-bottom:1px solid var(--border);
@@ -168,7 +168,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 .mobile-chip.guest{background:rgba(245,158,11,0.12);color:var(--warning);
   border-color:rgba(245,158,11,0.35)}
 
-/* ================= DRAWER ================= */
+/* DRAWER */
 .drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);
   backdrop-filter:blur(4px);z-index:500;opacity:0;visibility:hidden;
   transition:opacity .35s var(--ease-soft),visibility .35s}
@@ -233,7 +233,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 .drawer-user.guest{background:rgba(245,158,11,0.12);color:var(--warning);
   border-color:rgba(245,158,11,0.35)}
 
-/* ================= MAIN ================= */
+/* MAIN */
 .main{flex:1;max-width:100%;min-width:0;padding:1.5rem 1.25rem 4rem}
 .section{display:none}
 .section.active{display:block;animation:sectionEnter .5s var(--ease)}
@@ -283,10 +283,26 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 .card:hover::before{opacity:1}
 .card:active{transform:translateY(-2px) scale(.99)}
 .card-head{margin-bottom:.6rem}
-.card-title{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:8px;line-height:1.35}
+.card-title{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:8px;line-height:1.35;flex-wrap:wrap}
 .card-meta{font-size:.75rem;color:var(--text-3);margin-top:4px}
 .card-body{font-size:.88rem;color:var(--text-2);line-height:1.6;
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* Несколько номеров в ответе */
+.numbers-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:.2rem .55rem;border-radius:8px;
+  background:rgba(52,211,153,0.15);
+  border:1px solid rgba(52,211,153,0.35);
+  color:var(--accent-bright);
+  font-size:.72rem;font-weight:700;
+  letter-spacing:.3px;
+}
+.numbers-badge.multi{
+  background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(245,158,11,0.08));
+  border-color:rgba(245,158,11,0.4);
+  color:var(--warning);
+}
 
 .subject-card{background:var(--card);border:1px solid var(--border);
   border-radius:var(--radius);padding:1.5rem 1rem;text-align:center;
@@ -360,17 +376,37 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
   transition:all .3s var(--ease-soft)}
 .search-wrap:focus-within::before{opacity:1;transform:translateY(-50%) scale(1.1)}
 
+/* MEDIA */
 .media-block{margin:1rem 0;border-radius:var(--radius-sm);overflow:hidden;
   border:1px solid var(--border);background:rgba(0,0,0,0.4);
   animation:fadeInUp .5s var(--ease) both}
 .media-block iframe{width:100%;border:none;display:block}
-.media-block.photo iframe{height:320px}
 .media-block.site iframe{height:480px}
+.media-block.photo{
+  height:auto;background:transparent;border:none;border-radius:var(--radius-sm);
+  overflow:hidden;max-width:600px;margin-left:auto;margin-right:auto;
+}
+.media-block.photo img{
+  width:100%;height:auto;display:block;border-radius:var(--radius-sm);
+  border:1px solid var(--border);
+  transition:transform .4s var(--ease);
+  cursor:zoom-in;
+}
+.media-block.photo img:hover{
+  transform:scale(1.02);
+  box-shadow:0 12px 30px -8px rgba(16,185,129,0.4);
+}
+.media-block.photo .media-label{
+  border-radius:var(--radius-sm) var(--radius-sm) 0 0;
+  border:1px solid var(--border);border-bottom:none;
+  background:rgba(0,0,0,0.5);display:inline-block;
+  padding:4px 10px;margin-bottom:4px;
+}
 .media-label{font-size:.72rem;color:var(--text-3);padding:8px 12px;
   background:rgba(0,0,0,0.4);border-bottom:1px solid var(--border);
   display:flex;gap:6px;align-items:center}
 
-/* ================= SCHEDULE ================= */
+/* SCHEDULE */
 .schedule-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
 .schedule-day{background:var(--card);border:1px solid var(--border);
   border-radius:var(--radius-sm);padding:1.1rem;
@@ -386,22 +422,45 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 .schedule-day:nth-child(7){animation-delay:.35s}
 .schedule-day:hover{border-color:var(--border-hover);transform:translateY(-3px);
   box-shadow:0 20px 40px -15px rgba(16,185,129,0.3)}
+.schedule-day.today{border-color:var(--accent-bright);
+  background:rgba(52,211,153,0.08);
+  box-shadow:0 0 0 2px rgba(52,211,153,0.2),0 20px 40px -15px rgba(16,185,129,0.3)}
 .schedule-day-title{font-weight:700;color:var(--accent-bright);font-size:.85rem;
   text-transform:uppercase;letter-spacing:1.2px;margin-bottom:.75rem;
   padding-bottom:.6rem;border-bottom:1px solid var(--border);
   display:flex;align-items:center;gap:8px}
 .schedule-day-title::before{content:'📅';font-size:1rem;opacity:.7}
-.schedule-lesson{font-size:.88rem;color:var(--text-2);padding:7px 0;
-  border-bottom:1px dashed rgba(52,211,153,0.1);display:flex;gap:10px;
-  transition:all .2s var(--ease-soft);
-  border-radius:6px;padding-left:6px;padding-right:6px}
-.schedule-lesson:hover{background:rgba(52,211,153,0.06);
+.schedule-day-title .today-label{
+  background:var(--accent-bright);color:#050e08;
+  font-size:.65rem;padding:2px 8px;border-radius:8px;
+  margin-left:auto;font-weight:800;
+}
+.schedule-lesson{font-size:.88rem;color:var(--text-2);padding:8px 10px;
+  border-bottom:1px dashed rgba(52,211,153,0.1);
+  display:flex;gap:10px;align-items:center;
+  transition:all .25s var(--ease-soft);
+  border-radius:8px;cursor:pointer}
+.schedule-lesson:hover{background:rgba(52,211,153,0.1);
   transform:translateX(4px);color:var(--text)}
 .schedule-lesson:last-child{border-bottom:none}
 .schedule-lesson .num{color:var(--accent-bright);font-weight:700;min-width:22px;
-  font-variant-numeric:tabular-nums}
+  font-variant-numeric:tabular-nums;flex-shrink:0}
+.schedule-lesson .lesson-name{flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.schedule-lesson .lesson-hw-badge{
+  font-size:.68rem;padding:2px 8px;border-radius:8px;
+  background:rgba(52,211,153,0.15);
+  color:var(--accent-bright);
+  font-weight:700;flex-shrink:0;
+}
+.schedule-lesson .lesson-hw-badge.control{
+  background:rgba(239,68,68,0.15);color:#f87171;
+}
+.schedule-lesson:hover .lesson-hw-badge{
+  background:var(--accent-bright);color:#050e08;
+}
 
-/* ================= PREP ================= */
+/* PREP */
 .prep-card{background:var(--card);border:1px solid var(--border);
   border-radius:var(--radius);overflow:hidden;margin-bottom:1rem;
   transition:all .4s var(--ease);
@@ -429,7 +488,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 .empty::before{content:'📭';display:block;font-size:3rem;margin-bottom:1rem;
   opacity:.5;animation:emojiFloat 3s ease-in-out infinite}
 
-/* ================= FULLSCREEN ================= */
+/* FULLSCREEN */
 .fullscreen-view{position:fixed;inset:0;z-index:1000;
   background:var(--bg);display:none;
   flex-direction:column;overflow-y:auto;
@@ -485,7 +544,20 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 .fs-btn-secondary:hover{background:rgba(255,255,255,0.08);color:var(--text);
   transform:translateY(-2px)}
 
-/* ================= GLOBI ================= */
+/* SUBJECT DETAIL VIEW */
+.subject-detail-section{margin-bottom:1.5rem;
+  animation:fadeInUp .4s var(--ease) both}
+.subject-detail-section:nth-child(2){animation-delay:.05s}
+.subject-detail-section:nth-child(3){animation-delay:.1s}
+.subject-detail-title{font-size:1.05rem;font-weight:700;color:var(--accent-bright);
+  margin-bottom:.85rem;display:flex;align-items:center;gap:8px;
+  padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.subject-detail-title .count{
+  background:rgba(52,211,153,0.15);color:var(--accent-bright);
+  font-size:.72rem;padding:2px 10px;border-radius:999px;
+  margin-left:auto;font-weight:700}
+
+/* GLOBI */
 .globi-wrap{display:flex;flex-direction:column;height:calc(100vh - 240px);min-height:400px}
 .globi-chat{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;
   gap:.75rem;background:var(--card);border:1px solid var(--border);
@@ -572,7 +644,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
   box-shadow:0 6px 14px -4px rgba(16,185,129,0.3)}
 .quick-action:active{transform:translateY(0) scale(0.98)}
 
-/* ================= GUEST BANNER ================= */
+/* GUEST BANNER */
 .guest-banner{background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.04));
   border:1px solid rgba(245,158,11,0.3);border-radius:var(--radius);
   padding:1.1rem 1.25rem;margin-bottom:1.25rem;display:flex;
@@ -590,7 +662,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 .btn-small-global:hover{transform:translateY(-2px) scale(1.03);
   box-shadow:0 10px 22px -4px rgba(16,185,129,0.5)}
 
-/* ================= TOAST ================= */
+/* TOAST */
 .toast{position:fixed;bottom:24px;left:50%;
   transform:translateX(-50%) translateY(120px) scale(.9);
   background:linear-gradient(135deg,var(--accent),#059669);color:#fff;
@@ -601,7 +673,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
   box-shadow:0 15px 40px -10px rgba(16,185,129,0.6)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
 
-/* ================= АДАПТИВ ================= */
+/* АДАПТИВ */
 @media(min-width:900px){
   .mobile-header{display:none}
   .sidebar{display:flex}
@@ -616,6 +688,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
   .sidebar{display:none}
   .main{padding:1.25rem 1rem 2rem}
   .globi-wrap{height:calc(100vh - 300px);min-height:350px}
+  .media-block.photo{max-width:100%;margin-left:0;margin-right:0}
 }
 @media(max-width:360px){
   .mobile-title{font-size:.9rem}
@@ -664,7 +737,6 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 <div id="app">
   <div class="layout">
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="sidebar-brand">
         <img src="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg" alt="logo">
@@ -712,7 +784,6 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
       </div>
     </aside>
 
-    <!-- RIGHT -->
     <div style="flex:1;min-width:0;display:flex;flex-direction:column">
 
       <div class="mobile-header" id="mobileHeader">
@@ -765,6 +836,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 
         <div class="section" id="sec-schedule">
           <div class="section-title"><span class="emoji">📅</span>Расписание</div>
+          <div class="page-hint">Нажми на урок — покажу ДЗ и контрольные по предмету</div>
           <div id="scheduleContent"></div>
         </div>
 
@@ -782,7 +854,6 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
   </div>
 </div>
 
-<!-- DRAWER -->
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
 <aside class="drawer" id="drawer">
   <div class="drawer-header">
@@ -832,7 +903,6 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
   </div>
 </aside>
 
-<!-- FULLSCREEN -->
 <div class="fullscreen-view" id="fullscreenView">
   <div class="fs-header">
     <button class="fs-back" onclick="closeFullscreen()">←</button>
@@ -867,6 +937,8 @@ const DAY_NAMES_RU={'monday':'Понедельник','tuesday':'Вторник'
   'thursday':'Четверг','friday':'Пятница','saturday':'Суббота','sunday':'Воскресенье',
   'понедельник':'Понедельник','вторник':'Вторник','среда':'Среда','четверг':'Четверг',
   'пятница':'Пятница','суббота':'Суббота','воскресенье':'Воскресенье'};
+const DAY_NAMES_RU_SHORT={'monday':'Пн','tuesday':'Вт','wednesday':'Ср',
+  'thursday':'Чт','friday':'Пт','saturday':'Сб','sunday':'Вс'};
 const DAY_KEYS_EN=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 const DAY_ORDER={
   'понедельник':1,'monday':1,
@@ -890,6 +962,24 @@ const esc=(t)=>{if(!t)return'';const d=document.createElement('div');d.textConte
 function toast(text){const el=document.getElementById('toast');el.textContent=text;
   el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
 
+/* Московское время */
+function getMoscowDate(){
+  const now=new Date();
+  const utc=now.getTime()+(now.getTimezoneOffset()*60000);
+  return new Date(utc+(3*3600000)); // MSK = UTC+3
+}
+function formatMoscowDate(){
+  const d=getMoscowDate();
+  const months=['января','февраля','марта','апреля','мая','июня',
+    'июля','августа','сентября','октября','ноября','декабря'];
+  const days=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}, ${days[d.getDay()]}, ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} МСК`;
+}
+function getMoscowDayKey(){
+  const d=getMoscowDate();
+  return DAY_KEYS_EN[d.getDay()]; // monday..sunday
+}
+
 function richText(text){
   if(!text)return '';
   const re=/\{(photo|site):([^}]+)\}/g;
@@ -898,8 +988,18 @@ function richText(text){
     const before=text.substring(last,m.index);
     if(before.trim())out+=`<div style="white-space:pre-wrap">${esc(before)}</div>`;
     const type=m[1],url=m[2].trim();
-    const label=type==='photo'?'🖼 Фото':'🌐 Сайт';
-    out+=`<div class="media-block ${type}"><div class="media-label">${label}: ${esc(url.substring(0,60))}${url.length>60?'...':''}</div><iframe src="${esc(url)}" loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe></div>`;
+
+    if(type==='photo'){
+      out+=`<div class="media-block photo">
+        <div class="media-label">🖼 Фото</div>
+        <img src="${esc(url)}" loading="lazy" alt="Фото" onclick="window.open('${esc(url)}','_blank')" onerror="this.parentElement.innerHTML='<div style=&quot;padding:1rem;text-align:center;color:#94a3b8;font-size:.85rem&quot;>⚠️ Не удалось загрузить фото</div>'">
+      </div>`;
+    }else{
+      out+=`<div class="media-block site">
+        <div class="media-label">🌐 Сайт: ${esc(url.substring(0,60))}${url.length>60?'...':''}</div>
+        <iframe src="${esc(url)}" loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
+      </div>`;
+    }
     last=re.lastIndex;
   }
   const tail=text.substring(last);
@@ -909,6 +1009,38 @@ function richText(text){
 function plainPreview(text,len=160){
   if(!text)return '';
   return text.replace(/\{(photo|site):[^}]+\}/g,' [медиа] ').substring(0,len);
+}
+
+/* Разбор номеров из строки "1, 2, 3" или "1-5" или "5" */
+function parseNumbers(numStr){
+  if(!numStr)return [];
+  const s=String(numStr).trim();
+  // Поддержка: "1,2,3" | "1, 2, 3" | "1-5" | "1 - 5" | "1,3-5,7"
+  const parts=s.split(',').map(p=>p.trim()).filter(Boolean);
+  const result=[];
+  for(const p of parts){
+    const rangeMatch=p.match(/^(\d+)\s*[-–—]\s*(\d+)$/);
+    if(rangeMatch){
+      const a=parseInt(rangeMatch[1]);
+      const b=parseInt(rangeMatch[2]);
+      if(!isNaN(a)&&!isNaN(b)){
+        for(let i=Math.min(a,b);i<=Math.max(a,b);i++)result.push(i);
+        continue;
+      }
+    }
+    if(/^\d+$/.test(p))result.push(parseInt(p));
+    else result.push(p); // текстовый номер типа "№5а"
+  }
+  return result;
+}
+function formatNumbers(numStr){
+  if(!numStr)return '';
+  const nums=parseNumbers(numStr);
+  if(nums.length<=1)return `№${numStr}`;
+  return `№${nums.join(', ')}`;
+}
+function isMultiNumber(numStr){
+  return parseNumbers(numStr).length>1;
 }
 
 /* ==================== БАРЬЕР ==================== */
@@ -1036,7 +1168,7 @@ function renderChip(){
 /* ==================== ГЛАВНАЯ ==================== */
 function renderHome(){
   const greet=document.getElementById('homeGreeting');
-  const h=new Date().getHours();
+  const h=getMoscowDate().getHours();
   const gr=h<6?'Доброй ночи':h<12?'Доброе утро':h<18?'Добрый день':'Добрый вечер';
   greet.textContent=`${gr}, ${currentName}! ${isGuest?'Ты в гостевом режиме.':''}`;
 
@@ -1087,7 +1219,10 @@ function cardAnswer(a,type){
   const icon=s?.icon||'📚',name=s?.name||'—';
   let title,meta;
   if(type==='homework'){
-    title=`${icon} ${esc(a.number||'')} — ${esc(name)}`;
+    const multi=isMultiNumber(a.number);
+    const badgeClass=multi?'numbers-badge multi':'numbers-badge';
+    const badgeText=multi?formatNumbers(a.number):`№${esc(a.number||'')}`;
+    title=`${icon} <span class="${badgeClass}">${badgeText}</span> ${esc(name)}`;
     meta=a.date?`📅 ${esc(a.date)}`:'';
   }else{
     title=`${icon} ${esc(a.title||'')}`;
@@ -1130,7 +1265,7 @@ function cardNews(n){
   </div>`;
 }
 
-/* ==================== РАСПИСАНИЕ (сортировка по календарю) ==================== */
+/* ==================== РАСПИСАНИЕ ==================== */
 function renderSchedule(){
   const c=document.getElementById('scheduleContent');
   const days=Object.keys(schedule||{});
@@ -1139,36 +1274,157 @@ function renderSchedule(){
     return;
   }
 
-  // ✅ СОРТИРОВКА ПО КАЛЕНДАРЮ
   const sortedDays=[...days].sort((a,b)=>{
     const oa=DAY_ORDER[a.toLowerCase().trim()]||99;
     const ob=DAY_ORDER[b.toLowerCase().trim()]||99;
     return oa-ob;
   });
 
+  const todayKey=getMoscowDayKey();
+  const todayRu=DAY_NAMES_RU[todayKey];
+
   c.innerHTML=`<div class="schedule-grid">${sortedDays.map(day=>{
     const lessons=Array.isArray(schedule[day])?schedule[day]:[];
     const dn=DAY_NAMES_RU[day.toLowerCase()]||day;
-    return `<div class="schedule-day"><div class="schedule-day-title">${esc(dn)}</div>${
-      lessons.length
-        ? lessons.map((l,i)=>`<div class="schedule-lesson"><span class="num">${i+1}.</span><span>${esc(typeof l==='string'?l:l.name||JSON.stringify(l))}</span></div>`).join('')
-        : '<div class="schedule-lesson" style="opacity:.5">Нет уроков</div>'
-    }</div>`;
+    const isToday=(day.toLowerCase()===todayKey||day.toLowerCase()===todayRu?.toLowerCase());
+
+    return `<div class="schedule-day ${isToday?'today':''}">
+      <div class="schedule-day-title">
+        ${esc(dn)}
+        ${isToday?'<span class="today-label">СЕГОДНЯ</span>':''}
+      </div>
+      ${lessons.length
+        ? lessons.map((l,i)=>{
+            const lessonName=typeof l==='string'?l:(l.name||JSON.stringify(l));
+            const subj=subjects.find(s=>s.name.toLowerCase().trim()===lessonName.toLowerCase().trim());
+            // Есть ли ДЗ или контрольная по этому предмету
+            let hwCount=0,testCount=0;
+            if(subj){
+              hwCount=answers.filter(a=>a.subjectId===subj.id).length;
+              if(!isGuest)testCount=testsAnswers.filter(a=>a.subjectId===subj.id).length;
+            }
+            let badge='';
+            if(hwCount)badge+=`<span class="lesson-hw-badge">ДЗ</span>`;
+            if(testCount)badge+=`<span class="lesson-hw-badge control">КР</span>`;
+            return `<div class="schedule-lesson" onclick="openSubjectFromSchedule('${esc(lessonName)}','${day}')">
+              <span class="num">${i+1}.</span>
+              <span class="lesson-name">${esc(lessonName)}</span>
+              ${badge}
+            </div>`;
+          }).join('')
+        : '<div class="schedule-lesson" style="opacity:.5;cursor:default">Нет уроков</div>'
+      }
+    </div>`;
   }).join('')}</div>`;
 }
 
-/* ==================== ПОДГОТОВИШКА ==================== */
-function renderPrep(){
-  const c=document.getElementById('prepContent');
-  c.innerHTML=prep.length?prep.map(p=>`
-    <div class="prep-card">
-      ${p.photo?`<img src="${esc(p.photo)}" class="prep-photo" onerror="this.style.display='none'">`:''}
-      <div class="prep-content">
-        <div class="prep-title">${esc(p.title||'')}</div>
-        ${p.description?`<div class="prep-desc">${esc(p.description)}</div>`:''}
-        ${p.site?`<a class="prep-link" href="${esc(p.site)}" target="_blank" rel="noopener">🔗 Открыть сайт</a>`:''}
-      </div>
-    </div>`).join(''):'<div class="empty">Пока нет сайтов</div>';
+/* Клик по уроку в расписании → открывается страница предмета */
+function openSubjectFromSchedule(lessonName,dayKey){
+  // Ищем предмет
+  const subj=subjects.find(s=>s.name.toLowerCase().trim()===lessonName.toLowerCase().trim());
+  if(!subj){
+    toast(`Предмет «${lessonName}» не найден в базе`);
+    return;
+  }
+
+  // Показываем fullscreen с ДЗ и контрольными по предмету на след. 2 дня
+  showSubjectDetail(subj,dayKey);
+}
+
+function showSubjectDetail(subj,fromDay){
+  currentView={type:'subject',id:subj.id};
+
+  // Собираем ДЗ по предмету
+  const subjAnswers=answers.filter(a=>a.subjectId===subj.id);
+  const subjTests=isGuest?[]:testsAnswers.filter(a=>a.subjectId===subj.id);
+
+  // Заголовок
+  document.getElementById('fsTitle').innerHTML=`${subj.icon||'📚'} ${esc(subj.name)}`;
+
+  // Считаем даты: сегодня + 2 следующих дня с этим предметом
+  const today=getMoscowDate();
+  const dateInfo=[];
+  const todayKey=getMoscowDayKey();
+
+  for(let offset=0;offset<=3;offset++){
+    const d=new Date(today);
+    d.setDate(d.getDate()+offset);
+    const dayKey=DAY_KEYS_EN[d.getDay()];
+    const dayRu=DAY_NAMES_RU[dayKey];
+
+    // Есть ли этот предмет в расписании на этот день?
+    const lessons=getScheduleForDay(dayKey);
+    const hasSubject=lessons.some(l=>{
+      const n=typeof l==='string'?l:(l.name||'');
+      return n.toLowerCase().trim()===subj.name.toLowerCase().trim();
+    });
+
+    if(hasSubject||offset===0){
+      const dateStr=`${d.getDate()}.${String(d.getMonth()+1).padStart(2,'0')}`;
+      const dayLabel=offset===0?'Сегодня':offset===1?'Завтра':dayRu;
+      dateInfo.push({offset,dayKey,dayRu,dateStr,dayLabel,hasSubject});
+    }
+  }
+
+  const datesToShow=dateInfo.slice(0,3);
+
+  let metaHtml=datesToShow.map(d=>`<span style="display:inline-block;padding:2px 8px;margin-right:6px;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.3);border-radius:8px;font-size:.75rem;color:var(--accent-bright);font-weight:600;">${d.dayLabel} ${d.dateStr}</span>`).join('');
+  document.getElementById('fsMeta').innerHTML=metaHtml;
+
+  // Тело
+  let bodyHtml='';
+
+  // ДЗ по предмету
+  bodyHtml+=`<div class="subject-detail-section">
+    <div class="subject-detail-title">📝 Ответы ДЗ по предмету <span class="count">${subjAnswers.length}</span></div>
+    ${subjAnswers.length
+      ? subjAnswers.map(a=>{
+          const multi=isMultiNumber(a.number);
+          const badgeClass=multi?'numbers-badge multi':'numbers-badge';
+          const badgeText=multi?formatNumbers(a.number):`№${esc(a.number||'')}`;
+          return `<div class="card" style="margin-bottom:.75rem;" onclick="event.stopPropagation();openFullscreen('homework','${a.id}')">
+            <div class="card-head">
+              <div class="card-title"><span class="${badgeClass}">${badgeText}</span> ${esc(a.date||'')}</div>
+            </div>
+            <div class="card-body">${esc(plainPreview(a.text,180))}</div>
+          </div>`;
+        }).join('')
+      : '<div class="empty" style="padding:1.5rem .5rem">Нет ДЗ по этому предмету</div>'
+    }
+  </div>`;
+
+  // Контрольные по предмету
+  if(!isGuest){
+    bodyHtml+=`<div class="subject-detail-section">
+      <div class="subject-detail-title">🎯 Контрольные по предмету <span class="count">${subjTests.length}</span></div>
+      ${subjTests.length
+        ? subjTests.map(a=>`
+            <div class="card" style="margin-bottom:.75rem;" onclick="event.stopPropagation();openFullscreen('tests','${a.id}')">
+              <div class="card-head">
+                <div class="card-title">${esc(a.title||'')}</div>
+                <div class="card-meta">${a.date?'📅 '+esc(a.date):''}</div>
+              </div>
+              <div class="card-body">${esc(plainPreview(a.text,180))}</div>
+            </div>`).join('')
+        : '<div class="empty" style="padding:1.5rem .5rem">Нет контрольных по этому предмету</div>'
+      }
+    </div>`;
+  }
+
+  document.getElementById('fsBody').innerHTML=bodyHtml;
+
+  // Кнопки
+  const actionsEl=document.getElementById('fsActions');
+  actionsEl.innerHTML=`
+    <button class="fs-btn fs-btn-globi" onclick="explainSubjectWithGlobi('${subj.id}')">
+      <span>🤖</span><span>Спросить Globi о предмете</span>
+    </button>
+    <button class="fs-btn fs-btn-secondary" onclick="closeFullscreen()">
+      <span>✖</span><span>Закрыть</span>
+    </button>`;
+
+  document.getElementById('fullscreenView').classList.add('show');
+  document.body.style.overflow='hidden';
 }
 
 /* ==================== FULLSCREEN ==================== */
@@ -1197,16 +1453,19 @@ async function openFullscreen(type,id){
 
   if(type==='homework'){
     const s=subjects.find(x=>x.id===item.subjectId);
-    title=`${s?.icon||'📚'} ${item.number||''} — ${s?.name||''}`;
+    const multi=isMultiNumber(item.number);
+    const badgeClass=multi?'numbers-badge multi':'numbers-badge';
+    const badgeText=multi?formatNumbers(item.number):`№${esc(item.number||'')}`;
+    title=`${s?.icon||'📚'} <span class="${badgeClass}">${badgeText}</span> ${esc(s?.name||'')}`;
     meta=item.date?`📅 ${item.date}`:'';
   }else if(type==='tests'){
     const s=subjects.find(x=>x.id===item.subjectId);
-    title=`${s?.icon||'🎯'} ${item.title||''}`;
+    title=`${s?.icon||'🎯'} ${esc(item.title||'')}`;
     meta=`${s?.name||''}${item.date?' · 📅 '+item.date:''}`;
   }else{
-    title=`📰 ${item.title||''}`;meta='';
+    title=`📰 ${esc(item.title||'')}`;meta='';
   }
-  document.getElementById('fsTitle').textContent=title;
+  document.getElementById('fsTitle').innerHTML=title;
   document.getElementById('fsMeta').textContent=meta;
   document.getElementById('fsBody').innerHTML=richText(item.text||'');
 
@@ -1255,7 +1514,7 @@ function findNextHomework(){
   const currentId=currentView.id;
   const currentSubjId=answers.find(a=>a.id===currentId)?.subjectId;
 
-  const today=new Date();
+  const today=getMoscowDate();
   for(let offset=1;offset<=7;offset++){
     const d=new Date(today);
     d.setDate(d.getDate()+offset);
@@ -1287,7 +1546,7 @@ async function explainWithGlobi(){
   if(!item)return;
   const s=subjects.find(x=>x.id===item.subjectId);
   const subjName=s?.name||'предмет';
-  const num=item.number||'';
+  const num=formatNumbers(item.number||'');
   const text=plainPreview(item.text,400);
 
   closeFullscreen();
@@ -1297,6 +1556,21 @@ async function explainWithGlobi(){
     const input=document.getElementById('globiInput');
     if(!input)return;
     input.value=`Объясни в 3 предложениях это упражнение по ${subjName} ${num}: ${text}`;
+    await sendGlobi();
+  },200);
+}
+
+async function explainSubjectWithGlobi(subjId){
+  const subj=subjects.find(s=>s.id===subjId);
+  if(!subj)return;
+
+  closeFullscreen();
+  go('globi');
+
+  setTimeout(async()=>{
+    const input=document.getElementById('globiInput');
+    if(!input)return;
+    input.value=`Расскажи, что задано по предмету «${subj.name}» — какие ДЗ и контрольные на этой неделе?`;
     await sendGlobi();
   },200);
 }
@@ -1342,7 +1616,7 @@ function renderGlobi(){
       <div class="globi-avatar">🤖</div>
       <div class="globi-info">
         <h3>Globi</h3>
-        <p>Твой ИИ-помощник · онлайн</p>
+        <p>Твой ИИ-помощник · ${formatMoscowDate()}</p>
       </div>
     </div>
     <div class="quick-actions">
@@ -1350,6 +1624,7 @@ function renderGlobi(){
       <button class="quick-action" onclick="quickAsk('Объясни последнюю тему')">📐 Объясни тему</button>
       <button class="quick-action" onclick="quickAsk('Есть ли контрольные на этой неделе?')">🎯 Контрольные</button>
       <button class="quick-action" onclick="quickAsk('Что нового?')">📰 Что нового?</button>
+      <button class="quick-action" onclick="quickAsk('Какое сегодня число?')">📆 Дата</button>
     </div>
     <div class="globi-wrap">
       <div class="globi-chat" id="globiChat"></div>
@@ -1396,7 +1671,13 @@ function renderGlobiMessages(){
 
 function buildContext(userQuestion){
   const parts=[];
+  const now=getMoscowDate();
+  const dayRu=DAY_NAMES_RU[getMoscowDayKey()];
+
   parts.push(`Ты — Globi, ИИ-помощник сайта «ГДЗ Марат» для школьников.
+
+ТЕКУЩАЯ ДАТА И ВРЕМЯ (московское): ${formatMoscowDate()}
+Сегодня: ${dayRu}, ${now.getDate()}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}
 
 ТВОИ ПРАВИЛА (обязательно):
 1. ОБЯЗАТЕЛЬНО давай КОНКРЕТНЫЙ ответ из данных ниже. Если есть расписание — назови точное время и урок. Если есть ДЗ — назови номер, предмет и текст. Если есть контрольная — назови её и дату.
@@ -1404,7 +1685,9 @@ function buildContext(userQuestion){
 3. НЕ здоровайся повторно, если в истории диалога уже было приветствие.
 4. Отвечай кратко (2–5 предложений), дружелюбно, на «ты».
 5. Мотивируй, поддерживай, не осуждай за списывание.
-6. Если пользователь просит «объясни упражнение» — разбей на шаги, объясни суть, приведи пример.`);
+6. Если пользователь просит «объясни упражнение» — разбей на шаги, объясни суть, приведи пример.
+7. Если пользователь спрашивает дату/время/день недели — отвечай по московскому времени из блока выше.
+8. Если спрашивает «что задали на завтра» — смотри расписание на завтра (следующий день после сегодняшнего) и ищи ДЗ по этим предметам.`);
 
   if(globiHistory.length>0){
     parts.push(`\n💬 ИСТОРИЯ ДИАЛОГА:`);
@@ -1423,7 +1706,7 @@ function buildContext(userQuestion){
     parts.push(`\n📝 ОТВЕТЫ ДЗ:`);
     answers.slice(0,15).forEach(a=>{
       const s=subjects.find(x=>x.id===a.subjectId);
-      parts.push(`- ${s?.name||'?'} ${a.number||''}${a.date?' ('+a.date+')':''}: ${plainPreview(a.text,250)}`);
+      parts.push(`- ${s?.name||'?'} ${formatNumbers(a.number||'')}${a.date?' ('+a.date+')':''}: ${plainPreview(a.text,250)}`);
     });
   }
   if(!isGuest&&testsAnswers.length){
@@ -1440,11 +1723,12 @@ function buildContext(userQuestion){
     });
   }
   if(schedule&&Object.keys(schedule).length){
-    parts.push(`\n📅 РАСПИСАНИЕ:`);
+    parts.push(`\n📅 РАСПИСАНИЕ (полное):`);
     Object.keys(schedule).forEach(day=>{
       const lessons=Array.isArray(schedule[day])?schedule[day]:[];
       if(lessons.length){
-        parts.push(`- ${day}: ${lessons.map((l,i)=>`${i+1}) ${typeof l==='string'?l:l.name||JSON.stringify(l)}`).join(', ')}`);
+        const dayName=DAY_NAMES_RU[day.toLowerCase()]||day;
+        parts.push(`- ${dayName} (${day}): ${lessons.map((l,i)=>`${i+1}) ${typeof l==='string'?l:l.name||JSON.stringify(l)}`).join(', ')}`);
       }
     });
   }
@@ -1452,7 +1736,7 @@ function buildContext(userQuestion){
     parts.push(`\n🎓 ПОДГОТОВИШКА: ${prep.map(p=>p.title).join(', ')}`);
   }
 
-  parts.push(`\n---\nВОПРОС: ${userQuestion}\n---\nОтвечай КОНКРЕТНО, используя данные выше. Не отправляй в разделы, если ответ есть.`);
+  parts.push(`\n---\nВОПРОС: ${userQuestion}\n---\nОтвечай КОНКРЕТНО, используя данные выше. Учитывай текущую дату и день недели.`);
   return parts.join('\n');
 }
 
@@ -1476,8 +1760,10 @@ async function sendGlobi(){
   input.value='';
   sendBtn.disabled=true;
 
-  const now=new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-  globiHistory.push({role:'user',text,time:now});
+  const now=getMoscowDate();
+  const timeStr=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  globiHistory.push({role:'user',text,time:timeStr});
   renderGlobiMessages();
 
   const chat=document.getElementById('globiChat');
@@ -1499,12 +1785,23 @@ async function sendGlobi(){
     const data=await res.json();
     let reply='';
     if(data.steps){
-      const out=data.steps.find(s=>s.type==='model_output');
-      if(out&&out.content)reply=out.content.map(c=>c.text||'').join('');
+      for(const s of data.steps){
+        if(s.type==='model_output'&&.s.content){
+          for(const c of s.content){
+            if(c.type==='text'&&';
+c.text)reply+=c.text;
+          }
+             }
+      }
     }
-    if(!reply)reply='Не могу сейчас ответить, попробуй ещё раз.';
+    if(!reply){
+      if(data.error){
+        }
+ reply='⚠️ Ошибка: '+(data   .error.message||JSON.stringify(data.error));
+      } }
 
-    const actions=buildActions(reply);
+else{
+        reply='Не могу сейчас ответить, попробуй ещё раз    const actions=buildActions(reply);
     globiHistory.push({role:'globi',text:reply,
       time:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}),actions});
 
