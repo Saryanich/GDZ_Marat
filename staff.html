@@ -103,7 +103,6 @@ textarea{resize:vertical;min-height:90px;line-height:1.5}
       <div class="tabs">
         <button class="tab-btn active" data-tab="answers" onclick="switchTab('answers')">📝 Ответы</button>
         <button class="tab-btn" data-tab="my" onclick="switchTab('my')">📤 Мои заявки</button>
-        <button class="tab-btn" data-tab="content" onclick="switchTab('content')">📰 Контент</button>
       </div>
       <button class="btn-exit" onclick="exitToGdz()">← В обычный ГДЗ</button>
     </div>
@@ -139,33 +138,9 @@ textarea{resize:vertical;min-height:90px;line-height:1.5}
           <div class="hint">💡 Фото: <code>{photo:https://...}</code>, сайт: <code>{site:https://...}</code></div>
         </div>
         <div class="row-actions">
-          <button class="btn btn-primary" onclick="submitPending('homework')">📤 Отправить на модерацию</button>
+          <button class="btn btn-primary" onclick="submitPending()">📤 Отправить на модерацию</button>
         </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">🎯 Новый ответ (контрольная) — уйдёт на модерацию</div>
-        <div class="grid-2">
-          <div class="field">
-            <label>Предмет</label>
-            <select id="testAnswerSubject"></select>
-          </div>
-          <div class="field">
-            <label>Название контрольной</label>
-            <input type="text" id="testAnswerTitle" placeholder="Контрольная №2">
-          </div>
-        </div>
-        <div class="field">
-          <label>Дата</label>
-          <input type="date" id="testAnswerDate">
-        </div>
-        <div class="field">
-          <label>Текст ответа</label>
-          <textarea id="testAnswerText" placeholder="Ответ..."></textarea>
-        </div>
-        <div class="row-actions">
-          <button class="btn btn-primary" onclick="submitPending('test')">📤 Отправить на модерацию</button>
-        </div>
+        <div class="hint" style="margin-top:0.75rem;">ℹ️ Контрольные создаёт только администратор.</div>
       </div>
     </div>
 
@@ -175,67 +150,6 @@ textarea{resize:vertical;min-height:90px;line-height:1.5}
         <div class="section-title">📤 Мои заявки на модерации</div>
         <div class="hint" style="margin-bottom:1rem;">Здесь видно статус каждой заявки: ⏳ на модерации, ✅ одобрено админом, ❌ отклонено.</div>
         <div id="myPendingList"></div>
-      </div>
-    </div>
-
-    <!-- ============ ВКЛАДКА КОНТЕНТ ============ -->
-    <div class="panel" id="panel-content">
-      <div class="section">
-        <div class="section-title">📰 Новости</div>
-        <input type="hidden" id="newsEditId">
-        <div class="field">
-          <label>Заголовок</label>
-          <input type="text" id="newsTitle" placeholder="Заголовок новости">
-        </div>
-        <div class="field">
-          <label>Текст</label>
-          <textarea id="newsText" placeholder="Текст..."></textarea>
-        </div>
-        <div class="row-actions">
-          <button class="btn btn-primary" id="newsSaveBtn" onclick="saveNews()">💾 Сохранить</button>
-          <button class="btn btn-ghost hidden" id="newsCancelBtn" onclick="cancelNewsEdit()">Отмена</button>
-        </div>
-        <div style="margin-top:1.25rem;" id="newsList"></div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">🎓 Подготовишка</div>
-        <input type="hidden" id="prepEditId">
-        <div class="field">
-          <label>Название</label>
-          <input type="text" id="prepTitle" placeholder="Название сайта">
-        </div>
-        <div class="field">
-          <label>Описание</label>
-          <textarea id="prepDesc" placeholder="Описание..."></textarea>
-        </div>
-        <div class="grid-2">
-          <div class="field">
-            <label>Ссылка на сайт</label>
-            <input type="url" id="prepSite" placeholder="https://...">
-          </div>
-          <div class="field">
-            <label>Ссылка на картинку</label>
-            <input type="url" id="prepPhoto" placeholder="https://...">
-          </div>
-        </div>
-        <div class="row-actions">
-          <button class="btn btn-primary" id="prepSaveBtn" onclick="savePrep()">💾 Сохранить</button>
-          <button class="btn btn-ghost hidden" id="prepCancelBtn" onclick="cancelPrepEdit()">Отмена</button>
-        </div>
-        <div style="margin-top:1.25rem;" id="prepList"></div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">📅 Расписание (JSON)</div>
-        <div class="field">
-          <label>JSON расписания</label>
-          <textarea id="scheduleJson" placeholder='{"monday":["Математика","Русский"]}' style="min-height:140px;font-family:monospace;"></textarea>
-        </div>
-        <div class="row-actions">
-          <button class="btn btn-primary" onclick="saveSchedule()">💾 Сохранить расписание</button>
-          <button class="btn btn-ghost" onclick="loadScheduleToEditor()">🔄 Загрузить текущее</button>
-        </div>
       </div>
     </div>
   </div>
@@ -262,8 +176,6 @@ let currentUser=null;
 let currentGlobalId='';
 let currentName='';
 let subjectsCache=[];
-let newsCache=[];
-let prepCache=[];
 let myPendingCache=[];
 let myListener=null;
 
@@ -343,45 +255,31 @@ async function loadSubjects(){
   }
   const opts=subjectsCache.map(s=>`<option value="${s.id}">${s.icon||''} ${escapeHtml(s.name)}</option>`).join('');
   document.getElementById('answerSubject').innerHTML=opts||'<option value="">— нет —</option>';
-  document.getElementById('testAnswerSubject').innerHTML=opts||'<option value="">— нет —</option>';
 }
 
-/* ==================== ОТПРАВКА НА МОДЕРАЦИЮ ==================== */
-async function submitPending(type){
-  let payload;
-  if(type==='test'){
-    const subjectId=document.getElementById('testAnswerSubject').value;
-    const title=document.getElementById('testAnswerTitle').value.trim();
-    const date=document.getElementById('testAnswerDate').value;
-    const text=document.getElementById('testAnswerText').value;
-    if(!subjectId||!title||!text)return toast('Заполни все поля',true);
-    payload={type:'test',subjectId,title,date,text};
-  }else{
-    const subjectId=document.getElementById('answerSubject').value;
-    const number=document.getElementById('answerNumber').value.trim();
-    const date=document.getElementById('answerDate').value;
-    const text=document.getElementById('answerText').value;
-    if(!subjectId||!text)return toast('Заполни предмет и текст',true);
-    payload={type:'homework',subjectId,number,date,text};
-  }
+/* ==================== ОТПРАВКА НА МОДЕРАЦИЮ (ТОЛЬКО ДЗ) ==================== */
+async function submitPending(){
+  const subjectId=document.getElementById('answerSubject').value;
+  const number=document.getElementById('answerNumber').value.trim();
+  const date=document.getElementById('answerDate').value;
+  const text=document.getElementById('answerText').value;
+  if(!subjectId||!text)return toast('Заполни предмет и текст',true);
   try{
     await db.collection('GDZ').doc('pending_answers').collection('list').add({
-      ...payload,
+      type:'homework',
+      subjectId,
+      number,
+      date,
+      text,
       status:'pending',
       authorId:currentGlobalId,
       authorName:currentName,
       createdAt:Date.now()
     });
     toast('📤 Отправлено на модерацию');
-    if(type==='test'){
-      document.getElementById('testAnswerTitle').value='';
-      document.getElementById('testAnswerDate').value='';
-      document.getElementById('testAnswerText').value='';
-    }else{
-      document.getElementById('answerNumber').value='';
-      document.getElementById('answerDate').value='';
-      document.getElementById('answerText').value='';
-    }
+    document.getElementById('answerNumber').value='';
+    document.getElementById('answerDate').value='';
+    document.getElementById('answerText').value='';
     switchTab('my');
   }catch(e){toast('Ошибка: '+e.message,true);}
 }
@@ -410,10 +308,7 @@ function renderMyPending(){
   const sorted=[...myPendingCache].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   container.innerHTML=sorted.map(p=>{
     const subj=subjectsCache.find(s=>s.id===p.subjectId);
-    const isTest=p.type==='test';
-    const title=isTest
-      ? `🎯 ${escapeHtml(p.title||'Контрольная')} — ${escapeHtml(subj?.name||'—')}`
-      : `${subj?.icon||'📝'} ${escapeHtml(p.number||'')} — ${escapeHtml(subj?.name||'—')}`;
+    const title=`${subj?.icon||'📝'} ${escapeHtml(p.number||'')} — ${escapeHtml(subj?.name||'—')}`;
     let statusBadge='';
     let itemClass='';
     if(p.status==='pending'){
@@ -431,7 +326,7 @@ function renderMyPending(){
         <div class="list-item-head">
           <div>
             <div class="list-item-title">${title}</div>
-            <div class="list-item-meta">Создано: ${formatTime(p.createdAt)}</div>
+            <div class="list-item-meta">Дата ДЗ: ${escapeHtml(p.date||'—')} · Создано: ${formatTime(p.createdAt)}</div>
           </div>
           ${statusBadge}
         </div>
@@ -447,153 +342,6 @@ async function deleteMyPending(id){
   toast('Заявка удалена');
 }
 
-/* ==================== НОВОСТИ ==================== */
-async function loadNews(){
-  const snap=await db.collection('GDZ').doc('news').collection('list').get();
-  newsCache=snap.docs.map(d=>({id:d.id,...d.data()}));
-  const container=document.getElementById('newsList');
-  if(newsCache.length===0){container.innerHTML='<div class="empty-state">Пока нет новостей</div>';return;}
-  container.innerHTML=newsCache.map(n=>`
-    <div class="list-item">
-      <div class="list-item-head">
-        <div>
-          <div class="list-item-title">${escapeHtml(n.title||'')}</div>
-          <div class="list-item-meta">read: ${(n.read||[]).length}</div>
-        </div>
-        <div class="row-actions">
-          <button class="btn btn-warn btn-sm" onclick="editNews('${n.id}')">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteNews('${n.id}')">🗑</button>
-        </div>
-      </div>
-      <div class="list-item-body">${escapeHtml((n.text||'').substring(0,200))}</div>
-    </div>
-  `).join('');
-}
-async function saveNews(){
-  const id=document.getElementById('newsEditId').value;
-  const title=document.getElementById('newsTitle').value.trim();
-  const text=document.getElementById('newsText').value;
-  if(!title||!text)return toast('Заполни заголовок и текст',true);
-  const data={title,text,updatedAt:Date.now()};
-  try{
-    if(id){
-      await db.collection('GDZ').doc('news').collection('list').doc(id).update(data);
-      toast('Обновлено');
-    }else{
-      data.createdAt=Date.now();data.read=[];
-      await db.collection('GDZ').doc('news').collection('list').add(data);
-      toast('Добавлено');
-    }
-    cancelNewsEdit();loadNews();
-  }catch(e){toast('Ошибка: '+e.message,true);}
-}
-function editNews(id){
-  const n=newsCache.find(x=>x.id===id);if(!n)return;
-  document.getElementById('newsEditId').value=id;
-  document.getElementById('newsTitle').value=n.title||'';
-  document.getElementById('newsText').value=n.text||'';
-  document.getElementById('newsCancelBtn').classList.remove('hidden');
-  document.getElementById('newsSaveBtn').textContent='💾 Обновить';
-}
-function cancelNewsEdit(){
-  document.getElementById('newsEditId').value='';
-  document.getElementById('newsTitle').value='';
-  document.getElementById('newsText').value='';
-  document.getElementById('newsCancelBtn').classList.add('hidden');
-  document.getElementById('newsSaveBtn').textContent='💾 Сохранить';
-}
-async function deleteNews(id){
-  if(!confirm('Удалить новость?'))return;
-  await db.collection('GDZ').doc('news').collection('list').doc(id).delete();
-  toast('Удалено');loadNews();
-}
-
-/* ==================== ПОДГОТОВИШКА ==================== */
-async function loadPrep(){
-  const snap=await db.collection('GDZ').doc('prep').collection('list').get();
-  prepCache=snap.docs.map(d=>({id:d.id,...d.data()}));
-  const container=document.getElementById('prepList');
-  if(prepCache.length===0){container.innerHTML='<div class="empty-state">Пока нет сайтов</div>';return;}
-  container.innerHTML=prepCache.map(p=>`
-    <div class="list-item">
-      <div class="list-item-head">
-        <div>
-          <div class="list-item-title">${escapeHtml(p.title||'')}</div>
-          <div class="list-item-meta">${escapeHtml(p.site||'')}</div>
-        </div>
-        <div class="row-actions">
-          <button class="btn btn-warn btn-sm" onclick="editPrep('${p.id}')">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="deletePrep('${p.id}')">🗑</button>
-        </div>
-      </div>
-      <div class="list-item-body">${escapeHtml(p.description||'')}</div>
-    </div>
-  `).join('');
-}
-async function savePrep(){
-  const id=document.getElementById('prepEditId').value;
-  const title=document.getElementById('prepTitle').value.trim();
-  const description=document.getElementById('prepDesc').value;
-  const site=document.getElementById('prepSite').value.trim();
-  const photo=document.getElementById('prepPhoto').value.trim();
-  if(!title)return toast('Введи название',true);
-  const data={title,description,site,photo,updatedAt:Date.now()};
-  try{
-    if(id){
-      await db.collection('GDZ').doc('prep').collection('list').doc(id).update(data);
-      toast('Обновлено');
-    }else{
-      data.createdAt=Date.now();
-      await db.collection('GDZ').doc('prep').collection('list').add(data);
-      toast('Добавлено');
-    }
-    cancelPrepEdit();loadPrep();
-  }catch(e){toast('Ошибка: '+e.message,true);}
-}
-function editPrep(id){
-  const p=prepCache.find(x=>x.id===id);if(!p)return;
-  document.getElementById('prepEditId').value=id;
-  document.getElementById('prepTitle').value=p.title||'';
-  document.getElementById('prepDesc').value=p.description||'';
-  document.getElementById('prepSite').value=p.site||'';
-  document.getElementById('prepPhoto').value=p.photo||'';
-  document.getElementById('prepCancelBtn').classList.remove('hidden');
-  document.getElementById('prepSaveBtn').textContent='💾 Обновить';
-}
-function cancelPrepEdit(){
-  document.getElementById('prepEditId').value='';
-  document.getElementById('prepTitle').value='';
-  document.getElementById('prepDesc').value='';
-  document.getElementById('prepSite').value='';
-  document.getElementById('prepPhoto').value='';
-  document.getElementById('prepCancelBtn').classList.add('hidden');
-  document.getElementById('prepSaveBtn').textContent='💾 Сохранить';
-}
-async function deletePrep(id){
-  if(!confirm('Удалить?'))return;
-  await db.collection('GDZ').doc('prep').collection('list').doc(id).delete();
-  toast('Удалено');loadPrep();
-}
-
-/* ==================== РАСПИСАНИЕ ==================== */
-async function loadScheduleToEditor(){
-  const doc=await db.collection('GDZ').doc('file').get();
-  if(doc.exists&&doc.data().schedule){
-    document.getElementById('scheduleJson').value=JSON.stringify(doc.data().schedule,null,2);
-    toast('Загружено');
-  }else{toast('Расписания нет',true);}
-}
-async function saveSchedule(){
-  const raw=document.getElementById('scheduleJson').value.trim();
-  if(!raw)return toast('Введи JSON',true);
-  let parsed;
-  try{parsed=JSON.parse(raw);}catch(e){return toast('Некорректный JSON',true);}
-  try{
-    await db.collection('GDZ').doc('file').set({schedule:parsed},{merge:true});
-    toast('Расписание сохранено');
-  }catch(e){toast('Ошибка: '+e.message,true);}
-}
-
 /* ==================== СТАРТ ==================== */
 (async()=>{
   const ok=await checkAccess();
@@ -601,8 +349,6 @@ async function saveSchedule(){
   document.getElementById('loadingScreen').classList.add('hidden');
   document.getElementById('staffApp').classList.remove('hidden');
   await loadSubjects();
-  await loadNews();
-  await loadPrep();
   listenMyPending();
 })();
 </script>
