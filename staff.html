@@ -1,587 +1,610 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>ГДЗ Марат — Панель сотрудника</title>
-
-    <link rel="icon" type="image/jpeg" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
-    <link rel="apple-touch-icon" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
-    <meta name="theme-color" content="#050e08">
-
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
-
-    <style>
-        :root {
-            --bg-deep: #050e08;
-            --bg-card: rgba(10, 26, 17, 0.85);
-            --bg-input: rgba(3, 12, 7, 0.7);
-            --accent-green: #10b981;
-            --accent-bright: #34d399;
-            --accent-glow: rgba(52, 211, 153, 0.25);
-            --text-primary: #f0fdf4;
-            --text-secondary: #94a3b8;
-            --text-muted: #475569;
-            --border: rgba(52, 211, 153, 0.2);
-            --border-hover: rgba(52, 211, 153, 0.5);
-            --danger: #ef4444;
-            --warning: #f59e0b;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-deep);
-            min-height: 100vh;
-            color: var(--text-primary);
-            padding-bottom: 80px;
-        }
-        .glow-orb { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; opacity: 0.35; }
-        .orb-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(16,185,129,0.35) 0%, transparent 70%); }
-        .orb-2 { bottom: -10%; right: -10%; width: 45vw; height: 45vw; background: radial-gradient(circle, rgba(5,150,105,0.28) 0%, transparent 70%); }
-
-        .topbar { position: sticky; top: 0; z-index: 100; background: rgba(5,14,8,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 0.9rem 1.25rem; }
-        .topbar-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-        .admin-logo { display: flex; align-items: center; gap: 0.7rem; font-weight: 800; font-size: 1.05rem; flex-shrink: 0; }
-        .admin-logo img { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--accent-bright); }
-        .admin-logo .badge { font-size: 0.65rem; background: linear-gradient(135deg, #3b82f6, #1e40af); color: #fff; padding: 2px 8px; border-radius: 8px; font-weight: 700; margin-left: 4px; }
-        .tabs { display: flex; gap: 6px; flex: 1; overflow-x: auto; }
-        .tab-btn { padding: 0.55rem 1rem; border-radius: 10px; background: transparent; border: 1px solid transparent; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: inherit; }
-        .tab-btn:hover { background: rgba(52,211,153,0.08); color: var(--accent-bright); }
-        .tab-btn.active { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
-        .btn-exit { padding: 0.55rem 1rem; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
-        .btn-exit:hover { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.4); color: #f87171; }
-
-        .main { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1.25rem; position: relative; z-index: 10; }
-        .panel { display: none; }
-        .panel.active { display: block; }
-
-        .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; margin-bottom: 1.25rem; }
-        .section-title { font-size: 1.05rem; font-weight: 700; color: var(--accent-bright); margin-bottom: 1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--border); }
-
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
-        @media (max-width: 640px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
-
-        label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.1px; color: var(--accent-bright); margin-bottom: 0.35rem; font-weight: 700; }
-        input, textarea, select { width: 100%; padding: 0.7rem 0.9rem; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); font-size: 0.9rem; outline: none; font-family: inherit; }
-        input:focus, textarea:focus, select:focus { border-color: var(--accent-bright); box-shadow: 0 0 0 3px var(--accent-glow); }
-        textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
-        .field { margin-bottom: 0.85rem; }
-
-        .btn { padding: 0.7rem 1.2rem; border: none; border-radius: 10px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-primary { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
-        .btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
-        .btn-danger { background: linear-gradient(135deg, #ef4444, #b91c1c); color: #fff; }
-        .btn-warn { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
-        .btn-ghost { background: rgba(255,255,255,0.04); color: var(--text-secondary); border: 1px solid var(--border); }
-        .btn-sm { padding: 0.45rem 0.8rem; font-size: 0.78rem; }
-        .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-
-        .list-item { background: rgba(3,12,7,0.5); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 0.6rem; }
-        .list-item-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
-        .list-item-title { font-weight: 700; color: var(--text-primary); font-size: 0.95rem; }
-        .list-item-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
-        .list-item-body { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-top: 0.4rem; white-space: pre-wrap; word-break: break-word; }
-
-        .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem; }
-        .stat-card { background: rgba(3,12,7,0.5); border: 1px solid var(--border); border-radius: 14px; padding: 1.2rem; text-align: center; }
-        .stat-value { font-size: 2rem; font-weight: 800; color: var(--accent-bright); line-height: 1; margin-bottom: 0.3rem; }
-        .stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 700; }
-
-        .read-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 0.5rem; }
-        .read-chip { font-size: 0.72rem; padding: 3px 9px; border-radius: 999px; background: rgba(52,211,153,0.12); color: var(--accent-bright); border: 1px solid rgba(52,211,153,0.3); font-weight: 600; }
-
-        .empty-state { text-align: center; color: var(--text-muted); padding: 2rem 1rem; font-size: 0.88rem; }
-
-        .hint { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; margin-top: 0.5rem; }
-        .hint code { background: rgba(0,0,0,0.4); padding: 1px 6px; border-radius: 6px; color: #a7f3d0; font-size: 0.75rem; }
-
-        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: linear-gradient(135deg, #10b981, #059669); color: #fff; padding: 0.85rem 1.4rem; border-radius: 12px; font-size: 0.9rem; font-weight: 600; z-index: 9999; opacity: 0; transition: all 0.35s; pointer-events: none; }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-        .toast.error { background: linear-gradient(135deg, #ef4444, #b91c1c); }
-
-        #loadingScreen { position: fixed; inset: 0; background: var(--bg-deep); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1.5rem; z-index: 9998; }
-        .spinner { width: 56px; height: 56px; border-radius: 50%; border: 3px solid rgba(52,211,153,0.15); border-top-color: var(--accent-bright); border-right-color: var(--accent-bright); animation: spin 0.9s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .hidden { display: none !important; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>ГДЗ Марат — Панель сотрудника</title>
+<link rel="icon" type="image/jpeg" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
+<link rel="apple-touch-icon" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
+<meta name="theme-color" content="#050e08">
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+<style>
+:root{--bg-deep:#050e08;--bg-card:rgba(10,26,17,0.85);--bg-input:rgba(3,12,7,0.7);
+  --accent-green:#10b981;--accent-bright:#34d399;--accent-glow:rgba(52,211,153,0.25);
+  --text-primary:#f0fdf4;--text-secondary:#94a3b8;--text-muted:#475569;
+  --border:rgba(52,211,153,0.2);--danger:#ef4444;--warning:#f59e0b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;
+  background:var(--bg-deep);min-height:100vh;color:var(--text-primary);padding-bottom:80px}
+.glow-orb{position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0;opacity:0.35}
+.orb-1{top:-10%;left:-10%;width:50vw;height:50vw;background:radial-gradient(circle,rgba(16,185,129,0.35) 0%,transparent 70%)}
+.orb-2{bottom:-10%;right:-10%;width:45vw;height:45vw;background:radial-gradient(circle,rgba(5,150,105,0.28) 0%,transparent 70%)}
+.topbar{position:sticky;top:0;z-index:100;background:rgba(5,14,8,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0.9rem 1.25rem}
+.topbar-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.admin-logo{display:flex;align-items:center;gap:0.7rem;font-weight:800;font-size:1.05rem;flex-shrink:0}
+.admin-logo img{width:38px;height:38px;border-radius:50%;border:2px solid var(--accent-bright)}
+.admin-logo .badge{font-size:0.65rem;background:linear-gradient(135deg,#3b82f6,#1e40af);color:#fff;padding:2px 8px;border-radius:8px;font-weight:700;margin-left:4px}
+.tabs{display:flex;gap:6px;flex:1;overflow-x:auto}
+.tab-btn{padding:0.55rem 1rem;border-radius:10px;background:transparent;border:1px solid transparent;color:var(--text-secondary);font-size:0.85rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.tab-btn:hover{background:rgba(52,211,153,0.08);color:var(--accent-bright)}
+.tab-btn.active{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+.btn-exit{padding:0.55rem 1rem;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text-secondary);font-size:0.85rem;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-exit:hover{background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.4);color:#f87171}
+.main{max-width:1200px;margin:0 auto;padding:1.5rem 1.25rem;position:relative;z-index:10}
+.panel{display:none}
+.panel.active{display:block}
+.section{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:1.5rem;margin-bottom:1.25rem}
+.section-title{font-size:1.05rem;font-weight:700;color:var(--accent-bright);margin-bottom:1rem;padding-bottom:0.7rem;border-bottom:1px solid var(--border)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem}
+@media(max-width:640px){.grid-2,.grid-3{grid-template-columns:1fr}}
+label{display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:1.1px;color:var(--accent-bright);margin-bottom:0.35rem;font-weight:700}
+input,textarea,select{width:100%;padding:0.7rem 0.9rem;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;color:var(--text-primary);font-size:0.9rem;outline:none;font-family:inherit}
+input:focus,textarea:focus,select:focus{border-color:var(--accent-bright);box-shadow:0 0 0 3px var(--accent-glow)}
+textarea{resize:vertical;min-height:90px;line-height:1.5}
+.field{margin-bottom:0.85rem}
+.btn{padding:0.7rem 1.2rem;border:none;border-radius:10px;font-weight:700;font-size:0.88rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:inherit}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px)}
+.btn-success{background:linear-gradient(135deg,#22c55e,#15803d);color:#fff}
+.btn-danger{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff}
+.btn-warn{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid var(--border)}
+.btn-sm{padding:0.45rem 0.8rem;font-size:0.78rem}
+.row-actions{display:flex;gap:6px;flex-wrap:wrap}
+.list-item{background:rgba(3,12,7,0.5);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:0.6rem}
+.list-item.pending{border-color:rgba(245,158,11,0.5);background:rgba(245,158,11,0.06)}
+.list-item.approved{border-color:rgba(34,197,94,0.5);background:rgba(34,197,94,0.06)}
+.list-item.rejected{border-color:rgba(239,68,68,0.5);background:rgba(239,68,68,0.06)}
+.list-item-head{display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;margin-bottom:0.5rem;flex-wrap:wrap}
+.list-item-title{font-weight:700;color:var(--text-primary);font-size:0.95rem}
+.list-item-meta{font-size:0.75rem;color:var(--text-muted);margin-top:2px}
+.list-item-body{font-size:0.85rem;color:var(--text-secondary);line-height:1.5;margin-top:0.4rem;white-space:pre-wrap;word-break:break-word}
+.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:999px}
+.status-pending{background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.4)}
+.status-approved{background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.4)}
+.status-rejected{background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.4)}
+.stat-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;margin-bottom:1.25rem}
+.stat-card{background:rgba(3,12,7,0.5);border:1px solid var(--border);border-radius:14px;padding:1.2rem;text-align:center}
+.stat-value{font-size:2rem;font-weight:800;color:var(--accent-bright);line-height:1;margin-bottom:0.3rem}
+.stat-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:700}
+.empty-state{text-align:center;color:var(--text-muted);padding:2rem 1rem;font-size:0.88rem}
+.hint{font-size:0.78rem;color:var(--text-muted);line-height:1.5;margin-top:0.5rem}
+.hint code{background:rgba(0,0,0,0.4);padding:1px 6px;border-radius:6px;color:#a7f3d0;font-size:0.75rem}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:0.85rem 1.4rem;border-radius:12px;font-size:0.9rem;font-weight:600;z-index:9999;opacity:0;transition:all 0.35s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.error{background:linear-gradient(135deg,#ef4444,#b91c1c)}
+#loadingScreen{position:fixed;inset:0;background:var(--bg-deep);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1.5rem;z-index:9998}
+.spinner{width:56px;height:56px;border-radius:50%;border:3px solid rgba(52,211,153,0.15);border-top-color:var(--accent-bright);border-right-color:var(--accent-bright);animation:spin 0.9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+</style>
 </head>
 <body>
-    <div class="glow-orb orb-1"></div>
-    <div class="glow-orb orb-2"></div>
+<div class="glow-orb orb-1"></div>
+<div class="glow-orb orb-2"></div>
 
-    <div id="loadingScreen">
-        <div class="spinner"></div>
-        <div style="color: var(--text-secondary); font-size: 0.9rem;">Проверка доступа...</div>
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <div style="color:var(--text-secondary);font-size:0.9rem;">Проверка доступа...</div>
+</div>
+
+<div id="staffApp" class="hidden">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="admin-logo">
+        <img src="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg" alt="logo">
+        <span>ГДЗ Марат</span>
+        <span class="badge">STAFF</span>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="answers" onclick="switchTab('answers')">📝 Ответы</button>
+        <button class="tab-btn" data-tab="my" onclick="switchTab('my')">📤 Мои заявки</button>
+        <button class="tab-btn" data-tab="content" onclick="switchTab('content')">📰 Контент</button>
+      </div>
+      <button class="btn-exit" onclick="exitToGdz()">← В обычный ГДЗ</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- ============ ВКЛАДКА ОТВЕТЫ ============ -->
+    <div class="panel active" id="panel-answers">
+      <div class="section">
+        <div class="section-title">📚 Предметы (справочник)</div>
+        <div id="subjectsList"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">📝 Новый ответ (ДЗ) — уйдёт на модерацию</div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Предмет</label>
+            <select id="answerSubject"></select>
+          </div>
+          <div class="field">
+            <label>Номер задания</label>
+            <input type="text" id="answerNumber" placeholder="№5">
+          </div>
+        </div>
+        <div class="field">
+          <label>Дата (на какое число)</label>
+          <input type="date" id="answerDate">
+        </div>
+        <div class="field">
+          <label>Текст ответа</label>
+          <textarea id="answerText" placeholder="Ответ... {photo:https://...} {site:https://...}"></textarea>
+          <div class="hint">💡 Фото: <code>{photo:https://...}</code>, сайт: <code>{site:https://...}</code></div>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-primary" onclick="submitPending('homework')">📤 Отправить на модерацию</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🎯 Новый ответ (контрольная) — уйдёт на модерацию</div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Предмет</label>
+            <select id="testAnswerSubject"></select>
+          </div>
+          <div class="field">
+            <label>Название контрольной</label>
+            <input type="text" id="testAnswerTitle" placeholder="Контрольная №2">
+          </div>
+        </div>
+        <div class="field">
+          <label>Дата</label>
+          <input type="date" id="testAnswerDate">
+        </div>
+        <div class="field">
+          <label>Текст ответа</label>
+          <textarea id="testAnswerText" placeholder="Ответ..."></textarea>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-primary" onclick="submitPending('test')">📤 Отправить на модерацию</button>
+        </div>
+      </div>
     </div>
 
-    <div id="staffApp" class="hidden">
-        <div class="topbar">
-            <div class="topbar-inner">
-                <div class="admin-logo">
-                    <img src="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg" alt="logo">
-                    <span>ГДЗ Марат</span>
-                    <span class="badge">STAFF</span>
-                </div>
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="answers" onclick="switchTab('answers')">📝 Ответы</button>
-                    <button class="tab-btn" data-tab="content" onclick="switchTab('content')">📰 Контент</button>
-                    <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">📊 Статистика</button>
-                </div>
-                <button class="btn-exit" onclick="exitToGdz()">← В обычный ГДЗ</button>
-            </div>
-        </div>
-
-        <div class="main">
-            <!-- ============ ВКЛАДКА ОТВЕТЫ ============ -->
-            <div class="panel active" id="panel-answers">
-                <div class="section">
-                    <div class="section-title">📚 Предметы</div>
-                    <div class="grid-3">
-                        <div class="field">
-                            <label>Название</label>
-                            <input type="text" id="subjectName" placeholder="Математика">
-                        </div>
-                        <div class="field">
-                            <label>Иконка (эмодзи)</label>
-                            <input type="text" id="subjectIcon" placeholder="📐" maxlength="4">
-                        </div>
-                        <div class="field" style="display:flex; align-items:flex-end;">
-                            <button class="btn btn-primary" style="width:100%;" onclick="addSubject()">➕ Добавить</button>
-                        </div>
-                    </div>
-                    <div id="subjectsList"></div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">📝 Ответы (ДЗ)</div>
-                    <input type="hidden" id="answerEditId">
-                    <div class="grid-2">
-                        <div class="field">
-                            <label>Предмет</label>
-                            <select id="answerSubject"></select>
-                        </div>
-                        <div class="field">
-                            <label>Номер задания</label>
-                            <input type="text" id="answerNumber" placeholder="№5">
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Дата (на какое число)</label>
-                        <input type="date" id="answerDate">
-                    </div>
-                    <div class="field">
-                        <label>Текст ответа</label>
-                        <textarea id="answerText" placeholder="Ответ... Можно вставить {photo:https://...} или {site:https://...}"></textarea>
-                        <div class="hint">💡 Вставляй фото: <code>{photo:https://...}</code> и сайт: <code>{site:https://...}</code></div>
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn btn-primary" id="answerSaveBtn" onclick="saveAnswer()">💾 Сохранить ответ</button>
-                        <button class="btn btn-ghost hidden" id="answerCancelBtn" onclick="cancelAnswerEdit()">Отмена</button>
-                    </div>
-                    <div style="margin-top:1.25rem;" id="answersList"></div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">🎯 Ответы (контрольные)</div>
-                    <input type="hidden" id="testAnswerEditId">
-                    <div class="grid-2">
-                        <div class="field">
-                            <label>Предмет</label>
-                            <select id="testAnswerSubject"></select>
-                        </div>
-                        <div class="field">
-                            <label>Название контрольной</label>
-                            <input type="text" id="testAnswerTitle" placeholder="Контрольная №2">
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Дата</label>
-                        <input type="date" id="testAnswerDate">
-                    </div>
-                    <div class="field">
-                        <label>Текст ответа</label>
-                        <textarea id="testAnswerText" placeholder="Ответ... {photo:...} {site:...}"></textarea>
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn btn-primary" id="testAnswerSaveBtn" onclick="saveTestAnswer()">💾 Сохранить</button>
-                        <button class="btn btn-ghost hidden" id="testAnswerCancelBtn" onclick="cancelTestAnswerEdit()">Отмена</button>
-                    </div>
-                    <div style="margin-top:1.25rem;" id="testAnswersList"></div>
-                </div>
-            </div>
-
-            <!-- ============ ВКЛАДКА КОНТЕНТ ============ -->
-            <div class="panel" id="panel-content">
-                <div class="section">
-                    <div class="section-title">📰 Новости</div>
-                    <input type="hidden" id="newsEditId">
-                    <div class="field">
-                        <label>Заголовок</label>
-                        <input type="text" id="newsTitle" placeholder="Заголовок новости">
-                    </div>
-                    <div class="field">
-                        <label>Текст</label>
-                        <textarea id="newsText" placeholder="Текст... {photo:...} {site:...}"></textarea>
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn btn-primary" id="newsSaveBtn" onclick="saveNews()">💾 Сохранить</button>
-                        <button class="btn btn-ghost hidden" id="newsCancelBtn" onclick="cancelNewsEdit()">Отмена</button>
-                    </div>
-                    <div style="margin-top:1.25rem;" id="newsList"></div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">🎓 Подготовишка</div>
-                    <input type="hidden" id="prepEditId">
-                    <div class="field">
-                        <label>Название</label>
-                        <input type="text" id="prepTitle" placeholder="Название сайта">
-                    </div>
-                    <div class="field">
-                        <label>Описание</label>
-                        <textarea id="prepDesc" placeholder="Описание..."></textarea>
-                    </div>
-                    <div class="grid-2">
-                        <div class="field">
-                            <label>Ссылка на сайт</label>
-                            <input type="url" id="prepSite" placeholder="https://...">
-                        </div>
-                        <div class="field">
-                            <label>Ссылка на картинку</label>
-                            <input type="url" id="prepPhoto" placeholder="https://...">
-                        </div>
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn btn-primary" id="prepSaveBtn" onclick="savePrep()">💾 Сохранить</button>
-                        <button class="btn btn-ghost hidden" id="prepCancelBtn" onclick="cancelPrepEdit()">Отмена</button>
-                    </div>
-                    <div style="margin-top:1.25rem;" id="prepList"></div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">📅 Расписание (JSON)</div>
-                    <div class="field">
-                        <label>JSON расписания</label>
-                        <textarea id="scheduleJson" placeholder='{"monday":["Математика","Русский"],"tuesday":["Физика"]}' style="min-height:140px; font-family: monospace;"></textarea>
-                        <div class="hint">💡 Вставь JSON. Пример: <code>{"monday":["Математика","Русский"],...}</code></div>
-                    </div>
-                    <div class="row-actions">
-                        <button class="btn btn-primary" onclick="saveSchedule()">💾 Сохранить расписание</button>
-                        <button class="btn btn-ghost" onclick="loadScheduleToEditor()">🔄 Загрузить текущее</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ============ ВКЛАДКА СТАТИСТИКА ============ -->
-            <div class="panel" id="panel-stats">
-                <div class="section">
-                    <div class="section-title">📊 Общая статистика GDZ</div>
-                    <div class="stat-cards">
-                        <div class="stat-card">
-                            <div class="stat-value" id="statTotal">—</div>
-                            <div class="stat-label">Зарегистрировано в GDZ</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="statSubjects">—</div>
-                            <div class="stat-label">Предметов</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="statAnswers">—</div>
-                            <div class="stat-label">Ответов ДЗ</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="statTestAnswers">—</div>
-                            <div class="stat-label">Ответов контрольных</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">👥 Пользователи GDZ</div>
-                    <div id="usersList"></div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">📖 Кто читал ответы ДЗ</div>
-                    <div id="answersReadList"></div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">🎯 Кто читал ответы контрольных</div>
-                    <div id="testAnswersReadList"></div>
-                </div>
-
-                <div class="section">
-                    <div class="section-title">📰 Кто читал новости</div>
-                    <div id="newsReadList"></div>
-                </div>
-            </div>
-        </div>
+    <!-- ============ ВКЛАДКА МОИ ЗАЯВКИ ============ -->
+    <div class="panel" id="panel-my">
+      <div class="section">
+        <div class="section-title">📤 Мои заявки на модерации</div>
+        <div class="hint" style="margin-bottom:1rem;">Здесь видно статус каждой заявки: ⏳ на модерации, ✅ одобрено админом, ❌ отклонено.</div>
+        <div id="myPendingList"></div>
+      </div>
     </div>
 
-    <div class="toast" id="toast"></div>
+    <!-- ============ ВКЛАДКА КОНТЕНТ ============ -->
+    <div class="panel" id="panel-content">
+      <div class="section">
+        <div class="section-title">📰 Новости</div>
+        <input type="hidden" id="newsEditId">
+        <div class="field">
+          <label>Заголовок</label>
+          <input type="text" id="newsTitle" placeholder="Заголовок новости">
+        </div>
+        <div class="field">
+          <label>Текст</label>
+          <textarea id="newsText" placeholder="Текст..."></textarea>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-primary" id="newsSaveBtn" onclick="saveNews()">💾 Сохранить</button>
+          <button class="btn btn-ghost hidden" id="newsCancelBtn" onclick="cancelNewsEdit()">Отмена</button>
+        </div>
+        <div style="margin-top:1.25rem;" id="newsList"></div>
+      </div>
 
-    <script>
-    // ==================== FIREBASE ====================
-    const firebaseConfig = {
-        apiKey: "AIzaSyA6GGJxAiao77U7_9mBUEjftmS_FnSWbIw",
-        authDomain: "glob-data.firebaseapp.com",
-        projectId: "glob-data",
-        storageBucket: "glob-data.firebasestorage.app",
-        messagingSenderId: "122757049174",
-        appId: "1:122757049174:web:ebb425edd0e1a8ea9a44f7"
-    };
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+      <div class="section">
+        <div class="section-title">🎓 Подготовишка</div>
+        <input type="hidden" id="prepEditId">
+        <div class="field">
+          <label>Название</label>
+          <input type="text" id="prepTitle" placeholder="Название сайта">
+        </div>
+        <div class="field">
+          <label>Описание</label>
+          <textarea id="prepDesc" placeholder="Описание..."></textarea>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Ссылка на сайт</label>
+            <input type="url" id="prepSite" placeholder="https://...">
+          </div>
+          <div class="field">
+            <label>Ссылка на картинку</label>
+            <input type="url" id="prepPhoto" placeholder="https://...">
+          </div>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-primary" id="prepSaveBtn" onclick="savePrep()">💾 Сохранить</button>
+          <button class="btn btn-ghost hidden" id="prepCancelBtn" onclick="cancelPrepEdit()">Отмена</button>
+        </div>
+        <div style="margin-top:1.25rem;" id="prepList"></div>
+      </div>
 
-    // ==================== СОСТОЯНИЕ ====================
-    let currentUser = null;
-    let currentGlobalId = '';
-    let currentRole = '';
-    let subjectsCache = [];
-    let answersCache = [];
-    let testAnswersCache = [];
-    let newsCache = [];
-    let prepCache = [];
-    let usersCache = [];
+      <div class="section">
+        <div class="section-title">📅 Расписание (JSON)</div>
+        <div class="field">
+          <label>JSON расписания</label>
+          <textarea id="scheduleJson" placeholder='{"monday":["Математика","Русский"]}' style="min-height:140px;font-family:monospace;"></textarea>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-primary" onclick="saveSchedule()">💾 Сохранить расписание</button>
+          <button class="btn btn-ghost" onclick="loadScheduleToEditor()">🔄 Загрузить текущее</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-    // ==================== УТИЛИТЫ ====================
-    function toast(text, isError = false) {
-        const el = document.getElementById('toast');
-        el.textContent = text;
-        el.className = `toast show ${isError ? 'error' : ''}`;
-        setTimeout(() => el.className = 'toast', 2500);
-    }
+<div class="toast" id="toast"></div>
 
-    function escapeHtml(t) {
-        if (!t) return '';
-        const d = document.createElement('div');
-        d.textContent = t;
-        return d.innerHTML;
-    }
+<script>
+/* ==================== FIREBASE ==================== */
+const firebaseConfig={
+  apiKey:"AIzaSyA6GGJxAiao77U7_9mBUEjftmS_FnSWbIw",
+  authDomain:"glob-data.firebaseapp.com",
+  projectId:"glob-data",
+  storageBucket:"glob-data.firebasestorage.app",
+  messagingSenderId:"122757049174",
+  appId:"1:122757049174:web:ebb425edd0e1a8ea9a44f7"
+};
+if(!firebase.apps.length){firebase.initializeApp(firebaseConfig);}
+const auth=firebase.auth();
+const db=firebase.firestore();
 
-    function formatTime(ts) {
-        if (!ts) return '—';
-        const d = ts.toDate ? ts.toDate() : new Date(ts);
-        return d.toLocaleString('ru-RU');
-    }
+/* ==================== СОСТОЯНИЕ ==================== */
+let currentUser=null;
+let currentGlobalId='';
+let currentName='';
+let subjectsCache=[];
+let newsCache=[];
+let prepCache=[];
+let myPendingCache=[];
+let myListener=null;
 
-    // ==================== ПРОВЕРКА ДОСТУПА ====================
-    async function checkAccess() {
-        return new Promise((resolve) => {
-            const unsubscribe = auth.onAuthStateChanged(async (user) => {
-                unsubscribe();
+/* ==================== УТИЛИТЫ ==================== */
+function toast(text,isError=false){
+  const el=document.getElementById('toast');
+  el.textContent=text;
+  el.className=`toast show ${isError?'error':''}`;
+  setTimeout(()=>el.className='toast',2500);
+}
+function escapeHtml(t){
+  if(!t)return '';
+  const d=document.createElement('div');
+  d.textContent=t;
+  return d.innerHTML;
+}
+function formatTime(ts){
+  if(!ts)return '—';
+  const d=ts.toDate?ts.toDate():new Date(ts);
+  return d.toLocaleString('ru-RU');
+}
 
-                if (!user) {
-                    window.location.replace('index.html');
-                    resolve(false);
-                    return;
-                }
+/* ==================== ПРОВЕРКА ДОСТУПА ==================== */
+async function checkAccess(){
+  return new Promise((resolve)=>{
+    const unsub=auth.onAuthStateChanged(async(user)=>{
+      unsub();
+      if(!user){window.location.replace('index.html');resolve(false);return;}
+      currentUser=user;
+      try{
+        const userDoc=await db.collection('users').doc(user.uid).get();
+        if(!userDoc.exists){window.location.replace('index.html');resolve(false);return;}
+        const u=userDoc.data();
+        currentGlobalId=u.globalId||'';
+        currentName=u.displayName||u.nickname||u.fullName||currentGlobalId;
+        if(!currentGlobalId){window.location.replace('index.html');resolve(false);return;}
 
-                currentUser = user;
-
-                try {
-                    const userDoc = await db.collection('users').doc(user.uid).get();
-                    if (!userDoc.exists) {
-                        window.location.replace('index.html');
-                        resolve(false);
-                        return;
-                    }
-
-                    currentGlobalId = userDoc.data().globalId || '';
-                    if (!currentGlobalId) {
-                        window.location.replace('index.html');
-                        resolve(false);
-                        return;
-                    }
-
-                    const gdzDoc = await db.collection('GDZ')
-                        .doc('users')
-                        .collection('users')
-                        .doc(currentGlobalId)
-                        .get();
-
-                    currentRole = gdzDoc.exists ? (gdzDoc.data().role || 'user') : 'user';
-
-                    if (currentRole !== 'admin' && currentRole !== 'employee') {
-                        window.location.replace('gdz.html');
-                        resolve(false);
-                        return;
-                    }
-
-                    sessionStorage.setItem('gdz_globalId', currentGlobalId);
-                    resolve(true);
-
-                } catch (e) {
-                    console.error('Ошибка проверки доступа:', e);
-                    window.location.replace('index.html');
-                    resolve(false);
-                }
-            });
-        });
-    }
-
-    // ==================== ТАБЫ ====================
-    function switchTab(tab) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-        document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === `panel-${tab}`));
-
-        if (tab === 'stats') loadStats();
-    }
-
-    function exitToGdz() {
-        window.location.href = 'gdz.html';
-    }
-
-    // ==================== ПРЕДМЕТЫ ====================
-    async function loadSubjects() {
-        const snap = await db.collection('GDZ').doc('subjects').collection('list').get();
-        subjectsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-        const container = document.getElementById('subjectsList');
-        const selectA = document.getElementById('answerSubject');
-        const selectT = document.getElementById('testAnswerSubject');
-
-        if (subjectsCache.length === 0) {
-            container.innerHTML = '<div class="empty-state">Пока нет предметов</div>';
-        } else {
-            container.innerHTML = subjectsCache.map(s => `
-                <div class="list-item">
-                    <div class="list-item-head">
-                        <div>
-                            <div class="list-item-title">${s.icon || '📚'} ${escapeHtml(s.name)}</div>
-                            <div class="list-item-meta">ID: ${s.id}</div>
-                        </div>
-                        <button class="btn btn-danger btn-sm" onclick="deleteSubject('${s.id}')">🗑 Удалить</button>
-                    </div>
-                </div>
-            `).join('');
+        const gdzDoc=await db.collection('GDZ').doc('users').collection('users').doc(currentGlobalId).get();
+        const role=gdzDoc.exists?(gdzDoc.data().role||'user'):'user';
+        if(role!=='employee'&&role!=='admin'){
+          window.location.replace('gdz.html');
+          resolve(false);
+          return;
         }
+        sessionStorage.setItem('gdz_globalId',currentGlobalId);
+        resolve(true);
+      }catch(e){
+        console.error(e);
+        window.location.replace('index.html');
+        resolve(false);
+      }
+    });
+  });
+}
 
-        const opts = subjectsCache.map(s => `<option value="${s.id}">${s.icon || ''} ${escapeHtml(s.name)}</option>`).join('');
-        selectA.innerHTML = opts || '<option value="">— нет предметов —</option>';
-        selectT.innerHTML = opts || '<option value="">— нет предметов —</option>';
+/* ==================== ТАБЫ ==================== */
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===`panel-${tab}`));
+  if(tab==='my')loadMyPending();
+}
+function exitToGdz(){window.location.href='gdz.html';}
+
+/* ==================== ПРЕДМЕТЫ ==================== */
+async function loadSubjects(){
+  const snap=await db.collection('GDZ').doc('subjects').collection('list').get();
+  subjectsCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const container=document.getElementById('subjectsList');
+  if(subjectsCache.length===0){
+    container.innerHTML='<div class="empty-state">Пока нет предметов</div>';
+  }else{
+    container.innerHTML=subjectsCache.map(s=>`
+      <div class="list-item">
+        <div class="list-item-title">${s.icon||'📚'} ${escapeHtml(s.name)}</div>
+      </div>
+    `).join('');
+  }
+  const opts=subjectsCache.map(s=>`<option value="${s.id}">${s.icon||''} ${escapeHtml(s.name)}</option>`).join('');
+  document.getElementById('answerSubject').innerHTML=opts||'<option value="">— нет —</option>';
+  document.getElementById('testAnswerSubject').innerHTML=opts||'<option value="">— нет —</option>';
+}
+
+/* ==================== ОТПРАВКА НА МОДЕРАЦИЮ ==================== */
+async function submitPending(type){
+  let payload;
+  if(type==='test'){
+    const subjectId=document.getElementById('testAnswerSubject').value;
+    const title=document.getElementById('testAnswerTitle').value.trim();
+    const date=document.getElementById('testAnswerDate').value;
+    const text=document.getElementById('testAnswerText').value;
+    if(!subjectId||!title||!text)return toast('Заполни все поля',true);
+    payload={type:'test',subjectId,title,date,text};
+  }else{
+    const subjectId=document.getElementById('answerSubject').value;
+    const number=document.getElementById('answerNumber').value.trim();
+    const date=document.getElementById('answerDate').value;
+    const text=document.getElementById('answerText').value;
+    if(!subjectId||!text)return toast('Заполни предмет и текст',true);
+    payload={type:'homework',subjectId,number,date,text};
+  }
+  try{
+    await db.collection('GDZ').doc('pending_answers').collection('list').add({
+      ...payload,
+      status:'pending',
+      authorId:currentGlobalId,
+      authorName:currentName,
+      createdAt:Date.now()
+    });
+    toast('📤 Отправлено на модерацию');
+    if(type==='test'){
+      document.getElementById('testAnswerTitle').value='';
+      document.getElementById('testAnswerDate').value='';
+      document.getElementById('testAnswerText').value='';
+    }else{
+      document.getElementById('answerNumber').value='';
+      document.getElementById('answerDate').value='';
+      document.getElementById('answerText').value='';
     }
+    switchTab('my');
+  }catch(e){toast('Ошибка: '+e.message,true);}
+}
 
-    async function addSubject() {
-        const name = document.getElementById('subjectName').value.trim();
-        const icon = document.getElementById('subjectIcon').value.trim() || '📚';
-        if (!name) return toast('Введи название', true);
-
-        try {
-            await db.collection('GDZ').doc('subjects').collection('list').add({
-                name, icon, createdAt: Date.now()
-            });
-            document.getElementById('subjectName').value = '';
-            document.getElementById('subjectIcon').value = '';
-            toast('Предмет добавлен');
-            loadSubjects();
-        } catch (e) {
-            toast('Ошибка: ' + e.message, true);
-        }
+/* ==================== МОИ ЗАЯВКИ ==================== */
+function listenMyPending(){
+  if(myListener)return;
+  myListener=db.collection('GDZ').doc('pending_answers').collection('list')
+    .where('authorId','==',currentGlobalId)
+    .onSnapshot(snap=>{
+      myPendingCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+      const panel=document.getElementById('panel-my');
+      if(panel&&panel.classList.contains('active'))renderMyPending();
+    },err=>console.warn('my listener error',err));
+}
+async function loadMyPending(){
+  listenMyPending();
+  renderMyPending();
+}
+function renderMyPending(){
+  const container=document.getElementById('myPendingList');
+  if(myPendingCache.length===0){
+    container.innerHTML='<div class="empty-state">У тебя пока нет заявок</div>';
+    return;
+  }
+  const sorted=[...myPendingCache].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  container.innerHTML=sorted.map(p=>{
+    const subj=subjectsCache.find(s=>s.id===p.subjectId);
+    const isTest=p.type==='test';
+    const title=isTest
+      ? `🎯 ${escapeHtml(p.title||'Контрольная')} — ${escapeHtml(subj?.name||'—')}`
+      : `${subj?.icon||'📝'} ${escapeHtml(p.number||'')} — ${escapeHtml(subj?.name||'—')}`;
+    let statusBadge='';
+    let itemClass='';
+    if(p.status==='pending'){
+      statusBadge='<span class="status-badge status-pending">⏳ На модерации</span>';
+      itemClass='pending';
+    }else if(p.status==='approved'){
+      statusBadge='<span class="status-badge status-approved">✅ Одобрено админом</span>';
+      itemClass='approved';
+    }else{
+      statusBadge=`<span class="status-badge status-rejected">❌ Ответ отклонён${p.rejectReason?' · '+escapeHtml(p.rejectReason):''}</span>`;
+      itemClass='rejected';
     }
+    return `
+      <div class="list-item ${itemClass}">
+        <div class="list-item-head">
+          <div>
+            <div class="list-item-title">${title}</div>
+            <div class="list-item-meta">Создано: ${formatTime(p.createdAt)}</div>
+          </div>
+          ${statusBadge}
+        </div>
+        <div class="list-item-body">${escapeHtml((p.text||'').substring(0,300))}</div>
+        ${p.status==='pending'?`<div class="row-actions" style="margin-top:0.75rem;"><button class="btn btn-danger btn-sm" onclick="deleteMyPending('${p.id}')">🗑 Удалить заявку</button></div>`:''}
+      </div>
+    `;
+  }).join('');
+}
+async function deleteMyPending(id){
+  if(!confirm('Удалить заявку?'))return;
+  await db.collection('GDZ').doc('pending_answers').collection('list').doc(id).delete();
+  toast('Заявка удалена');
+}
 
-    async function deleteSubject(id) {
-        if (!confirm('Удалить предмет?')) return;
-        await db.collection('GDZ').doc('subjects').collection('list').doc(id).delete();
-        toast('Удалено');
-        loadSubjects();
+/* ==================== НОВОСТИ ==================== */
+async function loadNews(){
+  const snap=await db.collection('GDZ').doc('news').collection('list').get();
+  newsCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const container=document.getElementById('newsList');
+  if(newsCache.length===0){container.innerHTML='<div class="empty-state">Пока нет новостей</div>';return;}
+  container.innerHTML=newsCache.map(n=>`
+    <div class="list-item">
+      <div class="list-item-head">
+        <div>
+          <div class="list-item-title">${escapeHtml(n.title||'')}</div>
+          <div class="list-item-meta">read: ${(n.read||[]).length}</div>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-warn btn-sm" onclick="editNews('${n.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteNews('${n.id}')">🗑</button>
+        </div>
+      </div>
+      <div class="list-item-body">${escapeHtml((n.text||'').substring(0,200))}</div>
+    </div>
+  `).join('');
+}
+async function saveNews(){
+  const id=document.getElementById('newsEditId').value;
+  const title=document.getElementById('newsTitle').value.trim();
+  const text=document.getElementById('newsText').value;
+  if(!title||!text)return toast('Заполни заголовок и текст',true);
+  const data={title,text,updatedAt:Date.now()};
+  try{
+    if(id){
+      await db.collection('GDZ').doc('news').collection('list').doc(id).update(data);
+      toast('Обновлено');
+    }else{
+      data.createdAt=Date.now();data.read=[];
+      await db.collection('GDZ').doc('news').collection('list').add(data);
+      toast('Добавлено');
     }
+    cancelNewsEdit();loadNews();
+  }catch(e){toast('Ошибка: '+e.message,true);}
+}
+function editNews(id){
+  const n=newsCache.find(x=>x.id===id);if(!n)return;
+  document.getElementById('newsEditId').value=id;
+  document.getElementById('newsTitle').value=n.title||'';
+  document.getElementById('newsText').value=n.text||'';
+  document.getElementById('newsCancelBtn').classList.remove('hidden');
+  document.getElementById('newsSaveBtn').textContent='💾 Обновить';
+}
+function cancelNewsEdit(){
+  document.getElementById('newsEditId').value='';
+  document.getElementById('newsTitle').value='';
+  document.getElementById('newsText').value='';
+  document.getElementById('newsCancelBtn').classList.add('hidden');
+  document.getElementById('newsSaveBtn').textContent='💾 Сохранить';
+}
+async function deleteNews(id){
+  if(!confirm('Удалить новость?'))return;
+  await db.collection('GDZ').doc('news').collection('list').doc(id).delete();
+  toast('Удалено');loadNews();
+}
 
-    // ==================== ОТВЕТЫ ДЗ ====================
-    async function loadAnswers() {
-        const snap = await db.collection('GDZ').doc('answer').collection('list').get();
-        answersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-        const container = document.getElementById('answersList');
-        if (answersCache.length === 0) {
-            container.innerHTML = '<div class="empty-state">Пока нет ответов</div>';
-            return;
-        }
-        container.innerHTML = answersCache.map(a => {
-            const subj = subjectsCache.find(s => s.id === a.subjectId);
-            return `
-                <div class="list-item">
-                    <div class="list-item-head">
-                        <div>
-                            <div class="list-item-title">${subj?.icon || ''} ${escapeHtml(a.number || '')} — ${escapeHtml(subj?.name || '—')}</div>
-                            <div class="list-item-meta">${escapeHtml(a.date || '')} · read: ${(a.read || []).length}</div>
-                        </div>
-                        <div class="row-actions">
-                            <button class="btn btn-warn btn-sm" onclick="editAnswer('${a.id}')">✏️</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteAnswer('${a.id}')">🗑</button>
-                        </div>
-                    </div>
-                    <div class="list-item-body">${escapeHtml((a.text || '').substring(0, 200))}</div>
-                </div>
-            `;
-        }).join('');
+/* ==================== ПОДГОТОВИШКА ==================== */
+async function loadPrep(){
+  const snap=await db.collection('GDZ').doc('prep').collection('list').get();
+  prepCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+  const container=document.getElementById('prepList');
+  if(prepCache.length===0){container.innerHTML='<div class="empty-state">Пока нет сайтов</div>';return;}
+  container.innerHTML=prepCache.map(p=>`
+    <div class="list-item">
+      <div class="list-item-head">
+        <div>
+          <div class="list-item-title">${escapeHtml(p.title||'')}</div>
+          <div class="list-item-meta">${escapeHtml(p.site||'')}</div>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-warn btn-sm" onclick="editPrep('${p.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePrep('${p.id}')">🗑</button>
+        </div>
+      </div>
+      <div class="list-item-body">${escapeHtml(p.description||'')}</div>
+    </div>
+  `).join('');
+}
+async function savePrep(){
+  const id=document.getElementById('prepEditId').value;
+  const title=document.getElementById('prepTitle').value.trim();
+  const description=document.getElementById('prepDesc').value;
+  const site=document.getElementById('prepSite').value.trim();
+  const photo=document.getElementById('prepPhoto').value.trim();
+  if(!title)return toast('Введи название',true);
+  const data={title,description,site,photo,updatedAt:Date.now()};
+  try{
+    if(id){
+      await db.collection('GDZ').doc('prep').collection('list').doc(id).update(data);
+      toast('Обновлено');
+    }else{
+      data.createdAt=Date.now();
+      await db.collection('GDZ').doc('prep').collection('list').add(data);
+      toast('Добавлено');
     }
+    cancelPrepEdit();loadPrep();
+  }catch(e){toast('Ошибка: '+e.message,true);}
+}
+function editPrep(id){
+  const p=prepCache.find(x=>x.id===id);if(!p)return;
+  document.getElementById('prepEditId').value=id;
+  document.getElementById('prepTitle').value=p.title||'';
+  document.getElementById('prepDesc').value=p.description||'';
+  document.getElementById('prepSite').value=p.site||'';
+  document.getElementById('prepPhoto').value=p.photo||'';
+  document.getElementById('prepCancelBtn').classList.remove('hidden');
+  document.getElementById('prepSaveBtn').textContent='💾 Обновить';
+}
+function cancelPrepEdit(){
+  document.getElementById('prepEditId').value='';
+  document.getElementById('prepTitle').value='';
+  document.getElementById('prepDesc').value='';
+  document.getElementById('prepSite').value='';
+  document.getElementById('prepPhoto').value='';
+  document.getElementById('prepCancelBtn').classList.add('hidden');
+  document.getElementById('prepSaveBtn').textContent='💾 Сохранить';
+}
+async function deletePrep(id){
+  if(!confirm('Удалить?'))return;
+  await db.collection('GDZ').doc('prep').collection('list').doc(id).delete();
+  toast('Удалено');loadPrep();
+}
 
-    async function saveAnswer() {
-        const id = document.getElementById('answerEditId').value;
-        const subjectId = document.getElementById('answerSubject').value;
-        const number = document.getElementById('answerNumber').value.trim();
-        const date = document.getElementById('answerDate').value;
-        const text = document.getElementById('answerText').value;
+/* ==================== РАСПИСАНИЕ ==================== */
+async function loadScheduleToEditor(){
+  const doc=await db.collection('GDZ').doc('file').get();
+  if(doc.exists&&doc.data().schedule){
+    document.getElementById('scheduleJson').value=JSON.stringify(doc.data().schedule,null,2);
+    toast('Загружено');
+  }else{toast('Расписания нет',true);}
+}
+async function saveSchedule(){
+  const raw=document.getElementById('scheduleJson').value.trim();
+  if(!raw)return toast('Введи JSON',true);
+  let parsed;
+  try{parsed=JSON.parse(raw);}catch(e){return toast('Некорректный JSON',true);}
+  try{
+    await db.collection('GDZ').doc('file').set({schedule:parsed},{merge:true});
+    toast('Расписание сохранено');
+  }catch(e){toast('Ошибка: '+e.message,true);}
+}
 
-        if (!subjectId || !text) return toast('Заполни предмет и текст', true);
-
-        const data = { subjectId, number, date, text, updatedAt: Date.now() };
-
-        try {
-            if (id) {
-                await db.collection('GDZ').doc('answer').collection('list').doc(id).update(data);
-                toast('Обновлено');
-            } else {
-                data.createdAt = Date.now();
-                data.read = [];
-                await db.collection('GDZ').doc('answer').collection('list').add(data);
-                toast('Добавлено');
-            }
-            cancelAnswerEdit();
-            loadAnswers();
-        } catch (e) {
-            toast('Ошибка: ' + e.message, true);
-        }
-    }
-
-    function editAnswer(id) {
-        const a = answersCache.find(x => x.id === id);
-        if (!a) return;
-        document.getElementById('answerEditId').value = id;
-        document.getElementById('answerSubject').value = a.subjectId || '';
-        document.getElementById('answerNumber').value = a.number || '';
-        document.getElementById('answerDate').value = a.date || '';
-        document.getElementById('answerText').value = a.text || '';
-        document.getElementById('answerCancelBtn').classList.remove('hidden');
-        document.getElementById('answerSaveBtn').textContent = '💾 Обновить';
-    }
-
-    function cancelAnswerEdit() {
-        document.getElementById('answerEditId').value = '';
-        document.getElementById('answerSubject').value = '';
-        document.getElementById('answerNumber').value = '';
-        document.getElementById('answerDate').value = '';
-        document.getElementById('answerText').value = '';
-        document.getElementById('answerCancelBtn').classList.add('hidden');
-        document.getElementById('answerSaveBtn').textContent = '💾 Сохранить ответ';
-    }
-
-    async function deleteAnswer(id) {
-        if (!confirm('Удалить ответ?')) return;
-        await db.collection('GDZ').doc('answer').collection('list').doc(id).delete();
-        toast('Удалено');
-        loadAnswers();
-    }
-
-    // ==================== ОТВЕТЫ КОНТРОЛЬНЫХ ====================
-    async function loadTestAnswers
+/* ==================== СТАРТ ==================== */
+(async()=>{
+  const ok=await checkAccess();
+  if(!ok)return;
+  document.getElementById('loadingScreen').classList.add('hidden');
+  document.getElementById('staffApp').classList.remove('hidden');
+  await loadSubjects();
+  await loadNews();
+  await loadPrep();
+  listenMyPending();
+})();
+</script>
+</body>
+</html>
