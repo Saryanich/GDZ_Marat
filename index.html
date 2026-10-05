@@ -17,8 +17,7 @@
 :root{
   --bg:#050e08;--card:rgba(10,26,17,0.85);--accent:#10b981;--accent-bright:#34d399;
   --accent-glow:rgba(52,211,153,0.25);--text:#f0fdf4;--text-2:#94a3b8;--text-3:#475569;
-  --border:rgba(52,211,153,0.2);--border-hover:rgba(52,211,153,0.5);
-  --danger:#ef4444;--warning:#f59e0b;--radius:22px;--radius-sm:14px;
+  --border:rgba(52,211,153,0.2);--danger:#ef4444;--radius:22px;
   --shadow:0 20px 50px -12px rgba(0,0,0,0.7);--blur:blur(30px) saturate(180%);
   --ease:cubic-bezier(.16,1,.3,1);
 }
@@ -48,8 +47,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 .logo-container{display:flex;justify-content:center;margin-bottom:1.25rem}
 .logo-wrapper{padding:3px;border-radius:50%;
   background:linear-gradient(135deg,var(--accent-bright),rgba(16,185,129,0.2));
-  box-shadow:0 0 30px var(--accent-glow);transition:transform .4s var(--ease)}
-.glass-card:hover .logo-wrapper{transform:scale(1.05)}
+  box-shadow:0 0 30px var(--accent-glow)}
 .logo{width:96px;height:96px;border-radius:50%;object-fit:cover;display:block;background:#000}
 h1{font-size:2rem;font-weight:800;text-align:center;letter-spacing:-.5px;margin-bottom:.3rem}
 h1 span{background:linear-gradient(135deg,#fff 40%,var(--accent-bright));
@@ -58,6 +56,7 @@ h1 span{background:linear-gradient(135deg,#fff 40%,var(--accent-bright));
 .input-group{margin-bottom:1.15rem}
 label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:1.2px;
   color:var(--accent-bright);margin-bottom:.45rem;font-weight:700}
+.input-wrapper{position:relative;display:flex;align-items:center}
 input{width:100%;padding:.95rem 1.1rem;background:rgba(3,12,7,0.7);
   border:1.5px solid var(--border);border-radius:14px;color:var(--text);
   font-size:.95rem;outline:none;transition:all .25s var(--ease);-webkit-appearance:none;
@@ -67,7 +66,6 @@ input:focus{border-color:var(--accent-bright);background:rgba(3,12,7,0.95);
 input::placeholder{color:var(--text-3)}
 .toggle-password{position:absolute;right:1rem;background:none;border:none;
   color:var(--text-2);cursor:pointer;padding:4px;font-size:1rem;font-family:inherit}
-.input-wrapper{position:relative;display:flex;align-items:center}
 .btn{width:100%;padding:.95rem;border:none;border-radius:14px;font-weight:700;
   font-size:.95rem;cursor:pointer;font-family:inherit;
   transition:all .25s var(--ease);display:flex;align-items:center;justify-content:center;
@@ -87,7 +85,6 @@ input::placeholder{color:var(--text-3)}
 .role-box{
   background:rgba(52,211,153,0.05);border:1px solid var(--border);
   border-radius:16px;padding:1.1rem;margin-top:1.1rem;
-  animation:fadeInUp .6s var(--ease) both;
 }
 .role-box h4{color:var(--accent-bright);font-size:.88rem;margin-bottom:.6rem;
   display:flex;align-items:center;gap:8px}
@@ -96,18 +93,9 @@ input::placeholder{color:var(--text-3)}
   cursor:pointer;font-family:inherit;display:flex;align-items:center;
   justify-content:center;gap:8px;width:100%;transition:all .25s var(--ease);
   text-decoration:none;border:none}
-.role-btn.admin{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;
-  box-shadow:0 6px 18px -4px rgba(239,68,68,0.5)}
-.role-btn.admin:hover{transform:translateY(-2px);
-  box-shadow:0 10px 24px -4px rgba(239,68,68,0.7)}
-.role-btn.staff{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;
-  box-shadow:0 6px 18px -4px rgba(118,75,162,0.5);margin-top:.6rem}
-.role-btn.staff:hover{transform:translateY(-2px);
-  box-shadow:0 10px 24px -4px rgba(118,75,162,0.7)}
 .role-btn.user{background:linear-gradient(135deg,#10b981,#059669);color:#fff;
-  box-shadow:0 6px 18px -4px rgba(16,185,129,0.5);margin-top:.6rem}
-.role-btn.user:hover{transform:translateY(-2px);
-  box-shadow:0 10px 24px -4px rgba(16,185,129,0.7)}
+  box-shadow:0 6px 18px -4px rgba(16,185,129,0.5)}
+.role-btn.user:hover{transform:translateY(-2px)}
 .message{text-align:center;margin-top:1rem;font-size:.9rem;min-height:1.4rem;
   font-weight:500;border-radius:8px;padding:6px 12px;transition:all .25s}
 .error{color:#f87171;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.2)}
@@ -115,7 +103,7 @@ input::placeholder{color:var(--text-3)}
 .disclaimer{margin-top:1.5rem;padding:.9rem;background:rgba(0,0,0,0.25);
   border-radius:12px;font-size:.72rem;line-height:1.5;color:var(--text-3);text-align:center}
 .disclaimer a{color:var(--text-2);text-decoration:none;border-bottom:1px dotted var(--text-3)}
-.disclaimer a:hover{color:var(--accent-bright);border-bottom-color:var(--accent-bright)}
+.disclaimer a:hover{color:var(--accent-bright)}
 .footer-note{text-align:center;margin-top:1.3rem;font-size:.75rem;color:var(--text-3)}
 #loadingScreen{position:fixed;inset:0;z-index:9999;background:var(--bg);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;
@@ -128,7 +116,6 @@ input::placeholder{color:var(--text-3)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-text{color:var(--text-2);font-size:.9rem;animation:pulse 1.6s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:.55}50%{opacity:1}}
-@keyframes fadeInUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:none}}
 .hidden{display:none!important}
 </style>
 </head>
@@ -140,7 +127,6 @@ input::placeholder{color:var(--text-3)}
 </div>
 
 <div class="container">
-  <!-- ============ ЭКРАН ВХОДА ============ -->
   <div id="loginScreen" class="glass-card hidden">
     <div class="logo-container">
       <div class="logo-wrapper">
@@ -191,39 +177,6 @@ input::placeholder{color:var(--text-3)}
 
     <div class="footer-note">© 2026 IT Global</div>
   </div>
-
-  <!-- ============ ЭКРАН РОЛИ ============ -->
-  <div id="roleScreen" class="glass-card hidden">
-    <div class="logo-container">
-      <div class="logo-wrapper">
-        <img src="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg" alt="ГДЗ Марат" class="logo">
-      </div>
-    </div>
-    <h1><span>ГДЗ Марат</span></h1>
-    <div class="subtitle" id="welcomeText">Привет!</div>
-
-    <a class="role-btn user" href="gdz.html">
-      <span>🎓</span><span>Открыть ГДЗ</span>
-    </a>
-
-    <div id="adminBlock" class="hidden">
-      <a class="role-btn admin" href="admin.html">
-        <span>⚙️</span><span>Админ-панель</span>
-      </a>
-    </div>
-
-    <div id="staffBlock" class="hidden">
-      <a class="role-btn staff" href="staff.html">
-        <span>👨‍🏫</span><span>Панель сотрудника</span>
-      </a>
-    </div>
-
-    <button class="btn btn-primary" style="background:rgba(255,255,255,0.04);color:var(--text-2);border:1px solid var(--border);box-shadow:none;margin-top:1.2rem;" onclick="logout()">
-      <span>🚪</span><span>Выйти</span>
-    </button>
-
-    <div class="footer-note">© 2026 IT Global</div>
-  </div>
 </div>
 
 <script>
@@ -241,10 +194,6 @@ const auth=firebase.auth();
 const db=firebase.firestore();
 
 let authResolved=false;
-let currentUser=null;
-let currentGlobalId='';
-let currentName='';
-let currentRole='user';
 
 /* ==================== УТИЛИТЫ ==================== */
 function showMessage(text,isError){
@@ -253,15 +202,19 @@ function showMessage(text,isError){
   el.className='message '+(isError?'error':'success');
   setTimeout(function(){el.textContent='';el.className='message';},4000);
 }
-function show(el){el.classList.remove('hidden');}
-function hide(el){el.classList.add('hidden');}
+function hideLoading(){
+  const ls=document.getElementById('loadingScreen');
+  if(!ls)return;
+  ls.classList.add('hide');
+  setTimeout(function(){if(ls)ls.remove();},500);
+}
 function togglePassword(){
   const p=document.getElementById('loginPassword');
   p.type=p.type==='password'?'text':'password';
 }
 
 /* ==================== ПРОВЕРКА БАРЬЕРА ==================== */
-async function checkBarrier(globalId,isGuest){
+async function checkBarrier(globalId){
   try{
     const doc=await db.collection('GDZ').doc('file').get();
     if(!doc.exists)return false;
@@ -277,58 +230,42 @@ async function checkBarrier(globalId,isGuest){
   return false;
 }
 
-/* ==================== ОПРЕДЕЛЕНИЕ ПОЛЬЗОВАТЕЛЯ ==================== */
-async function determineUser(user){
-  currentUser=user;
+/* ==================== ВХОД → СРАЗУ НА gdz.html ==================== */
+async function handleUserLogin(user){
+  try{
+    const ud=await db.collection('users').doc(user.uid).get();
+    if(!ud.exists){
+      showMessage('Документ пользователя не найден',true);
+      return;
+    }
+    const u=ud.data();
+    const globalId=u.globalId||'';
+    if(!globalId){
+      showMessage('Global ID не найден',true);
+      return;
+    }
 
-  const ud=await db.collection('users').doc(user.uid).get();
-  if(!ud.exists){
-    showMessage('Документ пользователя не найден',true);
-    return false;
+    // Проверка барьера
+    if(await checkBarrier(globalId))return;
+
+    // Обновляем онлайн
+    db.collection('GDZ').doc('users').collection('users').doc(globalId).set({
+      globalId:globalId,
+      displayName:u.displayName||u.nickname||u.fullName||globalId,
+      online:true,
+      lastSeen:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true}).catch(function(){});
+
+    // Сохраняем в sessionStorage
+    sessionStorage.setItem('gdz_globalId',globalId);
+
+    // → СРАЗУ В ГДЗ
+    window.location.replace('gdz.html');
+
+  }catch(e){
+    console.error(e);
+    showMessage('Ошибка: '+e.message,true);
   }
-  const u=ud.data();
-  currentGlobalId=u.globalId||'';
-  currentName=u.displayName||u.nickname||u.fullName||currentGlobalId||'Пользователь';
-
-  if(!currentGlobalId){
-    showMessage('Global ID не найден',true);
-    return false;
-  }
-
-  // Проверка барьера
-  if(await checkBarrier(currentGlobalId,false))return false;
-
-  // Роль из GDZ/users/{globalId}
-  const gd=await db.collection('GDZ').doc('users').collection('users').doc(currentGlobalId).get();
-  currentRole=gd.exists?(gd.data().role||'user'):'user';
-
-  // Обновляем онлайн (fire-and-forget)
-  db.collection('GDZ').doc('users').collection('users').doc(currentGlobalId).set({
-    globalId:currentGlobalId,
-    displayName:currentName,
-    online:true,
-    lastSeen:firebase.firestore.FieldValue.serverTimestamp()
-  },{merge:true}).catch(function(){});
-
-  return true;
-}
-
-/* ==================== ЭКРАН РОЛИ ==================== */
-function renderRoleScreen(){
-  hide(document.getElementById('loginScreen'));
-  show(document.getElementById('roleScreen'));
-
-  const roleIcon=currentRole==='admin'?'👑':currentRole==='employee'?'👨‍🏫':'🎓';
-  document.getElementById('welcomeText').textContent='Привет, '+currentName+'!';
-
-  // Админ-панель: admin или employee
-  if(currentRole==='admin'){
-    show(document.getElementById('adminBlock'));
-    show(document.getElementById('staffBlock'));
-  }else if(currentRole==='employee'){
-    show(document.getElementById('staffBlock'));
-  }
-  // обычный пользователь — только кнопка "Открыть ГДЗ"
 }
 
 /* ==================== ВХОД ==================== */
@@ -344,7 +281,6 @@ window.login=async function(){
   try{
     let email=identifier;
 
-    // Если не email — ищем по Global ID
     if(identifier.indexOf('@')===-1){
       const q=await db.collection('users').where('globalId','==',identifier).get();
       if(q.empty){
@@ -357,12 +293,7 @@ window.login=async function(){
     }
 
     const userCred=await auth.signInWithEmailAndPassword(email,password);
-    const ok=await determineUser(userCred.user);
-    if(!ok)return;
-
-    btn.disabled=false;
-    btn.innerHTML='<span>🚀</span><span>Войти</span>';
-    renderRoleScreen();
+    await handleUserLogin(userCred.user);
 
   }catch(e){
     console.error(e);
@@ -383,25 +314,7 @@ window.loginAsGuest=function(){
   sessionStorage.setItem('guestMode','true');
   sessionStorage.setItem('guestName','Гость');
   sessionStorage.setItem('gdz_globalId','guest');
-  window.location.href='gdz.html?guest=1';
-};
-
-/* ==================== ВЫХОД ==================== */
-window.logout=async function(){
-  try{
-    if(currentGlobalId&&currentGlobalId!=='guest'){
-      await db.collection('GDZ').doc('users').collection('users').doc(currentGlobalId).update({
-        online:false,
-        lastSeen:firebase.firestore.FieldValue.serverTimestamp()
-      }).catch(function(){});
-    }
-    sessionStorage.clear();
-    await auth.signOut();
-    window.location.href='index.html';
-  }catch(e){
-    sessionStorage.clear();
-    window.location.href='index.html';
-  }
+  window.location.replace('gdz.html?guest=1');
 };
 
 /* ==================== АВТОВХОД ==================== */
@@ -409,36 +322,24 @@ auth.onAuthStateChanged(async function(user){
   if(authResolved)return;
   authResolved=true;
 
-  // Убираем загрузку
-  const ls=document.getElementById('loadingScreen');
-  if(ls)ls.classList.add('hide');
-  setTimeout(function(){if(ls)ls.remove();},500);
+  hideLoading();
 
   if(user){
-    // Пробуем восстановить сессию
-    try{
-      const ok=await determineUser(user);
-      if(ok){
-        renderRoleScreen();
-        return;
-      }
-    }catch(e){
-      console.error('Ошибка автовхода:',e);
-    }
+    // Сессия есть — сразу в gdz.html
+    await handleUserLogin(user);
+    return;
   }
 
-  // Иначе — экран входа
-  show(document.getElementById('loginScreen'));
+  // Сессии нет — показываем вход
+  document.getElementById('loginScreen').classList.remove('hidden');
 });
 
-// Страховка: если Firebase не ответил за 3 сек — показываем вход
+// Страховка
 setTimeout(function(){
   if(!authResolved){
     authResolved=true;
-    const ls=document.getElementById('loadingScreen');
-    if(ls)ls.classList.add('hide');
-    setTimeout(function(){if(ls)ls.remove();},500);
-    show(document.getElementById('loginScreen'));
+    hideLoading();
+    document.getElementById('loginScreen').classList.remove('hidden');
   }
 },3000);
 </script>
