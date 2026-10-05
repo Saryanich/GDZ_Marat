@@ -189,7 +189,9 @@ const firebaseConfig={
   messagingSenderId:"122757049174",
   appId:"1:122757049174:web:ebb425edd0e1a8ea9a44f7"
 };
-firebase.initializeApp(firebaseConfig);
+if(!firebase.apps.length){
+  firebase.initializeApp(firebaseConfig);
+}
 const auth=firebase.auth();
 const db=firebase.firestore();
 
@@ -221,7 +223,6 @@ function showLoginScreen(){
 function safeRedirect(url){
   if(redirecting)return;
   redirecting=true;
-  // Сбрасываем флаг через 2 секунды, чтобы не залипнуть, если редирект не сработал
   setTimeout(function(){redirecting=false;},2000);
   window.location.replace(url);
 }
@@ -236,6 +237,7 @@ async function checkBarrier(globalId){
     const target=d.barrierTarget;
     if(!target||target===globalId){
       sessionStorage.setItem('barrier_back','staff.html');
+      sessionStorage.setItem('gdz_redirect_done','1');
       safeRedirect('barrier.html');
       return true;
     }
@@ -260,23 +262,18 @@ async function handleUserLogin(user){
       return;
     }
 
-    // Проверка барьера
     if(await checkBarrier(globalId))return;
 
-    // Обновляем онлайн
     db.collection('GDZ').doc('users').collection('users').doc(globalId).set({
       globalId:globalId,
       displayName:u.displayName||u.nickname||u.fullName||globalId,
       online:true,
-      lastSeen:firebase.firestore.FieldValue.serverTimestamp()
+      lastSeen:Date.now()
     },{merge:true}).catch(function(){});
 
-    // Сохраняем в sessionStorage
     sessionStorage.setItem('gdz_globalId',globalId);
-    // Помечаем, что редирект в gdz уже был — чтобы gdz.html не отправлял обратно
     sessionStorage.setItem('gdz_redirect_done','1');
 
-    // → СРАЗУ В ГДЗ
     safeRedirect('gdz.html');
 
   }catch(e){
@@ -332,6 +329,7 @@ window.loginAsGuest=function(){
   sessionStorage.setItem('guestMode','true');
   sessionStorage.setItem('guestName','Гость');
   sessionStorage.setItem('gdz_globalId','guest');
+  sessionStorage.setItem('gdz_redirect_done','1');
   safeRedirect('gdz.html?guest=1');
 };
 
@@ -343,24 +341,18 @@ auth.onAuthStateChanged(async function(user){
   hideLoading();
 
   if(user){
-    // Если уже был редирект в gdz — не зацикливаемся
     if(sessionStorage.getItem('gdz_redirect_done')==='1'){
-      // Пользователь уже был перенаправлен, но почему-то вернулся.
-      // Показываем экран входа, чтобы он мог войти заново.
       sessionStorage.removeItem('gdz_redirect_done');
       showLoginScreen();
       return;
     }
-    // Сессия есть — сразу в gdz.html
     await handleUserLogin(user);
     return;
   }
 
-  // Сессии нет — показываем вход
   showLoginScreen();
 });
 
-// Страховка: если Firebase не ответил за 3 секунды — показываем форму
 setTimeout(function(){
   if(!authResolved){
     authResolved=true;
