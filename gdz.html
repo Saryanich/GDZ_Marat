@@ -367,6 +367,100 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
 .subject-name{font-weight:700;font-size:.95rem;transition:color .3s}
 .subject-card:hover .subject-name{color:var(--accent-bright)}
 
+/* ===== КОСМИЧЕСКИЕ ПРЕДМЕТЫ (точки) ===== */
+.subject-card.space .subject-name{
+  display:flex;align-items:center;justify-content:center;
+  gap:6px;min-height:1.2em;
+}
+.space-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--accent-bright);
+  box-shadow:0 0 8px var(--accent-bright),0 0 16px var(--accent-glow);
+  animation:spaceDot 1.4s ease-in-out infinite;
+  display:inline-block;flex-shrink:0;
+}
+.space-dot:nth-child(2){animation-delay:.2s}
+.space-dot:nth-child(3){animation-delay:.4s}
+.space-dot:nth-child(4){animation-delay:.6s}
+.space-dot:nth-child(5){animation-delay:.8s}
+.space-dot:nth-child(6){animation-delay:1s}
+.space-dot:nth-child(7){animation-delay:1.2s}
+.space-dot:nth-child(8){animation-delay:1.4s}
+@keyframes spaceDot{
+  0%,100%{transform:scale(1);opacity:.5}
+  50%{transform:scale(1.5);opacity:1;box-shadow:0 0 16px var(--accent-bright),0 0 32px var(--accent-glow)}
+}
+.subject-card.space .subject-name{
+  color:transparent;
+  position:relative;
+}
+.subject-card.space .subject-name::before{
+  content:'';
+  position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent 0%,var(--accent-bright) 50%,transparent 100%);
+  opacity:.15;
+  animation:spaceShimmer 2s linear infinite;
+  border-radius:4px;
+}
+@keyframes spaceShimmer{
+  0%{transform:translateX(-100%)}
+  100%{transform:translateX(100%)}
+}
+
+/* ===== МОДАЛКА ВЫБОРА ГРУППЫ ===== */
+.group-modal-overlay{
+  position:fixed;inset:0;z-index:1500;
+  background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;padding:1.5rem;
+  animation:fadeInUp .3s var(--ease);
+}
+.group-modal-overlay.show{display:flex}
+.group-modal{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.75rem 1.5rem;
+  max-width:420px;width:100%;box-shadow:var(--shadow);
+  animation:cardIn .35s var(--ease);
+}
+.group-modal h2{
+  font-size:1.25rem;font-weight:800;margin-bottom:1.25rem;
+  text-align:center;
+}
+.group-options{
+  display:flex;flex-direction:column;gap:10px;
+}
+.group-option{
+  padding:1rem 1.25rem;border-radius:var(--radius-sm);
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);
+  color:var(--text);font-size:.95rem;font-weight:600;
+  cursor:pointer;font-family:inherit;text-align:left;
+  display:flex;align-items:center;gap:12px;
+  transition:all .25s var(--ease-soft);
+}
+.group-option:hover{
+  background:rgba(52,211,153,0.12);
+  border-color:var(--accent-bright);
+  color:var(--accent-bright);
+  transform:translateX(4px);
+}
+.group-option .check{
+  margin-left:auto;font-size:1.1rem;opacity:0;
+  transition:opacity .2s;
+}
+.group-option.selected .check{opacity:1}
+.group-modal-actions{
+  display:flex;justify-content:center;margin-top:1.25rem;
+}
+.group-modal-cancel{
+  padding:.75rem 1.5rem;border-radius:999px;
+  background:rgba(255,255,255,0.06);
+  border:1px solid var(--border);
+  color:var(--text-2);font-weight:600;font-size:.88rem;
+  cursor:pointer;font-family:inherit;
+  transition:all .25s var(--ease-soft);
+}
+.group-modal-cancel:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+
 .lock-box{text-align:center;padding:3.5rem 1.5rem;
   background:rgba(245,158,11,0.05);border:1px dashed rgba(245,158,11,0.3);
   border-radius:var(--radius);margin:1rem 0;animation:fadeInUp .5s var(--ease) both}
@@ -1007,6 +1101,17 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
   <div class="fs-actions" id="fsActions"></div>
 </div>
 
+<!-- МОДАЛКА ВЫБОРА ГРУППЫ -->
+<div class="group-modal-overlay" id="groupModalOverlay">
+  <div class="group-modal" id="groupModal">
+    <h2 id="groupModalTitle">В какой группе вы находитесь?</h2>
+    <div class="group-options" id="groupOptions"></div>
+    <div class="group-modal-actions">
+      <button class="group-modal-cancel" onclick="closeGroupModal()">Отмена</button>
+    </div>
+  </div>
+</div>
+
 <!-- НАСТРОЙКИ -->
 <div class="settings-view" id="settingsView">
   <div class="settings-header">
@@ -1124,6 +1229,33 @@ const DAY_ORDER={
 };
 const SPECIAL_LESSONS=['окно','разговор о важном'];
 
+/* ===== ГРУППЫ ===== */
+const GROUP_CONFIG = {
+  'Английский язык': {
+    title: 'В какой группе вы находитесь?',
+    options: ['у Эльвиры Исмагиловны', 'у Зили Ринатовны'],
+    // Как будет называться предмет после выбора
+    resolveName: (choice) => `Английский язык (${choice})`,
+    // Как искать subjectId для группы
+    resolveId: (baseId, choice) => `${baseId}_${choice === 'у Эльвиры Исмагиловны' ? 'elvira' : 'zilya'}`
+  },
+  'Родной русский язык': {
+    title: 'В какой группе вы находитесь?',
+    options: ['Родной русский', 'Родной русско-татарский', 'Родной татарский'],
+    resolveName: (choice) => `${choice} язык`,
+    resolveId: (baseId, choice) => `${baseId}_${choice === 'Родной русский' ? 'ru' : choice === 'Родной русско-татарский' ? 'ru_tat' : 'tat'}`
+  },
+  'Родной русский литература': {
+    title: 'В какой группе вы находитесь?',
+    options: ['Родной русский', 'Родной русско-татарский', 'Родной татарский'],
+    resolveName: (choice) => `${choice} литература`,
+    resolveId: (baseId, choice) => `${baseId}_${choice === 'Родной русский' ? 'ru' : choice === 'Родной русско-татарский' ? 'ru_tat' : 'tat'}`
+  }
+};
+
+/* Базовые ID предметов, которые требуют выбора группы */
+const GROUP_BASE_IDS = ['angliyskiy-yazyk', 'rodnoy-russkiy-yazyk', 'rodnaya-russkaya-literatura'];
+
 /* ==================== СОСТОЯНИЕ ==================== */
 let currentUser=null,currentGlobalId='',currentName='',currentRole='guest',isGuest=true;
 let subjects=[],answers=[],testsAnswers=[],news=[],prep=[],schedule={};
@@ -1131,6 +1263,7 @@ let globiHistory=[];
 let currentView={type:null,id:null};
 let barrierTimer=null,heartbeatTimer=null;
 let breakTimer=null;
+let userGroups={}; // { baseId: choice }
 let settings={
   reduceEffects:false,
   theme:'default',
@@ -1531,6 +1664,7 @@ async function determineUser(){
           const data=gd.data()||{};
           currentRole=data.role||'user';
           if(!displayName&&data.displayName)currentName=data.displayName;
+          if(data.groups)userGroups=data.groups;
         }else{
           currentRole='user';
           db.collection('GDZ').doc('users').collection('users').doc(globalId).set({
@@ -1589,6 +1723,115 @@ async function loadAll(){
     );
   }
   await Promise.all(tasks);
+}
+
+/* ==================== ГРУППЫ ==================== */
+function getBaseSubjectId(subjectId){
+  // Если subjectId содержит суффикс группы — отрезаем
+  for(const base of GROUP_BASE_IDS){
+    if(subjectId === base || subjectId.startsWith(base + '_')) return base;
+  }
+  return subjectId;
+}
+
+function getGroupChoice(baseId){
+  return userGroups[baseId] || null;
+}
+
+function getEffectiveSubjectName(subject){
+  const baseId = getBaseSubjectId(subject.id);
+  if(GROUP_BASE_IDS.includes(baseId)){
+    const choice = getGroupChoice(baseId);
+    if(choice && GROUP_CONFIG[baseId]){
+      return GROUP_CONFIG[baseId].resolveName(choice);
+    }
+    return null; // ещё не выбрана
+  }
+  return subject.name;
+}
+
+function getEffectiveSubjectId(subject){
+  const baseId = getBaseSubjectId(subject.id);
+  if(GROUP_BASE_IDS.includes(baseId)){
+    const choice = getGroupChoice(baseId);
+    if(choice && GROUP_CONFIG[baseId]){
+      return GROUP_CONFIG[baseId].resolveId(baseId, choice);
+    }
+    return null; // ещё не выбрана
+  }
+  return subject.id;
+}
+
+function hasGroupChosen(subject){
+  const baseId = getBaseSubjectId(subject.id);
+  if(GROUP_BASE_IDS.includes(baseId)){
+    return !!getGroupChoice(baseId);
+  }
+  return true;
+}
+
+function openGroupModal(baseId){
+  const config = GROUP_CONFIG[baseId];
+  if(!config)return;
+
+  const overlay = document.getElementById('groupModalOverlay');
+  const title = document.getElementById('groupModalTitle');
+  const optionsEl = document.getElementById('groupOptions');
+
+  title.textContent = config.title;
+
+  const currentChoice = getGroupChoice(baseId);
+
+  optionsEl.innerHTML = config.options.map(opt=>`
+    <button class="group-option ${currentChoice===opt?'selected':''}"
+      onclick="selectGroup('${baseId}','${esc(opt)}')">
+      <span>${esc(opt)}</span>
+      <span class="check">✅</span>
+    </button>
+  `).join('');
+
+  overlay.classList.add('show');
+  document.body.style.overflow='hidden';
+}
+
+function closeGroupModal(){
+  document.getElementById('groupModalOverlay').classList.remove('show');
+  document.body.style.overflow='';
+}
+
+async function selectGroup(baseId, choice){
+  if(isGuest){
+    // Гостю не сохраняем — просто закрываем
+    closeGroupModal();
+    toast('Создай аккаунт, чтобы сохранить выбор');
+    return;
+  }
+
+  userGroups[baseId] = choice;
+  closeGroupModal();
+
+  try{
+    await db.collection('GDZ').doc('users').collection('users').doc(currentGlobalId).set({
+      groups: userGroups,
+      updatedAt: Date.now()
+    }, {merge: true});
+    toast('Группа сохранена');
+  }catch(e){
+    console.warn('group save error', e);
+    toast('Ошибка сохранения, попробуй позже');
+  }
+
+  // Перерисовываем всё, где отображаются предметы
+  renderSubjects();
+  renderHomework();
+  renderSchedule();
+  renderHome();
+
+  // Если открыт fullscreen предмета — обновим
+  if(currentView.type==='subject' && currentView.id){
+    const subj = subjects.find(s=>s.id===currentView.id);
+    if(subj) showSubjectDetail(subj);
+  }
 }
 
 /* ==================== ШАПКА ==================== */
@@ -1655,16 +1898,47 @@ function renderHome(){
 /* ==================== ПРЕДМЕТЫ ==================== */
 function renderSubjects(){
   const g=document.getElementById('subjectsGrid');
-  g.innerHTML=subjects.length?subjects.map(s=>`
-    <div class="subject-card" onclick="filterBySubject('${s.id}')">
-      <div class="subject-icon">${s.icon||'📚'}</div>
-      <div class="subject-name">${esc(s.name)}</div>
-    </div>`).join(''):'<div class="empty">Пока нет предметов</div>';
+  g.innerHTML=subjects.length?subjects.map(s=>{
+    const baseId = getBaseSubjectId(s.id);
+    const isSpace = GROUP_BASE_IDS.includes(baseId) && !hasGroupChosen(s);
+    const effectiveName = getEffectiveSubjectName(s);
+
+    if(isSpace){
+      return `
+        <div class="subject-card space" onclick="openGroupModal('${baseId}')">
+          <div class="subject-icon">${s.icon||'📚'}</div>
+          <div class="subject-name">
+            <span class="space-dot"></span>
+            <span class="space-dot"></span>
+            <span class="space-dot"></span>
+            <span class="space-dot"></span>
+            <span class="space-dot"></span>
+            <span class="space-dot"></span>
+            <span class="space-dot"></span>
+            <span class="space-dot"></span>
+          </div>
+        </div>`;
+    }
+
+    return `
+      <div class="subject-card" onclick="filterBySubject('${s.id}')">
+        <div class="subject-icon">${s.icon||'📚'}</div>
+        <div class="subject-name">${esc(effectiveName || s.name)}</div>
+      </div>`;
+  }).join(''):'<div class="empty">Пока нет предметов</div>';
 }
+
 function filterBySubject(id){
   const s=subjects.find(x=>x.id===id);
+  if(!s)return;
+  const baseId = getBaseSubjectId(s.id);
+  if(GROUP_BASE_IDS.includes(baseId) && !hasGroupChosen(s)){
+    openGroupModal(baseId);
+    return;
+  }
+  const effectiveName = getEffectiveSubjectName(s);
   go('homework');
-  setTimeout(()=>{document.getElementById('hwSearch').value=s?.name||'';filterHw();},100);
+  setTimeout(()=>{document.getElementById('hwSearch').value=effectiveName||s.name||'';filterHw();},100);
 }
 
 /* ==================== ДЗ ==================== */
@@ -1686,7 +1960,8 @@ function filterHw(){
 }
 function cardAnswer(a,type){
   const s=subjects.find(x=>x.id===a.subjectId);
-  const icon=s?.icon||'📚',name=s?.name||'—';
+  const icon=s?.icon||'📚';
+  const name=s?getEffectiveSubjectName(s)||s.name:'—';
   const done=isAnswerRead(a);
   let title,meta;
   if(type==='homework'){
@@ -1838,6 +2113,11 @@ function openSubjectFromSchedule(lessonName,dayKey){
     toast(`Предмет «${lessonName}» не найден в базе`);
     return;
   }
+  const baseId = getBaseSubjectId(subj.id);
+  if(GROUP_BASE_IDS.includes(baseId) && !hasGroupChosen(subj)){
+    openGroupModal(baseId);
+    return;
+  }
   showSubjectDetail(subj,dayKey);
 }
 
@@ -1847,7 +2127,8 @@ function showSubjectDetail(subj,fromDay){
   const subjAnswers=answers.filter(a=>a.subjectId===subj.id&&isHwActual(a));
   const subjTests=isGuest?[]:testsAnswers.filter(a=>a.subjectId===subj.id);
 
-  document.getElementById('fsTitle').innerHTML=`${subj.icon||'📚'} ${esc(subj.name)}`;
+  const effectiveName = getEffectiveSubjectName(subj) || subj.name;
+  document.getElementById('fsTitle').innerHTML=`${subj.icon||'📚'} ${esc(effectiveName)}`;
 
   const today=getMoscowDate();
   const dateInfo=[];
@@ -1965,12 +2246,14 @@ async function openFullscreen(type,id){
     const badgeText=multi?formatNumbers(item.number):`№${esc(item.number||'')}`;
     const done=isAnswerRead(item);
     const doneBadge=done?'<span class="numbers-badge done">✓ ДЗ выполнено</span>':'';
-    title=`${s?.icon||'📚'} <span class="${badgeClass}">${badgeText}</span> ${esc(s?.name||'')} ${doneBadge}`;
+    const effectiveName = s ? (getEffectiveSubjectName(s)||s.name) : '';
+    title=`${s?.icon||'📚'} <span class="${badgeClass}">${badgeText}</span> ${esc(effectiveName)} ${doneBadge}`;
     meta=item.date?`📅 ${item.date}`:'';
   }else if(type==='tests'){
     const s=subjects.find(x=>x.id===item.subjectId);
+    const effectiveName = s ? (getEffectiveSubjectName(s)||s.name) : '';
     title=`${s?.icon||'🎯'} ${esc(item.title||'')}`;
-    meta=`${s?.name||''}${item.date?' · 📅 '+item.date:''}`;
+    meta=`${esc(effectiveName)}${item.date?' · 📅 '+item.date:''}`;
   }else{
     title=`📰 ${esc(item.title||'')}`;meta='';
   }
@@ -2055,7 +2338,7 @@ async function explainWithGlobi(){
   const item=answers.find(a=>a.id===currentView.id);
   if(!item)return;
   const s=subjects.find(x=>x.id===item.subjectId);
-  const subjName=s?.name||'предмет';
+  const subjName=s?getEffectiveSubjectName(s)||s.name:'предмет';
   const num=formatNumbers(item.number||'');
   const text=plainPreview(item.text,400);
 
@@ -2073,6 +2356,7 @@ async function explainWithGlobi(){
 async function explainSubjectWithGlobi(subjId){
   const subj=subjects.find(s=>s.id===subjId);
   if(!subj)return;
+  const effectiveName = getEffectiveSubjectName(subj)||subj.name;
 
   closeFullscreen();
   go('globi');
@@ -2080,7 +2364,7 @@ async function explainSubjectWithGlobi(subjId){
   setTimeout(async()=>{
     const input=document.getElementById('globiInput');
     if(!input)return;
-    input.value=`Расскажи, что задано по предмету «${subj.name}» — какие ДЗ и контрольные на этой неделе?`;
+    input.value=`Расскажи, что задано по предмету «${effectiveName}» — какие ДЗ и контрольные на этой неделе?`;
     await sendGlobi();
   },200);
 }
@@ -2276,21 +2560,31 @@ function buildContext(userQuestion){
   parts.push(`\n👤 Пользователь: ${currentName} (${currentRole}).`);
 
   if(subjects.length){
-    parts.push(`\n📚 ПРЕДМЕТЫ: ${subjects.map(s=>`${s.icon||''} ${s.name}`).join(', ')}`);
+    const subjNames = subjects.map(s=>{
+      const baseId = getBaseSubjectId(s.id);
+      if(GROUP_BASE_IDS.includes(baseId)){
+        const n = getEffectiveSubjectName(s);
+        return n ? `${s.icon||''} ${n}` : `${s.icon||''} [группа не выбрана]`;
+      }
+      return `${s.icon||''} ${s.name}`;
+    });
+    parts.push(`\n📚 ПРЕДМЕТЫ: ${subjNames.join(', ')}`);
   }
   const actual=getActualAnswers();
   if(actual.length){
     parts.push(`\n📝 ОТВЕТЫ ДЗ (актуальные):`);
     actual.slice(0,15).forEach(a=>{
       const s=subjects.find(x=>x.id===a.subjectId);
-      parts.push(`- ${s?.name||'?'} ${formatNumbers(a.number||'')}${a.date?' ('+a.date+')':''}: ${plainPreview(a.text,250)}`);
+      const effectiveName = s ? (getEffectiveSubjectName(s)||s.name) : '?';
+      parts.push(`- ${effectiveName} ${formatNumbers(a.number||'')}${a.date?' ('+a.date+')':''}: ${plainPreview(a.text,250)}`);
     });
   }
   if(!isGuest&&testsAnswers.length){
     parts.push(`\n🎯 КОНТРОЛЬНЫЕ:`);
     testsAnswers.slice(0,10).forEach(a=>{
       const s=subjects.find(x=>x.id===a.subjectId);
-      parts.push(`- ${s?.name||'?'} — ${a.title||''}${a.date?' ('+a.date+')':''}: ${plainPreview(a.text,250)}`);
+      const effectiveName = s ? (getEffectiveSubjectName(s)||s.name) : '?';
+      parts.push(`- ${effectiveName} — ${a.title||''}${a.date?' ('+a.date+')':''}: ${plainPreview(a.text,250)}`);
     });
   }
   if(!isGuest&&news.length){
@@ -2450,7 +2744,7 @@ window.addEventListener('scroll',()=>{
 
 /* ==================== ESC ==================== */
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){closeFullscreen();closeDrawer();closeSettings();}
+  if(e.key==='Escape'){closeFullscreen();closeDrawer();closeSettings();closeGroupModal();}
 });
 
 /* ==================== RIPPLE INIT ==================== */
