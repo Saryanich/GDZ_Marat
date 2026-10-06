@@ -456,17 +456,29 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
 }
 .group-option.selected .check{opacity:1}
 .group-modal-actions{
-  display:flex;justify-content:center;margin-top:1.25rem;
+  display:flex;justify-content:space-between;gap:.75rem;margin-top:1.25rem;
 }
 .group-modal-cancel{
-  padding:.75rem 1.5rem;border-radius:999px;
+  flex:1;padding:.85rem 1.25rem;border-radius:999px;
   background:rgba(255,255,255,0.06);
   border:1px solid var(--border);
-  color:var(--text-2);font-weight:600;font-size:.88rem;
+  color:var(--text-2);font-weight:600;font-size:.9rem;
   cursor:pointer;font-family:inherit;
   transition:all .25s var(--ease-soft);
 }
 .group-modal-cancel:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+.group-modal-save{
+  flex:1;padding:.85rem 1.25rem;border-radius:999px;
+  background:linear-gradient(135deg,var(--accent),#059669);
+  border:none;color:#fff;font-weight:700;font-size:.9rem;
+  cursor:pointer;font-family:inherit;
+  transition:all .25s var(--ease-soft);
+  box-shadow:0 8px 20px -6px rgba(16,185,129,0.5);
+}
+.group-modal-save:hover{transform:translateY(-2px);box-shadow:0 12px 26px -6px rgba(16,185,129,0.7)}
+.group-modal-save:disabled{
+  opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;
+}
 
 .lock-box{text-align:center;padding:3.5rem 1.5rem;
   background:rgba(245,158,11,0.05);border:1px dashed rgba(245,158,11,0.3);
@@ -1114,6 +1126,7 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
     <div class="group-options" id="groupOptions"></div>
     <div class="group-modal-actions">
       <button class="group-modal-cancel" onclick="closeGroupModal()">Отмена</button>
+      <button class="group-modal-save" id="groupSaveBtn" onclick="saveGroupChoice()">Сохранить</button>
     </div>
   </div>
 </div>
@@ -1238,12 +1251,7 @@ const DAY_ORDER={
 const SPECIAL_LESSONS=['окно','разговор о важном'];
 
 /* ==================== ПАТЧ: ГРУППЫ ==================== */
-/* ПАТЧ: группы по английскому и родному
-   Причина бага со скринов: код искал предметы по ID (rodnoy-russkiy-yazyk,
-   angliyskiy-yazyk...), а в базе ID другие -> ничего не склеивалось.
-   Теперь предметы определяются по НАЗВАНИЮ (оно у тебя точно есть). */
-
-const ENGLISH_BASE_ID='angliyskiy-yazyk'; // ключ в Firebase (как и раньше)
+const ENGLISH_BASE_ID='angliyskiy-yazyk';
 const ENGLISH_GROUPS={
   title:'В какой группе вы находитесь?',
   options:[
@@ -1275,6 +1283,9 @@ let settings={
   theme:'default',
   breakEnabled:false
 };
+/* Временное (несохранённое) значение выбора группы, пока модалка открыта */
+let pendingGroupKey=null;
+let pendingGroupChoice=null;
 
 /* ==================== УТИЛИТЫ ==================== */
 const esc=(t)=>{if(!t)return'';const d=document.createElement('div');d.textContent=t;return d.innerHTML;};
@@ -1723,7 +1734,7 @@ function subjInfo(id){
   if(!id)return null;
   const s=subjects.find(x=>x.id===id);
   if(s)return classifyName(s.name||'');
-  if(String(id).startsWith(ENGLISH_BASE_ID))return {kind:'english',key:ENGLISH_BASE_ID}; // старые id *_elvira
+  if(String(id).startsWith(ENGLISH_BASE_ID))return {kind:'english',key:ENGLISH_BASE_ID};
   return null;
 }
 function isEnglishSubjectId(id){return subjInfo(id)?.kind==='english';}
@@ -1800,19 +1811,82 @@ function getActualAnswers(){
   return answers.filter(a=>isHwActual(a)&&isAnswerVisibleForUser(a));
 }
 
-/* Модалка выбора */
+/* Модалка выбора — теперь с кнопкой «Сохранить» */
 function openGroupModal(baseKey){
   const config=baseKey===ENGLISH_BASE_ID?ENGLISH_GROUPS:NATIVE_GROUPS[baseKey];
   if(!config)return;
-  const cur=getGroupChoice(baseKey);
+  pendingGroupKey=baseKey;
+  pendingGroupChoice=getGroupChoice(baseKey);
   document.getElementById('groupModalTitle').textContent=config.title;
-  document.getElementById('groupOptions').innerHTML=config.options.map(opt=>`
-    <button class="group-option ${cur===opt.value?'selected':''}"
-      onclick="selectGroup('${baseKey}','${opt.value}')">
-      <span>${esc(opt.label)}</span><span class="check">✅</span>
-    </button>`).join('');
+  renderGroupOptions(config.options);
   document.getElementById('groupModalOverlay').classList.add('show');
   document.body.style.overflow='hidden';
+  updateGroupSaveBtn();
+}
+
+function renderGroupOptions(options){
+  document.getElementById('groupOptions').innerHTML=options.map(opt=>`
+    <button class="group-option ${pendingGroupChoice===opt.value?'selected':''}"
+      onclick="pickGroupOption('${opt.value}')">
+      <span>${esc(opt.label)}</span><span class="check">✅</span>
+    </button>`).join('');
+}
+
+function pickGroupOption(value){
+  pendingGroupChoice=value;
+  const config=pendingGroupKey===ENGLISH_BASE_ID?ENGLISH_GROUPS:NATIVE_GROUPS[pendingGroupKey];
+  if(config)renderGroupOptions(config.options);
+  updateGroupSaveBtn();
+}
+
+function updateGroupSaveBtn(){
+  const btn=document.getElementById('groupSaveBtn');
+  if(!btn)return;
+  btn.disabled=!pendingGroupChoice;
+}
+
+async function saveGroupChoice(){
+  if(!pendingGroupKey||!pendingGroupChoice)return;
+
+  if(isGuest){
+    closeGroupModal();
+    toast('Создай аккаунт, чтобы сохранить выбор');
+    return;
+  }
+
+  userGroups[pendingGroupKey]=pendingGroupChoice;
+  const savedKey=pendingGroupKey;
+  closeGroupModal();
+
+  try{
+    await db.collection('GDZ').doc('users').collection('users').doc(currentGlobalId).set({
+      groups:userGroups,
+      updatedAt:Date.now()
+    },{merge:true});
+    toast('Группа сохранена');
+  }catch(e){
+    console.warn('group save error',e);
+    toast('Ошибка сохранения, попробуй позже');
+  }
+
+  renderSubjects();
+  renderHomework();
+  renderSchedule();
+  renderHome();
+  renderTests();
+  renderGroupSettings();
+
+  if(currentView.type==='subject'&&currentView.id){
+    const subj=subjects.find(s=>s.id===currentView.id);
+    if(subj)showSubjectDetail(subj);
+  }
+}
+
+function closeGroupModal(){
+  document.getElementById('groupModalOverlay').classList.remove('show');
+  document.body.style.overflow='';
+  pendingGroupKey=null;
+  pendingGroupChoice=null;
 }
 
 /* «Мои группы» в настройках */
@@ -1909,7 +1983,7 @@ function buildSubjectCards(){
       cards.push({icon:s.icon||'🇬🇧',name:chosen?groupCardName(ENGLISH_BASE_ID):null,
         space:!chosen,groupKey:ENGLISH_BASE_ID});
     }else if(info&&info.kind==='native'){
-      if(nat.has(info.key))continue;   // 6 предметов -> 2 карточки
+      if(nat.has(info.key))continue;
       nat.add(info.key);
       const name=groupCardName(info.key);
       cards.push({icon:s.icon||'📖',name,space:!name,groupKey:info.key});
@@ -2798,7 +2872,7 @@ document.addEventListener('keydown',e=>{
 
 /* ==================== RIPPLE INIT ==================== */
 document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelectorAll('.sidebar-nav-btn, .drawer-nav-btn, .sidebar-admin-btn, .sidebar-logout-btn, .sidebar-settings-btn, .burger-btn, .mobile-settings-btn, .fs-btn, .btn-global, .quick-action, .msg-action-btn, .globi-clear-btn').forEach(btn=>{
+  document.querySelectorAll('.sidebar-nav-btn, .drawer-nav-btn, .sidebar-admin-btn, .sidebar-logout-btn, .sidebar-settings-btn, .burger-btn, .mobile-settings-btn, .fs-btn, .btn-global, .quick-action, .msg-action-btn, .globi-clear-btn, .group-modal-save, .group-modal-cancel').forEach(btn=>{
     btn.classList.add('ripple');
     btn.addEventListener('click',addRipple);
   });
