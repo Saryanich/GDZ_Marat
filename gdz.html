@@ -1165,6 +1165,11 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
   </div>
 
   <div class="settings-group">
+    <div class="settings-group-title">Мои группы</div>
+    <div id="groupSettings"></div>
+  </div>
+
+  <div class="settings-group">
     <div class="settings-group-title">Перемена</div>
     <div class="settings-row">
       <div class="settings-row-text">
@@ -1232,58 +1237,30 @@ const DAY_ORDER={
 };
 const SPECIAL_LESSONS=['окно','разговор о важном'];
 
-/* ==================== ГРУППЫ ==================== */
-/* Только английский требует выбора группы.
-   Родной русский/татарский — это отдельные предметы в базе (6 штук),
-   которые на сайте объединяются в 2 «звёздные» карточки, пока группа не выбрана. */
+/* ==================== ПАТЧ: ГРУППЫ ==================== */
+/* ПАТЧ: группы по английскому и родному
+   Причина бага со скринов: код искал предметы по ID (rodnoy-russkiy-yazyk,
+   angliyskiy-yazyk...), а в базе ID другие -> ничего не склеивалось.
+   Теперь предметы определяются по НАЗВАНИЮ (оно у тебя точно есть). */
 
-const GROUP_CONFIG = {
-  'angliyskiy-yazyk': {
-    title: 'В какой группе вы находитесь?',
-    options: [
-      { value:'elvira', label:'у Эльвиры Исмагиловны', fullName:'Английский язык (у Эльвиры Исмагиловны)' },
-      { value:'zilya',  label:'у Зили Ринатовны',     fullName:'Английский язык (у Зили Ринатовны)' }
-    ]
-  }
+const ENGLISH_BASE_ID='angliyskiy-yazyk'; // ключ в Firebase (как и раньше)
+const ENGLISH_GROUPS={
+  title:'В какой группе вы находитесь?',
+  options:[
+    {value:'elvira',label:'Эльвира Исмагиловна'},
+    {value:'zilya', label:'Зиля Ринатовна'}
+  ]
 };
-
-/* ID английского в базе */
-const ENGLISH_BASE_ID = 'angliyskiy-yazyk';
-
-/* Шесть предметов родного языка/литературы в базе */
-const NATIVE_SUBJECT_IDS = [
-  'rodnoy-russkiy-yazyk',
-  'rodnaya-russkaya-literatura',
-  'rodnoy-russko-tatarskiy-yazyk',
-  'rodnaya-russko-tatarskaya-literatura',
-  'rodnoy-tatarskiy-yazyk',
-  'rodnaya-tatarskaya-literatura'
-];
-
-/* Две объединённые карточки для родного */
-const NATIVE_GROUPS = {
-  'rodnoy-yazyk-group': {
-    title: 'Выберите родной язык',
-    type: 'lang',
-    options: [
-      { value:'ru',     label:'Родной русский',         fullId:'rodnoy-russkiy-yazyk',          fullName:'Родной русский язык' },
-      { value:'ru_tat', label:'Родной русско-татарский', fullId:'rodnoy-russko-tatarskiy-yazyk', fullName:'Родной русско-татарский язык' },
-      { value:'tat',    label:'Родной татарский',        fullId:'rodnoy-tatarskiy-yazyk',        fullName:'Родной татарский язык' }
-    ]
-  },
-  'rodnaya-literatura-group': {
-    title: 'Выберите родную литературу',
-    type: 'lit',
-    options: [
-      { value:'ru',     label:'Родная русская',         fullId:'rodnaya-russkaya-literatura',          fullName:'Родная русская литература' },
-      { value:'ru_tat', label:'Родная русско-татарская', fullId:'rodnaya-russko-tatarskaya-literatura', fullName:'Родная русско-татарская литература' },
-      { value:'tat',    label:'Родная татарская',        fullId:'rodnaya-tatarskaya-literatura',        fullName:'Родная татарская литература' }
-    ]
-  }
+const NATIVE_GROUPS={
+  'rodnoy-yazyk-group':{title:'Выберите родной язык',lit:false,options:[
+    {value:'ru',    label:'Русский',          word:'русский'},
+    {value:'ru_tat',label:'Русско-татарский', word:'русско-татарский'},
+    {value:'tat',   label:'Татарский',        word:'татарский'}]},
+  'rodnaya-literatura-group':{title:'Выберите родную литературу',lit:true,options:[
+    {value:'ru',    label:'Русская',          word:'русская'},
+    {value:'ru_tat',label:'Русско-татарская', word:'русско-татарская'},
+    {value:'tat',   label:'Татарская',        word:'татарская'}]}
 };
-
-/* Все «групповые» базовые ID (английский + 6 родных) */
-const GROUP_BASE_IDS = [ENGLISH_BASE_ID, ...NATIVE_SUBJECT_IDS];
 
 /* ==================== СОСТОЯНИЕ ==================== */
 let currentUser=null,currentGlobalId='',currentName='',currentRole='guest',isGuest=true;
@@ -1462,6 +1439,7 @@ function updateMetaTheme(){
 }
 function openSettings(){
   applySettings();
+  renderGroupSettings();
   document.getElementById('settingsView').classList.add('show');
   document.body.style.overflow='hidden';
 }
@@ -1727,191 +1705,133 @@ async function loadAll(){
   await Promise.all(tasks);
 }
 
-/* ==================== ГРУППЫ ==================== */
-function isEnglishSubjectId(id){
-  if(!id)return false;
-  return id===ENGLISH_BASE_ID || id.startsWith(ENGLISH_BASE_ID + '_');
+/* ==================== ФУНКЦИИ ГРУПП (по названию) ==================== */
+function normName(s){
+  return String(s||'').toLowerCase().replace(/ё/g,'е').replace(/[^а-яa-z0-9]+/g,' ').trim();
 }
-
-function isNativeSubjectId(id){
-  return NATIVE_SUBJECT_IDS.includes(id);
-}
-
-/* Определяем, к какой «групповой» карточке относится предмет.
-   Для английского — 1 карточка, для родного — 2 карточки (язык / литература). */
-function getGroupCardKeyForSubject(subjId){
-  if(isEnglishSubjectId(subjId)) return ENGLISH_BASE_ID;
-  if(subjId === 'rodnoy-russkiy-yazyk' ||
-     subjId === 'rodnoy-russko-tatarskiy-yazyk' ||
-     subjId === 'rodnoy-tatarskiy-yazyk') return 'rodnoy-yazyk-group';
-  if(subjId === 'rodnaya-russkaya-literatura' ||
-     subjId === 'rodnaya-russko-tatarskaya-literatura' ||
-     subjId === 'rodnaya-tatarskaya-literatura') return 'rodnaya-literatura-group';
+function classifyName(name){
+  const n=normName(name);
+  if(/англ|english/.test(n))return {kind:'english',key:ENGLISH_BASE_ID};
+  if(/родн/.test(n)){
+    const lit=/литератур/.test(n);
+    const variant=/русско ?татар/.test(n)?'ru_tat':/татар/.test(n)?'tat':/русск/.test(n)?'ru':null;
+    return {kind:'native',key:lit?'rodnaya-literatura-group':'rodnoy-yazyk-group',variant};
+  }
   return null;
 }
-
-/* База для сохранения выбора в Firebase: 'angliyskiy-yazyk' или 'rodnoy-yazyk-group' / 'rodnaya-literatura-group' */
-function getGroupBaseId(subjId){
-  const key = getGroupCardKeyForSubject(subjId);
-  return key;
+function subjInfo(id){
+  if(!id)return null;
+  const s=subjects.find(x=>x.id===id);
+  if(s)return classifyName(s.name||'');
+  if(String(id).startsWith(ENGLISH_BASE_ID))return {kind:'english',key:ENGLISH_BASE_ID}; // старые id *_elvira
+  return null;
 }
-
-/* Выбранное значение для группы */
-function getGroupChoice(baseKey){
-  return userGroups[baseKey] || null;
+function isEnglishSubjectId(id){return subjInfo(id)?.kind==='english';}
+function isNativeSubjectId(id){return subjInfo(id)?.kind==='native';}
+function getGroupCardKeyForSubject(id){return subjInfo(id)?.key||null;}
+function getGroupBaseId(id){return getGroupCardKeyForSubject(id);}
+function getGroupChoice(key){return userGroups[key]||null;}
+function getGroupOption(key,value){
+  const opts=key===ENGLISH_BASE_ID?ENGLISH_GROUPS.options:(NATIVE_GROUPS[key]?.options||[]);
+  return opts.find(o=>o.value===value)||null;
 }
-
-/* Полное название предмета с учётом группы */
+function groupCardName(key){
+  const o=getGroupOption(key,getGroupChoice(key));
+  if(!o)return null;
+  if(key===ENGLISH_BASE_ID)return 'Английский язык ('+o.label+')';
+  return NATIVE_GROUPS[key].lit?`Родная ${o.word} литература`:`Родной ${o.word} язык`;
+}
 function getEffectiveSubjectName(subject){
-  if(!subject) return null;
-
-  // Английский
+  if(!subject)return null;
   if(isEnglishSubjectId(subject.id)){
-    const choice = getGroupChoice(ENGLISH_BASE_ID);
-    if(!choice) return null;
-    const opt = GROUP_CONFIG[ENGLISH_BASE_ID].options.find(o=>o.value===choice);
-    return opt ? opt.fullName : null;
+    const o=getGroupOption(ENGLISH_BASE_ID,getGroupChoice(ENGLISH_BASE_ID));
+    return o?`${subject.name} (${o.label})`:subject.name;
   }
-
-  // Родной — 6 отдельных предметов, у каждого своё название
-  if(isNativeSubjectId(subject.id)){
-    const cardKey = getGroupCardKeyForSubject(subject.id);
-    const choice = getGroupChoice(cardKey);
-    if(!choice) return null;
-    const opt = NATIVE_GROUPS[cardKey].options.find(o=>o.value===choice);
-    return opt ? opt.fullName : null;
-  }
-
   return subject.name;
 }
-
-/* Полный subjectId с учётом группы */
-function getEffectiveSubjectId(subject){
-  if(!subject) return null;
-
-  if(isEnglishSubjectId(subject.id)){
-    const choice = getGroupChoice(ENGLISH_BASE_ID);
-    if(!choice) return null;
-    return ENGLISH_BASE_ID + '_' + choice;
-  }
-
-  if(isNativeSubjectId(subject.id)){
-    const cardKey = getGroupCardKeyForSubject(subject.id);
-    const choice = getGroupChoice(cardKey);
-    if(!choice) return null;
-    const opt = NATIVE_GROUPS[cardKey].options.find(o=>o.value===choice);
-    return opt ? opt.fullId : null;
-  }
-
-  return subject.id;
-}
-
-/* Показывать ли карточку как «звёздную» (группа не выбрана) */
 function isGroupNotChosen(subject){
-  if(!subject) return false;
-  if(isEnglishSubjectId(subject.id)){
-    return !getGroupChoice(ENGLISH_BASE_ID);
-  }
-  if(isNativeSubjectId(subject.id)){
-    const cardKey = getGroupCardKeyForSubject(subject.id);
-    return !getGroupChoice(cardKey);
-  }
-  return false;
+  const info=subject&&subjInfo(subject.id);
+  return !!info&&!getGroupChoice(info.key);
 }
-
-/* Проверяет, относится ли ответ к доступной пользователю группе */
-function isAnswerVisibleForUser(a){
-  if(!a) return false;
-
-  // Английский
+function getEffectiveSubjectId(subject){
+  if(!subject)return null;
+  return isGroupNotChosen(subject)?null:subject.id;
+}
+function getEffectiveSubjectIdForAnswer(a){
+  if(!a)return null;
   if(isEnglishSubjectId(a.subjectId)){
-    const choice = getGroupChoice(ENGLISH_BASE_ID);
-    if(!choice) return false;
-    return a.subjectId === ENGLISH_BASE_ID + '_' + choice;
+    const s=subjects.find(x=>classifyName(x.name)?.kind==='english');
+    return s?s.id:a.subjectId;
   }
-
-  // Родной
-  if(isNativeSubjectId(a.subjectId)){
-    const cardKey = getGroupCardKeyForSubject(a.subjectId);
-    const choice = getGroupChoice(cardKey);
-    if(!choice) return false;
-    const opt = NATIVE_GROUPS[cardKey].options.find(o=>o.value===choice);
-    return opt ? a.subjectId === opt.fullId : false;
-  }
-
-  return true;
+  return a.subjectId;
 }
 
+function findSubjectForLesson(lessonName){
+  const n=normName(lessonName);
+  const exact=subjects.find(s=>normName(s.name)===n);
+  const info=classifyName(lessonName);
+  if(info&&info.kind==='native'){
+    const same=s=>{const i=classifyName(s.name);return i&&i.kind==='native'&&i.key===info.key;};
+    const choice=getGroupChoice(info.key);
+    const mine=choice&&subjects.find(s=>same(s)&&classifyName(s.name).variant===choice);
+    return mine||subjects.find(same)||exact||null;
+  }
+  return exact||null;
+}
+
+function answerMatchesSubject(a,subj){
+  if(!a||!subj)return false;
+  const same=a.subjectId===subj.id||(isEnglishSubjectId(subj.id)&&isEnglishSubjectId(a.subjectId));
+  return same&&isAnswerVisibleForUser(a);
+}
+
+function isAnswerVisibleForUser(a){
+  if(!a)return false;
+  const info=subjInfo(a.subjectId);
+  if(!info)return true;
+  const choice=getGroupChoice(info.key);
+  if(!choice)return false;
+  if(info.kind==='native')return !info.variant||info.variant===choice;
+  let g=a.group||a.englishGroup||'';
+  if(!g){const p=String(a.subjectId).split('_');if(p.length>1)g=p[p.length-1];}
+  return !g||g==='all'||g===choice;
+}
 function getActualAnswers(){
-  return answers.filter(a => isHwActual(a) && isAnswerVisibleForUser(a));
+  return answers.filter(a=>isHwActual(a)&&isAnswerVisibleForUser(a));
 }
 
-/* ==================== МОДАЛКА ГРУППЫ ==================== */
+/* Модалка выбора */
 function openGroupModal(baseKey){
-  let config, options, currentChoice;
-
-  if(baseKey === ENGLISH_BASE_ID){
-    config = GROUP_CONFIG[ENGLISH_BASE_ID];
-    options = config.options;
-    currentChoice = getGroupChoice(baseKey);
-  } else if(NATIVE_GROUPS[baseKey]){
-    config = NATIVE_GROUPS[baseKey];
-    options = config.options;
-    currentChoice = getGroupChoice(baseKey);
-  } else {
-    return;
-  }
-
-  document.getElementById('groupModalTitle').textContent = config.title;
-
-  const optionsEl = document.getElementById('groupOptions');
-  optionsEl.innerHTML = options.map(opt=>`
-    <button class="group-option ${currentChoice===opt.value?'selected':''}"
+  const config=baseKey===ENGLISH_BASE_ID?ENGLISH_GROUPS:NATIVE_GROUPS[baseKey];
+  if(!config)return;
+  const cur=getGroupChoice(baseKey);
+  document.getElementById('groupModalTitle').textContent=config.title;
+  document.getElementById('groupOptions').innerHTML=config.options.map(opt=>`
+    <button class="group-option ${cur===opt.value?'selected':''}"
       onclick="selectGroup('${baseKey}','${opt.value}')">
-      <span>${esc(opt.label)}</span>
-      <span class="check">✅</span>
-    </button>
-  `).join('');
-
+      <span>${esc(opt.label)}</span><span class="check">✅</span>
+    </button>`).join('');
   document.getElementById('groupModalOverlay').classList.add('show');
   document.body.style.overflow='hidden';
 }
 
-function closeGroupModal(){
-  document.getElementById('groupModalOverlay').classList.remove('show');
-  document.body.style.overflow='';
-}
-
-async function selectGroup(baseKey, value){
-  if(isGuest){
-    closeGroupModal();
-    toast('Создай аккаунт, чтобы сохранить выбор');
-    return;
-  }
-
-  userGroups[baseKey] = value;
-  closeGroupModal();
-
-  try{
-    await db.collection('GDZ').doc('users').collection('users').doc(currentGlobalId).set({
-      groups: userGroups,
-      updatedAt: Date.now()
-    }, {merge: true});
-    toast('Группа сохранена');
-  }catch(e){
-    console.warn('group save error', e);
-    toast('Ошибка сохранения, попробуй позже');
-  }
-
-  renderSubjects();
-  renderHomework();
-  renderSchedule();
-  renderHome();
-
-  if(currentView.type==='subject' && currentView.id){
-    const subj = subjects.find(s=>s.id===currentView.id);
-    if(subj) showSubjectDetail(subj);
-  }
+/* «Мои группы» в настройках */
+function renderGroupSettings(){
+  const el=document.getElementById('groupSettings');
+  if(!el)return;
+  const rows=[
+    {key:ENGLISH_BASE_ID,label:'🇬🇧 Английский язык'},
+    {key:'rodnoy-yazyk-group',label:'📖 Родной язык'},
+    {key:'rodnaya-literatura-group',label:'📕 Родная литература'}
+  ];
+  el.innerHTML=rows.map(r=>{
+    const o=getGroupOption(r.key,getGroupChoice(r.key));
+    return `<div class="settings-row" style="cursor:pointer" onclick="openGroupModal('${r.key}')">
+      <div class="settings-row-text">
+        <div class="settings-row-label">${r.label}</div>
+        <div class="settings-row-desc">${o?esc(o.label):'Не выбрано — нажми, чтобы выбрать'}</div>
+      </div></div>`;
+  }).join('');
 }
 
 /* ==================== ШАПКА ==================== */
@@ -1976,93 +1896,40 @@ function renderHome(){
 }
 
 /* ==================== ПРЕДМЕТЫ ==================== */
-/* Собираем «карточки» для отображения:
-   - английский: 1 карточка (или «звёздная», если группа не выбрана)
-   - родной: 2 карточки («язык» и «литература»), пока группа не выбрана — «звёздные»
-   - остальные: обычные карточки */
 function buildSubjectCards(){
-  const cards = [];
-  const usedNativeIds = new Set();
-
+  const cards=[];
+  let enDone=false;
+  const nat=new Set();
   for(const s of subjects){
-    // Английский
-    if(isEnglishSubjectId(s.id)){
-      const chosen = !!getGroupChoice(ENGLISH_BASE_ID);
-      cards.push({
-        key: ENGLISH_BASE_ID,
-        icon: s.icon || '🇬🇧',
-        name: chosen ? getEffectiveSubjectName(s) : null,
-        space: !chosen,
-        groupKey: ENGLISH_BASE_ID
-      });
-      continue;
+    const info=classifyName(s.name);
+    if(info&&info.kind==='english'){
+      if(enDone)continue;
+      enDone=true;
+      const chosen=!!getGroupChoice(ENGLISH_BASE_ID);
+      cards.push({icon:s.icon||'🇬🇧',name:chosen?groupCardName(ENGLISH_BASE_ID):null,
+        space:!chosen,groupKey:ENGLISH_BASE_ID});
+    }else if(info&&info.kind==='native'){
+      if(nat.has(info.key))continue;   // 6 предметов -> 2 карточки
+      nat.add(info.key);
+      const name=groupCardName(info.key);
+      cards.push({icon:s.icon||'📖',name,space:!name,groupKey:info.key});
+    }else{
+      cards.push({icon:s.icon||'📚',name:s.name,space:false,subjectId:s.id});
     }
-
-    // Родной — пропускаем все 6, они будут объединены ниже
-    if(isNativeSubjectId(s.id)){
-      usedNativeIds.add(s.id);
-      continue;
-    }
-
-    // Обычный предмет
-    cards.push({
-      key: s.id,
-      icon: s.icon || '📚',
-      name: s.name,
-      space: false,
-      subjectId: s.id
-    });
   }
-
-  // Родной: 2 карточки, если в базе есть хотя бы один из 6 предметов
-  const nativeLangIds = ['rodnoy-russkiy-yazyk','rodnoy-russko-tatarskiy-yazyk','rodnoy-tatarskiy-yazyk'];
-  const nativeLitIds  = ['rodnaya-russkaya-literatura','rodnaya-russko-tatarskaya-literatura','rodnaya-tatarskaya-literatura'];
-
-  const hasNativeLang = nativeLangIds.some(id=>subjects.some(s=>s.id===id));
-  const hasNativeLit  = nativeLitIds.some(id=>subjects.some(s=>s.id===id));
-
-  if(hasNativeLang){
-    const cardKey = 'rodnoy-yazyk-group';
-    const choice = getGroupChoice(cardKey);
-    const opt = choice ? NATIVE_GROUPS[cardKey].options.find(o=>o.value===choice) : null;
-    // значок берём у любого из предметов, если есть
-    const anySubj = subjects.find(s=>nativeLangIds.includes(s.id));
-    cards.push({
-      key: cardKey,
-      icon: anySubj?.icon || '📖',
-      name: opt ? opt.fullName : null,
-      space: !choice,
-      groupKey: cardKey
-    });
-  }
-
-  if(hasNativeLit){
-    const cardKey = 'rodnaya-literatura-group';
-    const choice = getGroupChoice(cardKey);
-    const opt = choice ? NATIVE_GROUPS[cardKey].options.find(o=>o.value===choice) : null;
-    const anySubj = subjects.find(s=>nativeLitIds.includes(s.id));
-    cards.push({
-      key: cardKey,
-      icon: anySubj?.icon || '📕',
-      name: opt ? opt.fullName : null,
-      space: !choice,
-      groupKey: cardKey
-    });
-  }
-
   return cards;
 }
 
 function renderSubjects(){
   const g=document.getElementById('subjectsGrid');
-  const cards = buildSubjectCards();
+  const cards=buildSubjectCards();
 
   if(!cards.length){
     g.innerHTML='<div class="empty">Пока нет предметов</div>';
     return;
   }
 
-  g.innerHTML = cards.map(c=>{
+  g.innerHTML=cards.map(c=>{
     if(c.space){
       return `
         <div class="subject-card space" onclick="openGroupModal('${c.groupKey}')">
@@ -2080,15 +1947,25 @@ function renderSubjects(){
         </div>`;
     }
 
-    const onclick = c.subjectId
-      ? `onclick="filterBySubject('${c.subjectId}')"`
-      : `onclick="openSubjectCardByGroup('${c.groupKey}')"`;
+    const onclick=c.subjectId
+      ?`onclick="filterBySubject('${c.subjectId}')"`
+      :`onclick="openSubjectCardByGroup('${c.groupKey}')"`;
     return `
       <div class="subject-card" ${onclick}>
         <div class="subject-icon">${c.icon}</div>
-        <div class="subject-name">${esc(c.name || '')}</div>
+        <div class="subject-name">${esc(c.name||'')}</div>
       </div>`;
   }).join('');
+}
+
+function openSubjectCardByGroup(groupKey){
+  const choice=getGroupChoice(groupKey);
+  if(!choice){openGroupModal(groupKey);return;}
+  const subj=subjects.find(s=>{
+    const i=classifyName(s.name);
+    return i&&i.key===groupKey&&(i.kind==='english'||i.variant===choice);
+  });
+  if(subj)showSubjectDetail(subj);
 }
 
 function filterBySubject(id){
@@ -2096,31 +1973,7 @@ function filterBySubject(id){
   if(!s)return;
   go('homework');
   setTimeout(()=>{
-    document.getElementById('hwSearch').value = s.name || '';
-    filterHw();
-  },100);
-}
-
-function openSubjectCardByGroup(groupKey){
-  // Открывает модалку группы либо, если группа уже выбрана, показывает ДЗ по выбранному предмету
-  const choice = getGroupChoice(groupKey);
-  if(!choice){
-    openGroupModal(groupKey);
-    return;
-  }
-  let fullId = null;
-  if(groupKey === ENGLISH_BASE_ID){
-    fullId = ENGLISH_BASE_ID + '_' + choice;
-  } else if(NATIVE_GROUPS[groupKey]){
-    const opt = NATIVE_GROUPS[groupKey].options.find(o=>o.value===choice);
-    fullId = opt ? opt.fullId : null;
-  }
-  if(!fullId) return;
-  const subj = subjects.find(s=>s.id===fullId);
-  if(!subj) return;
-  go('homework');
-  setTimeout(()=>{
-    document.getElementById('hwSearch').value = getEffectiveSubjectName(subj) || subj.name || '';
+    document.getElementById('hwSearch').value=s.name||'';
     filterHw();
   },100);
 }
@@ -2137,27 +1990,19 @@ function filterHw(){
   const actual=getActualAnswers();
   if(!q){renderHomework();return;}
   const f=actual.filter(a=>{
-    const s=subjects.find(x=>x.id===a.subjectId || x.id===getEffectiveSubjectIdForAnswer(a));
-    const name = s ? (getEffectiveSubjectName(s) || s.name) : '';
+    const s=subjects.find(x=>x.id===a.subjectId||x.id===getEffectiveSubjectIdForAnswer(a));
+    const name=s?(getEffectiveSubjectName(s)||s.name):'';
     return `${a.number||''} ${name} ${a.text||''} ${a.date||''}`.toLowerCase().includes(q);
   });
   c.innerHTML=f.length?f.map(a=>cardAnswer(a,'homework')).join(''):'<div class="empty">Ничего не найдено</div>';
 }
 
-/* Для ответа возвращает «базовый» subjectId (без группы), чтобы найти карточку предмета */
-function getEffectiveSubjectIdForAnswer(a){
-  if(!a) return null;
-  if(isEnglishSubjectId(a.subjectId)) return ENGLISH_BASE_ID;
-  if(isNativeSubjectId(a.subjectId)) return a.subjectId;
-  return a.subjectId;
-}
-
 function cardAnswer(a,type){
   const s=subjects.find(x=>x.id===a.subjectId)
-       || subjects.find(x=>x.id===getEffectiveSubjectIdForAnswer(a))
-       || null;
+       ||subjects.find(x=>x.id===getEffectiveSubjectIdForAnswer(a))
+       ||null;
   const icon=s?.icon||'📚';
-  const name = s ? (getEffectiveSubjectName(s) || s.name) : '—';
+  const name=s?(getEffectiveSubjectName(s)||s.name):'—';
   const done=isAnswerRead(a);
   let title,meta;
   if(type==='homework'){
@@ -2187,7 +2032,7 @@ function renderTests(){
     c.innerHTML=`<div class="lock-box"><div class="lock-icon">🔒</div><h3>Контрольные скрыты</h3><p>Ответы на контрольные доступны только пользователям с аккаунтом Global ID.</p><a class="btn-global" href="https://saryanich.github.io/Global-ID/" target="_blank" rel="noopener">✨ Создать аккаунт</a></div>`;
     return;
   }
-  const visible = testsAnswers.filter(isAnswerVisibleForUser);
+  const visible=testsAnswers.filter(isAnswerVisibleForUser);
   c.innerHTML=visible.length?`<div class="grid">${visible.map(a=>cardAnswer(a,'tests')).join('')}</div>`:'<div class="empty">Пока нет ответов</div>';
 }
 
@@ -2256,7 +2101,7 @@ function renderSchedule(){
         ${isToday?'<span class="today-label">СЕГОДНЯ</span>':''}
       </div>
       ${lessons.length
-        ? lessons.map((l,i)=>{
+        ?lessons.map((l,i)=>{
             const lessonName=typeof l==='string'?l:(l.name||JSON.stringify(l));
             const special=isSpecialLesson(lessonName);
             const window_=isWindowLesson(lessonName);
@@ -2270,16 +2115,14 @@ function renderSchedule(){
               </div>`;
             }
 
-            const subj=subjects.find(s=>s.name.toLowerCase().trim()===lessonName.toLowerCase().trim());
+            const subj=findSubjectForLesson(lessonName);
             let hwDone=false,hwExists=false,testCount=0;
-            if(subj&&!isPastDay){
-              const filterId = getEffectiveSubjectId(subj) || subj.id;
-              const dayAnswers=answers.filter(a=>a.subjectId===filterId&&isHwDateMatchDay(a,dayDate));
+            if(subj&&!isPastDay&&!isGroupNotChosen(subj)){
+              const dayAnswers=answers.filter(a=>answerMatchesSubject(a,subj)&&isHwDateMatchDay(a,dayDate));
               hwExists=dayAnswers.length>0;
               hwDone=dayAnswers.some(a=>isAnswerRead(a));
               if(!isGuest){
-                const tid = getEffectiveSubjectId(subj) || subj.id;
-                testCount=testsAnswers.filter(a=>a.subjectId===tid).length;
+                testCount=testsAnswers.filter(a=>answerMatchesSubject(a,subj)).length;
               }
             }
             let badge='';
@@ -2293,7 +2136,7 @@ function renderSchedule(){
               ${badge}
             </div>`;
           }).join('')
-        : '<div class="schedule-lesson" style="opacity:.5;cursor:default">Нет уроков</div>'
+        :'<div class="schedule-lesson" style="opacity:.5;cursor:default">Нет уроков</div>'
       }
     </div>`;
   }).join('')}</div>`;
@@ -2309,16 +2152,15 @@ function isHwDateMatchDay(a,dayDate){
 }
 
 function openSubjectFromSchedule(lessonName){
-  const subj=subjects.find(s=>s.name.toLowerCase().trim()===lessonName.toLowerCase().trim());
+  const subj=findSubjectForLesson(lessonName);
   if(!subj){
     toast(`Предмет «${lessonName}» не найден в базе`);
     return;
   }
 
-  // Если это групповой предмет и группа не выбрана — откроем модалку
   if(isGroupNotChosen(subj)){
-    const baseKey = getGroupBaseId(subj.id);
-    if(baseKey) openGroupModal(baseKey);
+    const baseKey=getGroupBaseId(subj.id);
+    if(baseKey)openGroupModal(baseKey);
     return;
   }
 
@@ -2328,11 +2170,10 @@ function openSubjectFromSchedule(lessonName){
 function showSubjectDetail(subj){
   currentView={type:'subject',id:subj.id};
 
-  const filterId = getEffectiveSubjectId(subj) || subj.id;
-  const subjAnswers=answers.filter(a=>a.subjectId===filterId&&isHwActual(a));
-  const subjTests=isGuest?[]:testsAnswers.filter(a=>a.subjectId===filterId);
+  const subjAnswers=answers.filter(a=>answerMatchesSubject(a,subj)&&isHwActual(a));
+  const subjTests=isGuest?[]:testsAnswers.filter(a=>answerMatchesSubject(a,subj));
 
-  const effectiveName = getEffectiveSubjectName(subj) || subj.name;
+  const effectiveName=getEffectiveSubjectName(subj)||subj.name;
   document.getElementById('fsTitle').innerHTML=`${subj.icon||'📚'} ${esc(effectiveName)}`;
 
   const today=getMoscowDate();
@@ -2348,7 +2189,7 @@ function showSubjectDetail(subj){
     const lessons=getScheduleForDay(dayKey);
     const hasSubject=lessons.some(l=>{
       const n=typeof l==='string'?l:(l.name||'');
-      return n.toLowerCase().trim()===subj.name.toLowerCase().trim();
+      return (findSubjectForLesson(n)||{}).id===subj.id;
     });
 
     if(hasSubject||offset===0){
@@ -2368,7 +2209,7 @@ function showSubjectDetail(subj){
   bodyHtml+=`<div class="subject-detail-section">
     <div class="subject-detail-title">📝 Ответы ДЗ по предмету <span class="count">${subjAnswers.length}</span></div>
     ${subjAnswers.length
-      ? subjAnswers.map(a=>{
+      ?subjAnswers.map(a=>{
           const multi=isMultiNumber(a.number);
           const badgeClass=multi?'numbers-badge multi':'numbers-badge';
           const badgeText=multi?formatNumbers(a.number):`№${esc(a.number||'')}`;
@@ -2381,7 +2222,7 @@ function showSubjectDetail(subj){
             <div class="card-body">${esc(plainPreview(a.text,180))}</div>
           </div>`;
         }).join('')
-      : '<div class="empty" style="padding:1.5rem .5rem">Нет актуальных ДЗ по этому предмету</div>'
+      :'<div class="empty" style="padding:1.5rem .5rem">Нет актуальных ДЗ по этому предмету</div>'
     }
   </div>`;
 
@@ -2389,7 +2230,7 @@ function showSubjectDetail(subj){
     bodyHtml+=`<div class="subject-detail-section">
       <div class="subject-detail-title">🎯 Контрольные по предмету <span class="count">${subjTests.length}</span></div>
       ${subjTests.length
-        ? subjTests.map(a=>`
+        ?subjTests.map(a=>`
             <div class="card" style="margin-bottom:.75rem;" onclick="event.stopPropagation();openFullscreen('tests','${a.id}')">
               <div class="card-head">
                 <div class="card-title">${esc(a.title||'')}</div>
@@ -2397,7 +2238,7 @@ function showSubjectDetail(subj){
               </div>
               <div class="card-body">${esc(plainPreview(a.text,180))}</div>
             </div>`).join('')
-        : '<div class="empty" style="padding:1.5rem .5rem">Нет контрольных по этому предмету</div>'
+        :'<div class="empty" style="padding:1.5rem .5rem">Нет контрольных по этому предмету</div>'
       }
     </div>`;
   }
@@ -2446,19 +2287,19 @@ async function openFullscreen(type,id){
 
   if(type==='homework'){
     const s=subjects.find(x=>x.id===item.subjectId)
-         || subjects.find(x=>x.id===getEffectiveSubjectIdForAnswer(item));
+         ||subjects.find(x=>x.id===getEffectiveSubjectIdForAnswer(item));
     const multi=isMultiNumber(item.number);
     const badgeClass=multi?'numbers-badge multi':'numbers-badge';
     const badgeText=multi?formatNumbers(item.number):`№${esc(item.number||'')}`;
     const done=isAnswerRead(item);
     const doneBadge=done?'<span class="numbers-badge done">✓ ДЗ выполнено</span>':'';
-    const effectiveName = s ? (getEffectiveSubjectName(s) || s.name) : '';
+    const effectiveName=s?(getEffectiveSubjectName(s)||s.name):'';
     title=`${s?.icon||'📚'} <span class="${badgeClass}">${badgeText}</span> ${esc(effectiveName)} ${doneBadge}`;
     meta=item.date?`📅 ${item.date}`:'';
   }else if(type==='tests'){
     const s=subjects.find(x=>x.id===item.subjectId)
-         || subjects.find(x=>x.id===getEffectiveSubjectIdForAnswer(item));
-    const effectiveName = s ? (getEffectiveSubjectName(s) || s.name) : '';
+         ||subjects.find(x=>x.id===getEffectiveSubjectIdForAnswer(item));
+    const effectiveName=s?(getEffectiveSubjectName(s)||s.name):'';
     title=`${s?.icon||'🎯'} ${esc(item.title||'')}`;
     meta=`${esc(effectiveName)}${item.date?' · 📅 '+item.date:''}`;
   }else{
@@ -2526,11 +2367,11 @@ function findNextHomework(){
       const lessonName=typeof lesson==='string'?lesson:(lesson.name||'');
       if(!lessonName)continue;
       if(isSpecialLesson(lessonName))continue;
-      const subj=subjects.find(s=>s.name.toLowerCase().trim()===lessonName.toLowerCase().trim());
+      const subj=findSubjectForLesson(lessonName);
       if(!subj)continue;
+      if(isGroupNotChosen(subj))continue;
       if(subj.id===currentSubjId)continue;
-      const filterId = getEffectiveSubjectId(subj) || subj.id;
-      const hw=answers.find(a=>a.subjectId===filterId&&isHwActual(a));
+      const hw=answers.find(a=>answerMatchesSubject(a,subj)&&isHwActual(a));
       if(hw)return hw;
     }
   }
@@ -2547,7 +2388,7 @@ async function explainWithGlobi(){
   const item=answers.find(a=>a.id===currentView.id);
   if(!item)return;
   const s=subjects.find(x=>x.id===item.subjectId)
-       || subjects.find(x=>x.id===getEffectiveSubjectIdForAnswer(item));
+       ||subjects.find(x=>x.id===getEffectiveSubjectIdForAnswer(item));
   const subjName=s?(getEffectiveSubjectName(s)||s.name):'предмет';
   const num=formatNumbers(item.number||'');
   const text=plainPreview(item.text,400);
@@ -2566,7 +2407,7 @@ async function explainWithGlobi(){
 async function explainSubjectWithGlobi(subjId){
   const subj=subjects.find(s=>s.id===subjId);
   if(!subj)return;
-  const effectiveName = getEffectiveSubjectName(subj)||subj.name;
+  const effectiveName=getEffectiveSubjectName(subj)||subj.name;
 
   closeFullscreen();
   go('globi');
@@ -2770,9 +2611,9 @@ function buildContext(userQuestion){
   parts.push(`\n👤 Пользователь: ${currentName} (${currentRole}).`);
 
   if(subjects.length){
-    const subjNames = subjects.map(s=>{
-      const n = getEffectiveSubjectName(s);
-      return n ? `${s.icon||''} ${n}` : `${s.icon||''} ${s.name}`;
+    const subjNames=subjects.map(s=>{
+      const n=getEffectiveSubjectName(s);
+      return n?`${s.icon||''} ${n}`:`${s.icon||''} ${s.name}`;
     });
     parts.push(`\n📚 ПРЕДМЕТЫ: ${subjNames.join(', ')}`);
   }
@@ -2781,8 +2622,8 @@ function buildContext(userQuestion){
     parts.push(`\n📝 ОТВЕТЫ ДЗ (актуальные):`);
     actual.slice(0,15).forEach(a=>{
       const s=subjects.find(x=>x.id===a.subjectId)
-           || subjects.find(x=>x.id===getEffectiveSubjectIdForAnswer(a));
-      const effectiveName = s ? (getEffectiveSubjectName(s)||s.name) : '?';
+           ||subjects.find(x=>x.id===getEffectiveSubjectIdForAnswer(a));
+      const effectiveName=s?(getEffectiveSubjectName(s)||s.name):'?';
       parts.push(`- ${effectiveName} ${formatNumbers(a.number||'')}${a.date?' ('+a.date+')':''}: ${plainPreview(a.text,250)}`);
     });
   }
@@ -2790,8 +2631,8 @@ function buildContext(userQuestion){
     parts.push(`\n🎯 КОНТРОЛЬНЫЕ:`);
     testsAnswers.filter(isAnswerVisibleForUser).slice(0,10).forEach(a=>{
       const s=subjects.find(x=>x.id===a.subjectId)
-           || subjects.find(x=>x.id===getEffectiveSubjectIdForAnswer(a));
-      const effectiveName = s ? (getEffectiveSubjectName(s)||s.name) : '?';
+           ||subjects.find(x=>x.id===getEffectiveSubjectIdForAnswer(a));
+      const effectiveName=s?(getEffectiveSubjectName(s)||s.name):'?';
       parts.push(`- ${effectiveName} — ${a.title||''}${a.date?' ('+a.date+')':''}: ${plainPreview(a.text,250)}`);
     });
   }
