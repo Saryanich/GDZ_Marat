@@ -399,18 +399,32 @@ const ENGLISH_GROUPS = [
   { value:'elvira', label:'у Эльвиры Исмагиловны' },
   { value:'zilya',  label:'у Зили Ринатовны' }
 ];
-function isEnglishSubjectId(id){
-  if(!id) return false;
-  return id === ENGLISH_BASE_ID || id.startsWith(ENGLISH_BASE_ID + '_');
-}
-function getEnglishGroupSuffix(id){
-  if(id && id.startsWith(ENGLISH_BASE_ID + '_')) return id.substring(ENGLISH_BASE_ID.length + 1);
+const ENGLISH_NAME_RE=/англ|english/i;
+function findSubject(id){
+  if(!id)return null;
+  const exact=subjectsCache.find(s=>s.id===id);
+  if(exact)return exact;
+  if(String(id).startsWith(ENGLISH_BASE_ID))return subjectsCache.find(s=>ENGLISH_NAME_RE.test(String(s.name||'')))||null;
   return null;
 }
+function isEnglishSubjectId(id){
+  if(!id)return false;
+  if(String(id).startsWith(ENGLISH_BASE_ID))return true;
+  const s=subjectsCache.find(x=>x.id===id);
+  return !!s&&ENGLISH_NAME_RE.test(String(s.name||''));
+}
+function getEnglishGroupSuffix(id){
+  if(id&&String(id).startsWith(ENGLISH_BASE_ID+'_'))return String(id).substring(ENGLISH_BASE_ID.length+1);
+  return null;
+}
+function getAnswerGroup(a){
+  if(!a)return null;
+  return a.group||getEnglishGroupSuffix(a.subjectId)||null;
+}
 function getEnglishGroupLabel(sfx){
-  if(!sfx) return '';
-  const g = ENGLISH_GROUPS.find(x=>x.value===sfx);
-  return g ? g.label : sfx;
+  if(!sfx)return '';
+  const g=ENGLISH_GROUPS.find(x=>x.value===sfx);
+  return g?g.label:sfx;
 }
 
 /* ==================== СОСТОЯНИЕ ==================== */
@@ -571,9 +585,8 @@ async function loadAnswers(){
     return;
   }
   container.innerHTML=answersCache.map(a=>{
-    const baseId = isEnglishSubjectId(a.subjectId) ? ENGLISH_BASE_ID : a.subjectId;
-    const subj=subjectsCache.find(s=>s.id===baseId);
-    const sfx = getEnglishGroupSuffix(a.subjectId);
+    const subj=findSubject(a.subjectId);
+    const sfx = getAnswerGroup(a);
     const groupBadge = sfx ? ` <span class="group-badge">${escapeHtml(getEnglishGroupLabel(sfx))}</span>` : '';
     return `
       <div class="list-item">
@@ -600,38 +613,23 @@ async function saveAnswer(){
   const date=document.getElementById('answerDate').value;
   const text=document.getElementById('answerText').value;
   if(!subjectId||!text)return toast('Заполни предмет и текст',true);
-
-  /* Если английский — обязательно выбрать группу */
+  const data={subjectId,number,date,text,updatedAt:Date.now()};
   if(isEnglishSubjectId(subjectId)){
     const group=document.getElementById('answerGroup').value;
     if(!group)return toast('Выбери группу английского',true);
-    const finalId = subjectId.includes('_') ? subjectId : (ENGLISH_BASE_ID + '_' + group);
-    const data={subjectId:finalId,number,date,text,updatedAt:Date.now()};
-    try{
-      if(id){
-        await db.collection('GDZ').doc('answer').collection('list').doc(id).update(data);
-        toast('Обновлено');
-      }else{
-        data.createdAt=Date.now();data.read=[];
-        await db.collection('GDZ').doc('answer').collection('list').add(data);
-        toast('Добавлено ('+getEnglishGroupLabel(group)+')');
-      }
-      cancelAnswerEdit();
-      loadAnswers();
-    }catch(e){toast('Ошибка: '+e.message,true);}
-    return;
+    data.group=group;
+  }else if(id){
+    data.group=firebase.firestore.FieldValue.delete();
   }
-
-  /* Обычный предмет */
-  const data={subjectId,number,date,text,updatedAt:Date.now()};
   try{
+    const coll=db.collection('GDZ').doc('answer').collection('list');
     if(id){
-      await db.collection('GDZ').doc('answer').collection('list').doc(id).update(data);
+      await coll.doc(id).update(data);
       toast('Обновлено');
     }else{
       data.createdAt=Date.now();data.read=[];
-      await db.collection('GDZ').doc('answer').collection('list').add(data);
-      toast('Добавлено');
+      await coll.add(data);
+      toast(data.group?('Добавлено ('+getEnglishGroupLabel(data.group)+')'):'Добавлено');
     }
     cancelAnswerEdit();
     loadAnswers();
@@ -642,14 +640,10 @@ function editAnswer(id){
   const a=answersCache.find(x=>x.id===id);
   if(!a)return;
   document.getElementById('answerEditId').value=id;
-
-  const baseId = isEnglishSubjectId(a.subjectId) ? ENGLISH_BASE_ID : a.subjectId;
-  document.getElementById('answerSubject').value=baseId;
+  const subj=findSubject(a.subjectId);
+  document.getElementById('answerSubject').value=subj?subj.id:a.subjectId;
   onAnswerSubjectChange();
-
-  const sfx = getEnglishGroupSuffix(a.subjectId);
-  document.getElementById('answerGroup').value = sfx || '';
-
+  document.getElementById('answerGroup').value=getAnswerGroup(a)||'';
   document.getElementById('answerNumber').value=a.number||'';
   document.getElementById('answerDate').value=a.date||'';
   document.getElementById('answerText').value=a.text||'';
@@ -698,9 +692,8 @@ async function loadTestAnswers(){
     return;
   }
   container.innerHTML=testAnswersCache.map(a=>{
-    const baseId = isEnglishSubjectId(a.subjectId) ? ENGLISH_BASE_ID : a.subjectId;
-    const subj=subjectsCache.find(s=>s.id===baseId);
-    const sfx = getEnglishGroupSuffix(a.subjectId);
+    const subj=findSubject(a.subjectId);
+    const sfx = getAnswerGroup(a);
     const groupBadge = sfx ? ` <span class="group-badge">${escapeHtml(getEnglishGroupLabel(sfx))}</span>` : '';
     return `
       <div class="list-item">
@@ -727,36 +720,23 @@ async function saveTestAnswer(){
   const date=document.getElementById('testAnswerDate').value;
   const text=document.getElementById('testAnswerText').value;
   if(!subjectId||!title||!text)return toast('Заполни все поля',true);
-
+  const data={subjectId,title,date,text,updatedAt:Date.now()};
   if(isEnglishSubjectId(subjectId)){
     const group=document.getElementById('testAnswerGroup').value;
     if(!group)return toast('Выбери группу английского',true);
-    const finalId = subjectId.includes('_') ? subjectId : (ENGLISH_BASE_ID + '_' + group);
-    const data={subjectId:finalId,title,date,text,updatedAt:Date.now()};
-    try{
-      if(id){
-        await db.collection('GDZ').doc('tests_answer').collection('list').doc(id).update(data);
-        toast('Обновлено');
-      }else{
-        data.createdAt=Date.now();data.read=[];
-        await db.collection('GDZ').doc('tests_answer').collection('list').add(data);
-        toast('Добавлено ('+getEnglishGroupLabel(group)+')');
-      }
-      cancelTestAnswerEdit();
-      loadTestAnswers();
-    }catch(e){toast('Ошибка: '+e.message,true);}
-    return;
+    data.group=group;
+  }else if(id){
+    data.group=firebase.firestore.FieldValue.delete();
   }
-
-  const data={subjectId,title,date,text,updatedAt:Date.now()};
   try{
+    const coll=db.collection('GDZ').doc('tests_answer').collection('list');
     if(id){
-      await db.collection('GDZ').doc('tests_answer').collection('list').doc(id).update(data);
+      await coll.doc(id).update(data);
       toast('Обновлено');
     }else{
       data.createdAt=Date.now();data.read=[];
-      await db.collection('GDZ').doc('tests_answer').collection('list').add(data);
-      toast('Добавлено');
+      await coll.add(data);
+      toast(data.group?('Добавлено ('+getEnglishGroupLabel(data.group)+')'):'Добавлено');
     }
     cancelTestAnswerEdit();
     loadTestAnswers();
@@ -767,14 +747,10 @@ function editTestAnswer(id){
   const a=testAnswersCache.find(x=>x.id===id);
   if(!a)return;
   document.getElementById('testAnswerEditId').value=id;
-
-  const baseId = isEnglishSubjectId(a.subjectId) ? ENGLISH_BASE_ID : a.subjectId;
-  document.getElementById('testAnswerSubject').value=baseId;
+  const subj=findSubject(a.subjectId);
+  document.getElementById('testAnswerSubject').value=subj?subj.id:a.subjectId;
   onTestAnswerSubjectChange();
-
-  const sfx = getEnglishGroupSuffix(a.subjectId);
-  document.getElementById('testAnswerGroup').value = sfx || '';
-
+  document.getElementById('testAnswerGroup').value=getAnswerGroup(a)||'';
   document.getElementById('testAnswerTitle').value=a.title||'';
   document.getElementById('testAnswerDate').value=a.date||'';
   document.getElementById('testAnswerText').value=a.text||'';
@@ -833,10 +809,9 @@ function renderPending(){
     return;
   }
   container.innerHTML=pending.map(p=>{
-    const baseId = isEnglishSubjectId(p.subjectId) ? ENGLISH_BASE_ID : p.subjectId;
-    const subj=subjectsCache.find(s=>s.id===baseId);
+    const subj=findSubject(p.subjectId);
     const isTest=p.type==='test';
-    const sfx = getEnglishGroupSuffix(p.subjectId);
+    const sfx = getAnswerGroup(p);
     const groupBadge = sfx ? ` <span class="group-badge">${escapeHtml(getEnglishGroupLabel(sfx))}</span>` : '';
     const title=isTest
       ? `🎯 ${escapeHtml(p.title||'Контрольная')} — ${escapeHtml(subj?.name||'—')}${groupBadge}`
@@ -870,7 +845,7 @@ async function approvePending(id){
     const isTest=p.type==='test';
     const targetColl=isTest?'tests_answer':'answer';
     const data={
-      subjectId:p.subjectId,
+      subjectId:(findSubject(p.subjectId)||{id:p.subjectId}).id,
       date:p.date||'',
       text:p.text||'',
       read:[],
@@ -879,6 +854,7 @@ async function approvePending(id){
       publishedBy:currentGlobalId,
       originalAuthor:p.authorId||''
     };
+    if(isEnglishSubjectId(p.subjectId)&&getAnswerGroup(p))data.group=getAnswerGroup(p);
     if(isTest){data.title=p.title||'';}
     else{data.number=p.number||'';}
 
@@ -917,10 +893,9 @@ async function loadModerationHistory(){
       return;
     }
     container.innerHTML=moderationHistoryCache.map(p=>{
-      const baseId = isEnglishSubjectId(p.subjectId) ? ENGLISH_BASE_ID : p.subjectId;
-      const subj=subjectsCache.find(s=>s.id===baseId);
+      const subj=findSubject(p.subjectId);
       const isTest=p.type==='test';
-      const sfx = getEnglishGroupSuffix(p.subjectId);
+      const sfx = getAnswerGroup(p);
       const groupBadge = sfx ? ` <span class="group-badge">${escapeHtml(getEnglishGroupLabel(sfx))}</span>` : '';
       const title=isTest
         ? `🎯 ${escapeHtml(p.title||'')} — ${escapeHtml(subj?.name||'—')}${groupBadge}`
@@ -1186,9 +1161,8 @@ async function loadReadLists(){
   else{
     ansList.innerHTML=ansSnap.docs.map(d=>{
       const a=d.data();
-      const baseId = isEnglishSubjectId(a.subjectId) ? ENGLISH_BASE_ID : a.subjectId;
-      const subj=subjectsCache.find(s=>s.id===baseId);
-      const sfx = getEnglishGroupSuffix(a.subjectId);
+      const subj=findSubject(a.subjectId);
+      const sfx = getAnswerGroup(a);
       const groupBadge = sfx ? ` <span class="group-badge">${escapeHtml(getEnglishGroupLabel(sfx))}</span>` : '';
       const reads=a.read||[];
       return `
@@ -1208,9 +1182,8 @@ async function loadReadLists(){
   else{
     tList.innerHTML=tSnap.docs.map(d=>{
       const a=d.data();
-      const baseId = isEnglishSubjectId(a.subjectId) ? ENGLISH_BASE_ID : a.subjectId;
-      const subj=subjectsCache.find(s=>s.id===baseId);
-      const sfx = getEnglishGroupSuffix(a.subjectId);
+      const subj=findSubject(a.subjectId);
+      const sfx = getAnswerGroup(a);
       const groupBadge = sfx ? ` <span class="group-badge">${escapeHtml(getEnglishGroupLabel(sfx))}</span>` : '';
       const reads=a.read||[];
       return `
