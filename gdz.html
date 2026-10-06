@@ -1286,6 +1286,8 @@ let settings={
 /* Временное (несохранённое) значение выбора группы, пока модалка открыта */
 let pendingGroupKey=null;
 let pendingGroupChoice=null;
+/* Урок из расписания, ожидающий выбора группы (чтобы после сохранения сразу открыть предмет) */
+let pendingScheduleLesson=null;
 
 /* ==================== УТИЛИТЫ ==================== */
 const esc=(t)=>{if(!t)return'';const d=document.createElement('div');d.textContent=t;return d.innerHTML;};
@@ -1777,17 +1779,46 @@ function getEffectiveSubjectIdForAnswer(a){
   return a.subjectId;
 }
 
+/* ============================================================
+   ГЛАВНОЕ ИЗМЕНЕНИЕ:
+   findSubjectForLesson — теперь корректно находит предмет
+   выбранной группы для «Родного языка» / «Родной литературы».
+   Если в названии урока уже указан вариант ("Родной русский язык"),
+   берём именно его. Иначе — ищем предмет по выбранной группе.
+   ============================================================ */
 function findSubjectForLesson(lessonName){
   const n=normName(lessonName);
-  const exact=subjects.find(s=>normName(s.name)===n);
   const info=classifyName(lessonName);
+
   if(info&&info.kind==='native'){
-    const same=s=>{const i=classifyName(s.name);return i&&i.kind==='native'&&i.key===info.key;};
+    const same=s=>{
+      const i=classifyName(s.name);
+      return i&&i.kind==='native'&&i.key===info.key;
+    };
+
+    // 1. Если в самом названии урока указан вариант — берём его (высший приоритет)
+    if(info.variant){
+      const byVariant=subjects.find(s=>same(s)&&classifyName(s.name).variant===info.variant);
+      if(byVariant)return byVariant;
+    }
+
+    // 2. Если пользователь выбрал группу — ищем предмет именно этого варианта
     const choice=getGroupChoice(info.key);
-    const mine=choice&&subjects.find(s=>same(s)&&classifyName(s.name).variant===choice);
-    return mine||subjects.find(same)||exact||null;
+    if(choice){
+      const mine=subjects.find(s=>same(s)&&classifyName(s.name).variant===choice);
+      if(mine)return mine;
+    }
+
+    // 3. Точное совпадение по названию
+    const exact=subjects.find(s=>normName(s.name)===n);
+    if(exact)return exact;
+
+    // 4. Первый попавшийся предмет этого типа
+    return subjects.find(same)||null;
   }
-  return exact||null;
+
+  // Обычный предмет — точное совпадение по названию
+  return subjects.find(s=>normName(s.name)===n)||null;
 }
 
 function answerMatchesSubject(a,subj){
@@ -1811,7 +1842,7 @@ function getActualAnswers(){
   return answers.filter(a=>isHwActual(a)&&isAnswerVisibleForUser(a));
 }
 
-/* Модалка выбора — теперь с кнопкой «Сохранить» */
+/* Модалка выбора — с кнопкой «Сохранить» */
 function openGroupModal(baseKey){
   const config=baseKey===ENGLISH_BASE_ID?ENGLISH_GROUPS:NATIVE_GROUPS[baseKey];
   if(!config)return;
@@ -1848,14 +1879,23 @@ function updateGroupSaveBtn(){
 async function saveGroupChoice(){
   if(!pendingGroupKey||!pendingGroupChoice)return;
 
+  // Запоминаем контекст до закрытия модалки
+  const savedKey=pendingGroupKey;
+  const savedChoice=pendingGroupChoice;
+  const savedLesson=pendingScheduleLesson;
+
+  // Гость: сохранить некуда, но предмет всё равно показываем
   if(isGuest){
     closeGroupModal();
     toast('Создай аккаунт, чтобы сохранить выбор');
+    if(savedLesson){
+      const subj=findSubjectForLesson(savedLesson);
+      if(subj)showSubjectDetail(subj);
+    }
     return;
   }
 
-  userGroups[pendingGroupKey]=pendingGroupChoice;
-  const savedKey=pendingGroupKey;
+  userGroups[savedKey]=savedChoice;
   closeGroupModal();
 
   try{
@@ -1869,6 +1909,7 @@ async function saveGroupChoice(){
     toast('Ошибка сохранения, попробуй позже');
   }
 
+  // Обновляем интерфейс
   renderSubjects();
   renderHomework();
   renderSchedule();
@@ -1876,7 +1917,11 @@ async function saveGroupChoice(){
   renderTests();
   renderGroupSettings();
 
-  if(currentView.type==='subject'&&currentView.id){
+  // Если модалку открывали из расписания — сразу открываем предмет выбранной группы
+  if(savedLesson){
+    const subj=findSubjectForLesson(savedLesson);
+    if(subj)showSubjectDetail(subj);
+  }else if(currentView.type==='subject'&&currentView.id){
     const subj=subjects.find(s=>s.id===currentView.id);
     if(subj)showSubjectDetail(subj);
   }
@@ -1887,6 +1932,7 @@ function closeGroupModal(){
   document.body.style.overflow='';
   pendingGroupKey=null;
   pendingGroupChoice=null;
+  pendingScheduleLesson=null;
 }
 
 /* «Мои группы» в настройках */
@@ -2203,7 +2249,7 @@ function renderSchedule(){
             if(hwExists)badge+=`<span class="lesson-hw-badge ${hwDone?'done':''}">${hwDone?'Выполнено':'Есть ответ'}</span>`;
             if(testCount)badge+=`<span class="lesson-hw-badge control">КР</span>`;
 
-            const onclick=subj?`onclick="openSubjectFromSchedule('${esc(lessonName)}','${day}')"`:'';
+            const onclick=subj?`onclick="openSubjectFromSchedule('${esc(lessonName)}')"`:'';
             return `<div class="schedule-lesson" ${onclick}>
               <span class="num">${i+1}.</span>
               <span class="lesson-name">${esc(lessonName)}</span>
@@ -2225,6 +2271,11 @@ function isHwDateMatchDay(a,dayDate){
     &&d.getDate()===dayDate.getDate();
 }
 
+/* ============================================================
+   ГЛАВНОЕ ИЗМЕНЕНИЕ:
+   openSubjectFromSchedule — если группа не выбрана,
+   запоминаем урок и после выбора группы открываем предмет.
+   ============================================================ */
 function openSubjectFromSchedule(lessonName){
   const subj=findSubjectForLesson(lessonName);
   if(!subj){
@@ -2234,7 +2285,10 @@ function openSubjectFromSchedule(lessonName){
 
   if(isGroupNotChosen(subj)){
     const baseKey=getGroupBaseId(subj.id);
-    if(baseKey)openGroupModal(baseKey);
+    if(baseKey){
+      pendingScheduleLesson=lessonName; // ← запоминаем контекст
+      openGroupModal(baseKey);
+    }
     return;
   }
 
