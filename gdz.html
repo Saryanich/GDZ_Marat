@@ -273,6 +273,7 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
 .drawer.open .drawer-nav-btn:nth-child(6){animation-delay:.3s}
 .drawer.open .drawer-nav-btn:nth-child(7){animation-delay:.35s}
 .drawer.open .drawer-nav-btn:nth-child(8){animation-delay:.4s}
+.drawer.open .drawer-nav-btn:nth-child(9){animation-delay:.45s}
 @keyframes drawerItemIn{to{opacity:1;transform:translateX(0)}}
 .drawer-nav-btn:hover{background:rgba(52,211,153,0.08);color:var(--accent-bright);transform:translateX(6px)}
 .drawer-nav-btn.active{background:linear-gradient(135deg,var(--accent),#059669);color:#fff}
@@ -858,89 +859,117 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
 .confirm-no{background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text-2)}
 .confirm-no:hover{background:rgba(255,255,255,0.1);color:var(--text)}
 
-/* ===== ЧАТ ===== */
-.chat-view{display:flex;flex-direction:column;height:calc(100vh - 200px);min-height:400px}
-.chat-messages{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;
-  gap:.75rem;background:var(--card);border:1px solid var(--border);
-  border-radius:var(--radius);margin-bottom:1rem}
-.chat-messages::-webkit-scrollbar{width:6px}
+/* ===== ЧАТ (компактный) ===== */
+.chat-view{display:flex;flex-direction:column;height:calc(100vh - 180px);min-height:380px}
+.chat-messages{flex:1;overflow-y:auto;padding:.5rem .6rem;display:flex;flex-direction:column;
+  gap:.35rem;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius-sm);margin-bottom:.5rem;position:relative}
+.chat-messages::-webkit-scrollbar{width:5px}
 .chat-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-.chat-msg{max-width:85%;padding:.75rem 1rem;border-radius:18px;font-size:.9rem;
-  line-height:1.5;word-wrap:break-word;position:relative;
-  animation:msgIn .35s var(--ease)}
+.chat-msg{max-width:88%;padding:.4rem .65rem;border-radius:12px;font-size:.85rem;
+  line-height:1.35;word-wrap:break-word;position:relative;
+  animation:msgIn .3s var(--ease)}
 .chat-msg.own{align-self:flex-end;background:linear-gradient(135deg,var(--accent),#059669);
-  color:#fff;border-bottom-right-radius:4px}
-.chat-msg.other{align-self:flex-start;background:rgba(255,255,255,0.06);
-  border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
+  color:#fff;border-bottom-right-radius:3px}
+.chat-msg.other{align-self:flex-start;background:rgba(255,255,255,0.05);
+  border:1px solid rgba(52,211,153,0.15);color:var(--text);border-bottom-left-radius:3px}
 .chat-msg.globi-msg{align-self:flex-start;
-  background:linear-gradient(135deg,rgba(102,126,234,0.15),rgba(118,75,162,0.15));
-  border:1px solid rgba(118,75,162,0.4);border-bottom-left-radius:4px}
-.chat-msg-header{display:flex;align-items:center;gap:6px;margin-bottom:4px;
-  font-size:.72rem;font-weight:600}
-.chat-msg-avatar{width:20px;height:20px;border-radius:50%;display:flex;
-  align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0}
+  background:linear-gradient(135deg,rgba(102,126,234,0.18),rgba(118,75,162,0.18));
+  border:1px solid rgba(118,75,162,0.4);border-bottom-left-radius:3px}
+.chat-msg-header{display:flex;align-items:center;gap:5px;margin-bottom:2px;
+  font-size:.66rem;font-weight:600}
+.chat-msg-avatar{width:16px;height:16px;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;font-size:.55rem;flex-shrink:0;
+  font-weight:700}
 .chat-msg.globi-msg .chat-msg-avatar{background:linear-gradient(135deg,#667eea,#764ba2);
   color:#fff;font-weight:800}
-.chat-msg-name{font-weight:700}
-.chat-msg-time{font-size:.65rem;opacity:.5;margin-left:auto}
-.chat-msg-text{margin-top:2px}
-.chat-msg-sticker{font-size:2.5rem;text-align:center;padding:.25rem 0;line-height:1.2}
-.chat-msg-photo{max-width:100%;border-radius:12px;margin-top:6px;cursor:pointer;
-  border:1px solid var(--border);transition:transform .3s}
+.chat-msg-name{font-weight:700;opacity:.85}
+.chat-msg-time{font-size:.6rem;opacity:.45;margin-left:auto}
+.chat-msg-text{margin-top:1px;word-break:break-word}
+.chat-msg-sticker{font-size:2rem;text-align:center;padding:0;line-height:1.1}
+.chat-msg-photo{max-width:100%;border-radius:8px;margin-top:3px;cursor:pointer;
+  border:1px solid rgba(52,211,153,0.15);transition:transform .3s;display:block}
 .chat-msg-photo:hover{transform:scale(1.02)}
-.chat-msg-reply{padding:.4rem .6rem;margin-bottom:6px;border-radius:8px;
-  border-left:3px solid var(--accent-bright);background:rgba(52,211,153,0.08);
-  font-size:.78rem;opacity:.8;cursor:pointer}
+.chat-msg-reply{padding:.25rem .5rem;margin-bottom:3px;border-radius:6px;
+  border-left:2px solid var(--accent-bright);background:rgba(52,211,153,0.08);
+  font-size:.68rem;opacity:.85;cursor:pointer;line-height:1.3}
 .chat-msg.own .chat-msg-reply{border-left-color:rgba(255,255,255,0.6);
   background:rgba(255,255,255,0.1)}
 .chat-msg.globi-msg .chat-msg-reply{border-left-color:#764ba2;
   background:rgba(118,75,162,0.1)}
-.chat-msg-reactions{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.chat-msg-reactions{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
 .chat-reaction{display:inline-flex;align-items:center;gap:2px;
-  padding:2px 6px;border-radius:999px;font-size:.72rem;cursor:pointer;
+  padding:1px 5px;border-radius:999px;font-size:.68rem;cursor:pointer;
   background:rgba(255,255,255,0.08);border:1px solid var(--border);
-  transition:all .2s}
+  transition:all .2s;animation:reactionPop .3s var(--ease-bounce)}
+@keyframes reactionPop{0%{transform:scale(0.5);opacity:0}100%{transform:scale(1);opacity:1}}
 .chat-reaction:hover{background:rgba(52,211,153,0.15)}
 .chat-reaction.mine{background:rgba(52,211,153,0.25);
   border-color:var(--accent-bright)}
 .chat-msg.own .chat-reaction{background:rgba(255,255,255,0.15);
   border-color:rgba(255,255,255,0.2)}
 .chat-msg.own .chat-reaction.mine{background:rgba(255,255,255,0.3)}
-.chat-input-bar{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
-.chat-input{flex:1;min-width:150px;padding:.9rem 1.1rem;background:var(--card);
-  border:1px solid var(--border);border-radius:22px;color:var(--text);
-  font-size:.95rem;font-family:inherit;outline:none;resize:none;
-  max-height:120px;min-height:48px;line-height:1.4;transition:all .3s var(--ease-soft)}
+.chat-input-bar{display:flex;gap:5px;align-items:flex-end;flex-wrap:wrap}
+.chat-input{flex:1;min-width:120px;padding:.55rem .85rem;background:var(--card);
+  border:1px solid var(--border);border-radius:18px;color:var(--text);
+  font-size:.88rem;font-family:inherit;outline:none;resize:none;
+  max-height:90px;min-height:38px;line-height:1.3;transition:all .3s var(--ease-soft)}
 .chat-input:focus{border-color:var(--accent-bright);
-  box-shadow:0 0 0 4px var(--accent-glow)}
-.chat-send{width:48px;height:48px;border-radius:50%;
+  box-shadow:0 0 0 3px var(--accent-glow)}
+.chat-send{width:38px;height:38px;border-radius:50%;
   background:linear-gradient(135deg,var(--accent),#059669);border:none;color:#fff;
-  font-size:1.2rem;cursor:pointer;flex-shrink:0;display:flex;
+  font-size:1rem;cursor:pointer;flex-shrink:0;display:flex;
   align-items:center;justify-content:center;transition:all .3s var(--ease)}
 .chat-send:hover:not(:disabled){transform:translateY(-2px) scale(1.08);
   box-shadow:0 8px 20px -4px rgba(16,185,129,0.6)}
 .chat-send:disabled{opacity:.4;cursor:not-allowed}
-.chat-sticker-btn,.chat-photo-btn{width:48px;height:48px;border-radius:50%;
+.chat-sticker-btn,.chat-photo-btn{width:38px;height:38px;border-radius:50%;
   background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);
-  font-size:1.3rem;cursor:pointer;flex-shrink:0;display:flex;
+  font-size:1.05rem;cursor:pointer;flex-shrink:0;display:flex;
   align-items:center;justify-content:center;transition:all .3s var(--ease-soft)}
 .chat-sticker-btn:hover,.chat-photo-btn:hover{background:rgba(52,211,153,0.15);
   color:var(--accent-bright);transform:scale(1.05)}
-.sticker-picker{position:absolute;bottom:100%;left:0;right:0;margin-bottom:8px;
+.sticker-picker{position:absolute;bottom:100%;left:0;right:0;margin-bottom:6px;
   background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);
-  padding:.75rem;display:none;grid-template-columns:repeat(6,1fr);gap:6px;
-  max-height:220px;overflow-y:auto;z-index:10;box-shadow:var(--shadow)}
+  padding:.5rem;display:none;grid-template-columns:repeat(6,1fr);gap:4px;
+  max-height:200px;overflow-y:auto;z-index:10;box-shadow:var(--shadow)}
 .sticker-picker.show{display:grid}
-.sticker-item{font-size:1.8rem;text-align:center;padding:.4rem;border-radius:8px;
+.sticker-item{font-size:1.5rem;text-align:center;padding:.3rem;border-radius:6px;
   cursor:pointer;transition:all .2s;user-select:none}
 .sticker-item:hover{background:rgba(52,211,153,0.12);transform:scale(1.15)}
-.chat-msg.selected-for-reply{border:2px solid var(--accent-bright);
-  box-shadow:0 0 0 3px var(--accent-glow)}
-.reply-preview{display:flex;align-items:center;gap:8px;padding:.6rem 1rem;
+.chat-msg.selected-for-reply{border:1px solid var(--accent-bright);
+  box-shadow:0 0 0 2px var(--accent-glow)}
+.reply-preview{display:flex;align-items:center;gap:6px;padding:.4rem .7rem;
   background:rgba(52,211,153,0.08);border:1px solid var(--border);
-  border-radius:12px;margin-bottom:8px;font-size:.82rem}
-.reply-preview-close{margin-left:auto;cursor:pointer;opacity:.6;font-size:1rem}
+  border-radius:10px;margin-bottom:5px;font-size:.75rem}
+.reply-preview-close{margin-left:auto;cursor:pointer;opacity:.6;font-size:.9rem}
 .reply-preview-close:hover{opacity:1;color:#f87171}
+
+/* Анимация «брызг» реакций */
+.reaction-burst{position:fixed;pointer-events:none;z-index:2000;
+  font-size:1.4rem;will-change:transform,opacity;
+  animation:reactionBurst 1.1s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes reactionBurst{
+  0%{transform:translate(-50%,-50%) scale(0.3);opacity:0}
+  15%{transform:translate(-50%,-50%) scale(1.2);opacity:1}
+  60%{opacity:1}
+  100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(0.6) rotate(var(--rot));opacity:0}
+}
+
+/* Анимация «вылета» сообщения из инпута */
+.msg-fly{
+  position:fixed;pointer-events:none;z-index:2000;
+  padding:.4rem .65rem;border-radius:12px;font-size:.85rem;
+  background:linear-gradient(135deg,var(--accent),#059669);color:#fff;
+  box-shadow:0 6px 16px -4px rgba(16,185,129,0.6);
+  transform-origin:center;max-width:80vw;word-wrap:break-word;
+  animation:msgFly .55s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes msgFly{
+  0%{opacity:0;transform:scale(.7) translateY(0)}
+  20%{opacity:1;transform:scale(1.05) translateY(-6px)}
+  100%{opacity:0;transform:scale(.85) translateY(var(--fly-y,0)) translateX(var(--fly-x,0))}
+}
 
 @media(min-width:900px){
   .mobile-header{display:none}
@@ -958,7 +987,7 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
   .sidebar{display:none}
   .main{padding:1.25rem 1rem 2rem}
   .globi-wrap{height:calc(100vh - 300px);min-height:350px}
-  .chat-view{height:calc(100vh - 300px);min-height:350px}
+  .chat-view{height:calc(100vh - 260px);min-height:340px}
   .media-block.photo{max-width:100%;margin-left:0;margin-right:0}
 }
 @media(max-width:360px){
@@ -3100,7 +3129,7 @@ function renderChatMessages(){
       content=`<div class="chat-msg-sticker">${m.text}</div>`;
     }else if(m.type==='photo'){
       content=`<img class="chat-msg-photo" src="${esc(m.photo)}" loading="lazy" onclick="window.open('${esc(m.photo)}','_blank')">`;
-      if(m.text)content+=`<div class="chat-msg-text" style="margin-top:6px">${esc(m.text)}</div>`;
+      if(m.text)content+=`<div class="chat-msg-text" style="margin-top:4px">${esc(m.text)}</div>`;
     }else{
       content=`<div class="chat-msg-text">${esc(m.text)}</div>`;
     }
@@ -3118,7 +3147,7 @@ function renderChatMessages(){
       reactionsHtml='<div class="chat-msg-reactions">'+Object.entries(m.reactions).map(([emoji,users])=>{
         if(!users||!users.length)return'';
         const mine=users.includes(currentGlobalId);
-        return `<span class="chat-reaction ${mine?'mine':''}" onclick="toggleReaction('${m.id}','${emoji}')">${emoji} ${users.length}</span>`;
+        return `<span class="chat-reaction ${mine?'mine':''}" onclick="toggleReaction('${m.id}','${emoji}',event)">${emoji} ${users.length}</span>`;
       }).join('')+'</div>';
     }
     return `<div class="chat-msg ${cls}" id="msg-${m.id}" data-id="${m.id}">
@@ -3181,7 +3210,7 @@ function openMessageActions(id){
   document.getElementById('confirmTitle').textContent='Действия с сообщением';
   document.getElementById('confirmText').innerHTML=
     `<div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px">
-      ${actions.map(a=>`<span style="font-size:1.6rem;cursor:pointer" onclick="toggleReaction('${id}','${a}');document.getElementById('confirmOverlay').classList.remove('show')">${a}</span>`).join('')}
+      ${actions.map(a=>`<span style="font-size:1.6rem;cursor:pointer" onclick="toggleReaction('${id}','${a}',event);document.getElementById('confirmOverlay').classList.remove('show')">${a}</span>`).join('')}
     </div>
     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
       <button class="break-btn break-btn-yes" style="padding:.6rem 1rem;font-size:.85rem" onclick="startReply('${id}');document.getElementById('confirmOverlay').classList.remove('show')">↩ Ответить</button>
@@ -3212,20 +3241,59 @@ function startReply(id){
 
 function cancelReply(){
   replyToMessage=null;
-  document.getElementById('replyPreview').classList.add('hidden');
+  const rp=document.getElementById('replyPreview');
+  if(rp)rp.classList.add('hidden');
 }
 
-async function toggleReaction(messageId,emoji){
+/* ====== АНИМАЦИЯ «БРЫЗГ» РЕАКЦИЙ ====== */
+function spawnReactionBurst(targetEl,emoji,clickX,clickY){
+  if(settings.reduceEffects)return;
+  let rect;
+  if(targetEl)rect=targetEl.getBoundingClientRect();
+  else rect={left:clickX||window.innerWidth/2,top:clickY||window.innerHeight/2,width:0,height:0};
+  const cx=rect.left+rect.width/2;
+  const cy=rect.top+rect.height/2;
+  const count=8;
+  for(let i=0;i<count;i++){
+    const el=document.createElement('span');
+    el.className='reaction-burst';
+    el.textContent=emoji;
+    el.style.left=cx+'px';
+    el.style.top=cy+'px';
+    const angle=(Math.PI*2*i)/count + Math.random()*0.5;
+    const dist=45+Math.random()*55;
+    const dx=Math.cos(angle)*dist;
+    const dy=Math.sin(angle)*dist;
+    el.style.setProperty('--dx',dx.toFixed(1)+'px');
+    el.style.setProperty('--dy',dy.toFixed(1)+'px');
+    el.style.setProperty('--rot',(Math.random()*720-360).toFixed(0)+'deg');
+    el.style.animationDelay=(i*0.02)+'s';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),1300);
+  }
+}
+
+async function toggleReaction(messageId,emoji,evt){
   const m=chatMessages.find(x=>x.id===messageId);
   if(!m)return;
   const reactions=m.reactions||{};
   const users=reactions[emoji]||[];
-  if(users.includes(currentGlobalId)){
+  const wasAdding=!users.includes(currentGlobalId);
+  if(wasAdding){
+    reactions[emoji]=[...users,currentGlobalId];
+  }else{
     reactions[emoji]=users.filter(u=>u!==currentGlobalId);
     if(!reactions[emoji].length)delete reactions[emoji];
-  }else{
-    reactions[emoji]=[...users,currentGlobalId];
   }
+
+  // Анимация брызг при добавлении
+  if(wasAdding){
+    let target=null;
+    if(evt&&evt.currentTarget)target=evt.currentTarget;
+    if(!target)target=document.getElementById('msg-'+messageId);
+    spawnReactionBurst(target,emoji);
+  }
+
   try{
     await db.collection('GDZ').doc('chat').collection('messages').doc(messageId).update({
       reactions
@@ -3257,12 +3325,14 @@ async function sendSticker(sticker){
   const sp=document.getElementById('stickerPicker');
   if(sp)sp.classList.remove('show');
   stickerPickerOpen=false;
+  const input=document.getElementById('chatInput');
+  const from=input?input.getBoundingClientRect():null;
   await pushChatMessage({
     type:'sticker',
     text:sticker,
     photo:'',
     replyTo:replyToMessage||null
-  });
+  },from);
   cancelReply();
 }
 
@@ -3276,12 +3346,14 @@ async function sendChatPhoto(input){
   }
   const reader=new FileReader();
   reader.onload=async()=>{
+    const inp=document.getElementById('chatInput');
+    const from=inp?inp.getBoundingClientRect():null;
     await pushChatMessage({
       type:'photo',
       text:'',
       photo:reader.result,
       replyTo:replyToMessage||null
-    });
+    },from);
     cancelReply();
   };
   reader.readAsDataURL(file);
@@ -3291,22 +3363,42 @@ function chatKey(e){
   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChatMessage();}
 }
 
+/* ====== АНИМАЦИЯ «ВЫЛЕТА» СООБЩЕНИЯ ====== */
+function flyMessageAnimation(text,fromRect){
+  if(settings.reduceEffects)return;
+  if(!fromRect)return;
+  const el=document.createElement('div');
+  el.className='msg-fly';
+  el.textContent=text.length>60?text.slice(0,60)+'…':text;
+  const startX=fromRect.left+fromRect.width/2;
+  const startY=fromRect.top+fromRect.height/2;
+  el.style.left=startX+'px';
+  el.style.top=startY+'px';
+  el.style.setProperty('--fly-y','-140px');
+  el.style.setProperty('--fly-x','0px');
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),700);
+}
+
 async function sendChatMessage(){
   const input=document.getElementById('chatInput');
   if(!input)return;
   const text=input.value.trim();
   if(!text)return;
+  const fromRect=input.getBoundingClientRect();
   input.value='';
+  // Анимация «вылета» перед отправкой
+  flyMessageAnimation(text,fromRect);
   await pushChatMessage({
     type:'text',
     text,
     photo:'',
     replyTo:replyToMessage||null
-  });
+  },fromRect);
   cancelReply();
 }
 
-async function pushChatMessage(msgData){
+async function pushChatMessage(msgData,fromRect){
   if(isGuest)return;
   const now=Date.now();
   const payload={
@@ -3322,7 +3414,6 @@ async function pushChatMessage(msgData){
   try{
     const ref=await db.collection('GDZ').doc('chat').collection('messages').add(payload);
 
-    // ==== АЛГОРИТМ МАТА (без ИИ) ====
     if(payload.type==='text'){
       const matCount=detectMat(payload.text);
       if(matCount>3){
@@ -3336,7 +3427,6 @@ async function pushChatMessage(msgData){
       }
     }
 
-    // ==== АЛГОРИТМ УПОМИНАНИЯ ГЛОБИ ====
     if(payload.type==='text'&&isGlobiMention(payload.text)){
       const now2=Date.now();
       if(now2-globiMentionCooldown>10000){
