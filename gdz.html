@@ -27,8 +27,8 @@
   --ease:cubic-bezier(.16,1,.3,1);
   --ease-soft:cubic-bezier(.4,0,.2,1);
   --ease-bounce:cubic-bezier(.34,1.56,.64,1);
+  --user-icon-color:#10b981;
 }
-/* ===== ТЕМЫ ===== */
 body.theme-white{
   --bg:#f8fafc;--card:rgba(255,255,255,0.85);--card-hover:rgba(255,255,255,0.98);
   --accent:#059669;--accent-bright:#10b981;--accent-glow:rgba(16,185,129,0.18);
@@ -366,7 +366,7 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
 .subject-name{font-weight:700;font-size:.95rem;transition:color .3s}
 .subject-card:hover .subject-name{color:var(--accent-bright)}
 
-/* ===== КРАСИВЫЕ АНИМИРОВАННЫЕ ЗВЁЗДЫ (вместо названия) ===== */
+/* ===== КРАСИВЫЕ АНИМИРОВАННЫЕ ЗВЁЗДЫ ===== */
 .space-name{
   display:flex;align-items:center;justify-content:center;
   gap:7px;min-height:1.4em;padding:.15rem 0;
@@ -858,11 +858,96 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
 .confirm-no{background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text-2)}
 .confirm-no:hover{background:rgba(255,255,255,0.1);color:var(--text)}
 
+/* ===== ЧАТ ===== */
+.chat-view{display:flex;flex-direction:column;height:calc(100vh - 200px);min-height:400px}
+.chat-messages{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;
+  gap:.75rem;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);margin-bottom:1rem}
+.chat-messages::-webkit-scrollbar{width:6px}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.chat-msg{max-width:85%;padding:.75rem 1rem;border-radius:18px;font-size:.9rem;
+  line-height:1.5;word-wrap:break-word;position:relative;
+  animation:msgIn .35s var(--ease)}
+.chat-msg.own{align-self:flex-end;background:linear-gradient(135deg,var(--accent),#059669);
+  color:#fff;border-bottom-right-radius:4px}
+.chat-msg.other{align-self:flex-start;background:rgba(255,255,255,0.06);
+  border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
+.chat-msg.globi-msg{align-self:flex-start;
+  background:linear-gradient(135deg,rgba(102,126,234,0.15),rgba(118,75,162,0.15));
+  border:1px solid rgba(118,75,162,0.4);border-bottom-left-radius:4px}
+.chat-msg-header{display:flex;align-items:center;gap:6px;margin-bottom:4px;
+  font-size:.72rem;font-weight:600}
+.chat-msg-avatar{width:20px;height:20px;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0}
+.chat-msg.globi-msg .chat-msg-avatar{background:linear-gradient(135deg,#667eea,#764ba2);
+  color:#fff;font-weight:800}
+.chat-msg-name{font-weight:700}
+.chat-msg-time{font-size:.65rem;opacity:.5;margin-left:auto}
+.chat-msg-text{margin-top:2px}
+.chat-msg-sticker{font-size:2.5rem;text-align:center;padding:.25rem 0;line-height:1.2}
+.chat-msg-photo{max-width:100%;border-radius:12px;margin-top:6px;cursor:pointer;
+  border:1px solid var(--border);transition:transform .3s}
+.chat-msg-photo:hover{transform:scale(1.02)}
+.chat-msg-reply{padding:.4rem .6rem;margin-bottom:6px;border-radius:8px;
+  border-left:3px solid var(--accent-bright);background:rgba(52,211,153,0.08);
+  font-size:.78rem;opacity:.8;cursor:pointer}
+.chat-msg.own .chat-msg-reply{border-left-color:rgba(255,255,255,0.6);
+  background:rgba(255,255,255,0.1)}
+.chat-msg.globi-msg .chat-msg-reply{border-left-color:#764ba2;
+  background:rgba(118,75,162,0.1)}
+.chat-msg-reactions{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.chat-reaction{display:inline-flex;align-items:center;gap:2px;
+  padding:2px 6px;border-radius:999px;font-size:.72rem;cursor:pointer;
+  background:rgba(255,255,255,0.08);border:1px solid var(--border);
+  transition:all .2s}
+.chat-reaction:hover{background:rgba(52,211,153,0.15)}
+.chat-reaction.mine{background:rgba(52,211,153,0.25);
+  border-color:var(--accent-bright)}
+.chat-msg.own .chat-reaction{background:rgba(255,255,255,0.15);
+  border-color:rgba(255,255,255,0.2)}
+.chat-msg.own .chat-reaction.mine{background:rgba(255,255,255,0.3)}
+.chat-input-bar{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.chat-input{flex:1;min-width:150px;padding:.9rem 1.1rem;background:var(--card);
+  border:1px solid var(--border);border-radius:22px;color:var(--text);
+  font-size:.95rem;font-family:inherit;outline:none;resize:none;
+  max-height:120px;min-height:48px;line-height:1.4;transition:all .3s var(--ease-soft)}
+.chat-input:focus{border-color:var(--accent-bright);
+  box-shadow:0 0 0 4px var(--accent-glow)}
+.chat-send{width:48px;height:48px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),#059669);border:none;color:#fff;
+  font-size:1.2rem;cursor:pointer;flex-shrink:0;display:flex;
+  align-items:center;justify-content:center;transition:all .3s var(--ease)}
+.chat-send:hover:not(:disabled){transform:translateY(-2px) scale(1.08);
+  box-shadow:0 8px 20px -4px rgba(16,185,129,0.6)}
+.chat-send:disabled{opacity:.4;cursor:not-allowed}
+.chat-sticker-btn,.chat-photo-btn{width:48px;height:48px;border-radius:50%;
+  background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);
+  font-size:1.3rem;cursor:pointer;flex-shrink:0;display:flex;
+  align-items:center;justify-content:center;transition:all .3s var(--ease-soft)}
+.chat-sticker-btn:hover,.chat-photo-btn:hover{background:rgba(52,211,153,0.15);
+  color:var(--accent-bright);transform:scale(1.05)}
+.sticker-picker{position:absolute;bottom:100%;left:0;right:0;margin-bottom:8px;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:.75rem;display:none;grid-template-columns:repeat(6,1fr);gap:6px;
+  max-height:220px;overflow-y:auto;z-index:10;box-shadow:var(--shadow)}
+.sticker-picker.show{display:grid}
+.sticker-item{font-size:1.8rem;text-align:center;padding:.4rem;border-radius:8px;
+  cursor:pointer;transition:all .2s;user-select:none}
+.sticker-item:hover{background:rgba(52,211,153,0.12);transform:scale(1.15)}
+.chat-msg.selected-for-reply{border:2px solid var(--accent-bright);
+  box-shadow:0 0 0 3px var(--accent-glow)}
+.reply-preview{display:flex;align-items:center;gap:8px;padding:.6rem 1rem;
+  background:rgba(52,211,153,0.08);border:1px solid var(--border);
+  border-radius:12px;margin-bottom:8px;font-size:.82rem}
+.reply-preview-close{margin-left:auto;cursor:pointer;opacity:.6;font-size:1rem}
+.reply-preview-close:hover{opacity:1;color:#f87171}
+
 @media(min-width:900px){
   .mobile-header{display:none}
   .sidebar{display:flex}
   .main{padding:2.5rem 3rem 4rem}
   .globi-wrap{height:calc(100vh - 200px)}
+  .chat-view{height:calc(100vh - 200px)}
   .fullscreen-view{padding:2.5rem 3rem}
   .settings-view{padding:2.5rem 3rem}
   .fs-title{font-size:1.75rem}
@@ -873,6 +958,7 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
   .sidebar{display:none}
   .main{padding:1.25rem 1rem 2rem}
   .globi-wrap{height:calc(100vh - 300px);min-height:350px}
+  .chat-view{height:calc(100vh - 300px);min-height:350px}
   .media-block.photo{max-width:100%;margin-left:0;margin-right:0}
 }
 @media(max-width:360px){
@@ -960,6 +1046,9 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
         <button class="sidebar-nav-btn" data-sec="globi" onclick="go('globi')" id="sideNavGlobi">
           <span class="sidebar-nav-icon">🤖</span><span>Globi</span>
         </button>
+        <button class="sidebar-nav-btn" data-sec="chat" onclick="go('chat')" id="sideNavChat">
+          <span class="sidebar-nav-icon">💬</span><span>Чат</span>
+        </button>
       </nav>
 
       <div class="sidebar-footer">
@@ -997,7 +1086,7 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
       <main class="main">
         <div class="guest-banner hidden" id="guestBanner">
           <div class="guest-banner-text">
-            <strong>👤 Гостевой режим.</strong> Контрольные, новости и Globi скрыты. Создай аккаунт Global ID для полного доступа.
+            <strong>👤 Гостевой режим.</strong> Контрольные, новости, Globi и чат скрыты. Создай аккаунт Global ID для полного доступа.
           </div>
           <a class="btn-small-global" href="https://saryanich.github.io/Global-ID/" target="_blank" rel="noopener">✨ Создать аккаунт</a>
         </div>
@@ -1048,6 +1137,11 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
           <div class="section-title"><span class="emoji">🤖</span>Globi</div>
           <div id="globiContent"></div>
         </div>
+
+        <div class="section" id="sec-chat">
+          <div class="section-title"><span class="emoji">💬</span>Чат</div>
+          <div id="chatContent"></div>
+        </div>
       </main>
     </div>
   </div>
@@ -1085,6 +1179,9 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
     </button>
     <button class="drawer-nav-btn" data-sec="globi" onclick="go('globi');closeDrawer()" id="drawerNavGlobi">
       <span class="drawer-nav-icon">🤖</span><span>Globi</span>
+    </button>
+    <button class="drawer-nav-btn" data-sec="chat" onclick="go('chat');closeDrawer()" id="drawerNavChat">
+      <span class="drawer-nav-icon">💬</span><span>Чат</span>
     </button>
   </nav>
 
@@ -1178,6 +1275,18 @@ body.theme-pink .drawer{background:rgba(26,8,18,0.98)}
   </div>
 
   <div class="settings-group">
+    <div class="settings-group-title">Цвет моей иконки</div>
+    <div class="settings-row">
+      <div class="settings-row-text">
+        <div class="settings-row-label">Иконка в чате</div>
+        <div class="settings-row-desc">Выбери цвет круга с буквой</div>
+      </div>
+      <input type="color" id="setIconColor" value="#10b981" onchange="setIconColor(this.value)"
+        style="width:48px;height:36px;border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer">
+    </div>
+  </div>
+
+  <div class="settings-group">
     <div class="settings-group-title">Мои группы</div>
     <div id="groupSettings"></div>
   </div>
@@ -1250,6 +1359,17 @@ const DAY_ORDER={
 };
 const SPECIAL_LESSONS=['окно','разговор о важном'];
 
+/* ==================== СТИКЕРЫ ==================== */
+const STICKERS=[
+  '🐱','🐶','🐼','🦊','🐻','🐨','🐸','🐷','🐵','🦁',
+  '🐯','🐮','🐰','🐹','🐭','🐿️','🦔','🦇','🐺','🦝',
+  '🍕','🍔','🍟','🌮','🍿','🍩','🍪','🍰','🍫','🍭',
+  '⚽','🏀','🎮','🎯','🎲','🎸','🎧','📚','✏️','💡',
+  '❤️','💚','💙','💜','🧡','💛','⭐','✨','🔥','💧',
+  '😀','😂','🤣','😍','😎','🤔','😴','🥳','😭','😡',
+  '👍','👎','👏','🙏','💪','🤝','✌️','🤞','👋','🫡'
+];
+
 /* ==================== ПАТЧ: ГРУППЫ ==================== */
 const ENGLISH_BASE_ID='angliyskiy-yazyk';
 const ENGLISH_GROUPS={
@@ -1274,20 +1394,26 @@ const NATIVE_GROUPS={
 let currentUser=null,currentGlobalId='',currentName='',currentRole='guest',isGuest=true;
 let subjects=[],answers=[],testsAnswers=[],news=[],prep=[],schedule={};
 let globiHistory=[];
+let chatMessages=[];
 let currentView={type:null,id:null};
 let barrierTimer=null,heartbeatTimer=null;
 let breakTimer=null;
-let userGroups={}; // { baseId: choice }
+let userGroups={};
 let settings={
   reduceEffects:false,
   theme:'default',
-  breakEnabled:false
+  breakEnabled:false,
+  iconColor:'#10b981'
 };
-/* Временное (несохранённое) значение выбора группы, пока модалка открыта */
 let pendingGroupKey=null;
 let pendingGroupChoice=null;
-/* Урок из расписания, ожидающий выбора группы (чтобы после сохранения сразу открыть предмет) */
 let pendingScheduleLesson=null;
+let replyToMessage=null;
+let stickerPickerOpen=false;
+let chatUnsubscribe=null;
+let globiMentionCooldown=0;
+let matCounter=0;
+let matTimer=null;
 
 /* ==================== УТИЛИТЫ ==================== */
 const esc=(t)=>{if(!t)return'';const d=document.createElement('div');d.textContent=t;return d.innerHTML;};
@@ -1434,10 +1560,13 @@ function applySettings(){
   document.body.classList.toggle('reduce-effects',settings.reduceEffects);
   document.body.classList.remove('theme-white','theme-black','theme-blue','theme-pink');
   if(settings.theme!=='default')document.body.classList.add('theme-'+settings.theme);
+  document.documentElement.style.setProperty('--user-icon-color',settings.iconColor);
   const re=document.getElementById('setReduceEffects');
   if(re)re.checked=settings.reduceEffects;
   const be=document.getElementById('setBreakEnabled');
   if(be)be.checked=settings.breakEnabled;
+  const ic=document.getElementById('setIconColor');
+  if(ic)ic.value=settings.iconColor;
   document.querySelectorAll('.theme-swatch').forEach(el=>{
     el.classList.toggle('active',el.dataset.theme===settings.theme);
   });
@@ -1466,6 +1595,10 @@ function toggleReduceEffects(v){
 function setTheme(t){
   settings.theme=t;saveSettings();applySettings();
   toast('Тема изменена');
+}
+function setIconColor(c){
+  settings.iconColor=c;saveSettings();applySettings();
+  toast('Цвет иконки сохранён');
 }
 function toggleBreak(v){
   settings.breakEnabled=v;saveSettings();
@@ -1718,7 +1851,7 @@ async function loadAll(){
   await Promise.all(tasks);
 }
 
-/* ==================== ФУНКЦИИ ГРУПП (по названию) ==================== */
+/* ==================== ФУНКЦИИ ГРУПП ==================== */
 function normName(s){
   return String(s||'').toLowerCase().replace(/ё/g,'е').replace(/[^а-яa-z0-9]+/g,' ').trim();
 }
@@ -1779,13 +1912,6 @@ function getEffectiveSubjectIdForAnswer(a){
   return a.subjectId;
 }
 
-/* ============================================================
-   ГЛАВНОЕ ИЗМЕНЕНИЕ:
-   findSubjectForLesson — теперь корректно находит предмет
-   выбранной группы для «Родного языка» / «Родной литературы».
-   Если в названии урока уже указан вариант ("Родной русский язык"),
-   берём именно его. Иначе — ищем предмет по выбранной группе.
-   ============================================================ */
 function findSubjectForLesson(lessonName){
   const n=normName(lessonName);
   const info=classifyName(lessonName);
@@ -1796,28 +1922,23 @@ function findSubjectForLesson(lessonName){
       return i&&i.kind==='native'&&i.key===info.key;
     };
 
-    // 1. Если в самом названии урока указан вариант — берём его (высший приоритет)
     if(info.variant){
       const byVariant=subjects.find(s=>same(s)&&classifyName(s.name).variant===info.variant);
       if(byVariant)return byVariant;
     }
 
-    // 2. Если пользователь выбрал группу — ищем предмет именно этого варианта
     const choice=getGroupChoice(info.key);
     if(choice){
       const mine=subjects.find(s=>same(s)&&classifyName(s.name).variant===choice);
       if(mine)return mine;
     }
 
-    // 3. Точное совпадение по названию
     const exact=subjects.find(s=>normName(s.name)===n);
     if(exact)return exact;
 
-    // 4. Первый попавшийся предмет этого типа
     return subjects.find(same)||null;
   }
 
-  // Обычный предмет — точное совпадение по названию
   return subjects.find(s=>normName(s.name)===n)||null;
 }
 
@@ -1842,7 +1963,6 @@ function getActualAnswers(){
   return answers.filter(a=>isHwActual(a)&&isAnswerVisibleForUser(a));
 }
 
-/* Модалка выбора — с кнопкой «Сохранить» */
 function openGroupModal(baseKey){
   const config=baseKey===ENGLISH_BASE_ID?ENGLISH_GROUPS:NATIVE_GROUPS[baseKey];
   if(!config)return;
@@ -1879,12 +1999,10 @@ function updateGroupSaveBtn(){
 async function saveGroupChoice(){
   if(!pendingGroupKey||!pendingGroupChoice)return;
 
-  // Запоминаем контекст до закрытия модалки
   const savedKey=pendingGroupKey;
   const savedChoice=pendingGroupChoice;
   const savedLesson=pendingScheduleLesson;
 
-  // Гость: сохранить некуда, но предмет всё равно показываем
   if(isGuest){
     closeGroupModal();
     toast('Создай аккаунт, чтобы сохранить выбор');
@@ -1909,7 +2027,6 @@ async function saveGroupChoice(){
     toast('Ошибка сохранения, попробуй позже');
   }
 
-  // Обновляем интерфейс
   renderSubjects();
   renderHomework();
   renderSchedule();
@@ -1917,7 +2034,6 @@ async function saveGroupChoice(){
   renderTests();
   renderGroupSettings();
 
-  // Если модалку открывали из расписания — сразу открываем предмет выбранной группы
   if(savedLesson){
     const subj=findSubjectForLesson(savedLesson);
     if(subj)showSubjectDetail(subj);
@@ -1935,7 +2051,6 @@ function closeGroupModal(){
   pendingScheduleLesson=null;
 }
 
-/* «Мои группы» в настройках */
 function renderGroupSettings(){
   const el=document.getElementById('groupSettings');
   if(!el)return;
@@ -1990,7 +2105,8 @@ function renderChip(){
 
   if(isGuest){
     document.getElementById('guestBanner').classList.remove('hidden');
-    ['sideNavTests','sideNavNews','sideNavGlobi','drawerNavTests','drawerNavNews','drawerNavGlobi']
+    ['sideNavTests','sideNavNews','sideNavGlobi','sideNavChat',
+     'drawerNavTests','drawerNavNews','drawerNavGlobi','drawerNavChat']
       .forEach(id=>document.getElementById(id)?.classList.add('locked'));
   }
 }
@@ -2271,11 +2387,6 @@ function isHwDateMatchDay(a,dayDate){
     &&d.getDate()===dayDate.getDate();
 }
 
-/* ============================================================
-   ГЛАВНОЕ ИЗМЕНЕНИЕ:
-   openSubjectFromSchedule — если группа не выбрана,
-   запоминаем урок и после выбора группы открываем предмет.
-   ============================================================ */
 function openSubjectFromSchedule(lessonName){
   const subj=findSubjectForLesson(lessonName);
   if(!subj){
@@ -2286,7 +2397,7 @@ function openSubjectFromSchedule(lessonName){
   if(isGroupNotChosen(subj)){
     const baseKey=getGroupBaseId(subj.id);
     if(baseKey){
-      pendingScheduleLesson=lessonName; // ← запоминаем контекст
+      pendingScheduleLesson=lessonName;
       openGroupModal(baseKey);
     }
     return;
@@ -2562,6 +2673,7 @@ function go(sec){
   else if(sec==='schedule')renderSchedule();
   else if(sec==='prep')renderPrep();
   else if(sec==='globi')renderGlobi();
+  else if(sec==='chat')renderChat();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -2897,6 +3009,411 @@ function renderPrep(){
     </div>`).join('');
 }
 
+/* ==================== ЧАТ ==================== */
+const MAT_WORDS=[
+  'блять','блядь','бля','нахуй','нахуя','хуй','хуя','хуе','пиздец','пизда',
+  'сука','суки','ебать','ебал','ебу','ебет','ёб','залупа','мудак','мудила',
+  'гандон','долбоеб','долбоёб','пидор','пидар','шлюха','мразь','тварь'
+];
+
+function detectMat(text){
+  const lower=String(text||'').toLowerCase().replace(/ё/g,'е');
+  const words=lower.split(/[^а-яa-z0-9]+/).filter(Boolean);
+  let count=0;
+  for(const w of words){
+    if(MAT_WORDS.some(m=>w.includes(m.replace(/ё/g,'е'))))count++;
+  }
+  return count;
+}
+
+function isGlobiMention(text){
+  const lower=String(text||'').toLowerCase();
+  return /(^|\s)гл[оа]?б[иi](\s|$|[,.!?])/.test(lower)
+    || /(^|\s)globi(\s|$|[,.!?])/.test(lower);
+}
+
+function renderChat(){
+  const c=document.getElementById('chatContent');
+  if(isGuest){
+    c.innerHTML=`<div class="lock-box"><div class="lock-icon">💬</div><h3>Чат доступен с аккаунтом</h3><p>Общайся с одноклассниками, отправляй стикеры и фото. Создай аккаунт Global ID.</p><a class="btn-global" href="https://saryanich.github.io/Global-ID/" target="_blank" rel="noopener">✨ Создать аккаунт</a></div>`;
+    return;
+  }
+  c.innerHTML=`
+    <div class="chat-view">
+      <div class="chat-messages" id="chatMessages"></div>
+      <div id="replyPreview" class="reply-preview hidden">
+        <span id="replyPreviewText"></span>
+        <span class="reply-preview-close" onclick="cancelReply()">✕</span>
+      </div>
+      <div class="chat-input-bar" style="position:relative">
+        <button class="chat-sticker-btn" onclick="toggleStickerPicker()">😀</button>
+        <button class="chat-photo-btn" onclick="document.getElementById('chatPhotoInput').click()">📷</button>
+        <input type="file" id="chatPhotoInput" accept="image/*" class="hidden" onchange="sendChatPhoto(this)">
+        <textarea class="chat-input" id="chatInput" placeholder="Сообщение..." rows="1" onkeydown="chatKey(event)"></textarea>
+        <button class="chat-send" id="chatSend" onclick="sendChatMessage()">➤</button>
+        <div class="sticker-picker" id="stickerPicker">
+          ${STICKERS.map(s=>`<div class="sticker-item" onclick="sendSticker('${s}')">${s}</div>`).join('')}
+        </div>
+      </div>
+      <div class="globi-hint">Удерживай сообщение, чтобы ответить или поставить реакцию</div>
+    </div>`;
+  startChatListener();
+  renderChatMessages();
+}
+
+function startChatListener(){
+  if(chatUnsubscribe)chatUnsubscribe();
+  chatUnsubscribe=db.collection('GDZ').doc('chat').collection('messages')
+    .orderBy('timestamp','asc').limit(100)
+    .onSnapshot(snap=>{
+      chatMessages=snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderChatMessages();
+    },err=>{
+      console.warn('chat listener error',err);
+      db.collection('GDZ').doc('chat').collection('messages').limit(100).get()
+        .then(snap=>{
+          chatMessages=snap.docs.map(d=>({id:d.id,...d.data()}))
+            .sort((a,b)=>(a.timestamp||0)-(b.timestamp||0));
+          renderChatMessages();
+        });
+    });
+}
+
+function renderChatMessages(){
+  const c=document.getElementById('chatMessages');
+  if(!c)return;
+  if(!chatMessages.length){
+    c.innerHTML='<div class="empty" style="padding:2rem 1rem">Пока нет сообщений. Напиши первым!</div>';
+    return;
+  }
+  c.innerHTML=chatMessages.map(m=>{
+    const own=m.globalId===currentGlobalId;
+    const isGlobi=m.isGlobi===true;
+    const cls=isGlobi?'globi-msg':(own?'own':'other');
+    const name=isGlobi?'Globi':(m.displayName||m.globalId||'Гость');
+    const time=m.timestamp?new Date(m.timestamp).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}):'';
+    const avatarLetter=isGlobi?'G':(name.charAt(0).toUpperCase());
+    const avatarBg=isGlobi?'linear-gradient(135deg,#667eea,#764ba2)'
+      :(own?settings.iconColor:'rgba(255,255,255,0.15)');
+    let content='';
+    if(m.type==='sticker'){
+      content=`<div class="chat-msg-sticker">${m.text}</div>`;
+    }else if(m.type==='photo'){
+      content=`<img class="chat-msg-photo" src="${esc(m.photo)}" loading="lazy" onclick="window.open('${esc(m.photo)}','_blank')">`;
+      if(m.text)content+=`<div class="chat-msg-text" style="margin-top:6px">${esc(m.text)}</div>`;
+    }else{
+      content=`<div class="chat-msg-text">${esc(m.text)}</div>`;
+    }
+    let replyHtml='';
+    if(m.replyTo){
+      const rt=chatMessages.find(x=>x.id===m.replyTo);
+      if(rt){
+        const rName=rt.isGlobi?'Globi':(rt.displayName||rt.globalId);
+        const rText=rt.type==='sticker'?rt.text:plainPreview(rt.text||'',80);
+        replyHtml=`<div class="chat-msg-reply" onclick="scrollToMessage('${rt.id}')"><strong>${esc(rName)}</strong><br>${esc(rText)}</div>`;
+      }
+    }
+    let reactionsHtml='';
+    if(m.reactions&&Object.keys(m.reactions).length){
+      reactionsHtml='<div class="chat-msg-reactions">'+Object.entries(m.reactions).map(([emoji,users])=>{
+        if(!users||!users.length)return'';
+        const mine=users.includes(currentGlobalId);
+        return `<span class="chat-reaction ${mine?'mine':''}" onclick="toggleReaction('${m.id}','${emoji}')">${emoji} ${users.length}</span>`;
+      }).join('')+'</div>';
+    }
+    return `<div class="chat-msg ${cls}" id="msg-${m.id}" data-id="${m.id}">
+      ${replyHtml}
+      <div class="chat-msg-header">
+        <span class="chat-msg-avatar" style="background:${avatarBg};color:#fff">${avatarLetter}</span>
+        <span class="chat-msg-name">${esc(name)}</span>
+        <span class="chat-msg-time">${time}</span>
+      </div>
+      ${content}
+      ${reactionsHtml}
+    </div>`;
+  }).join('');
+  c.scrollTop=c.scrollHeight;
+  bindChatLongPress();
+}
+
+function bindChatLongPress(){
+  const c=document.getElementById('chatMessages');
+  if(!c)return;
+  c.querySelectorAll('.chat-msg').forEach(el=>{
+    if(el.dataset.bound)return;
+    el.dataset.bound='1';
+    let pressTimer=null;
+    let longPressed=false;
+    const start=()=>{
+      longPressed=false;
+      el.classList.add('pressing');
+      pressTimer=setTimeout(()=>{
+        longPressed=true;
+        el.classList.remove('pressing');
+        const id=el.dataset.id;
+        if(!id)return;
+        openMessageActions(id);
+      },600);
+    };
+    const cancel=()=>{
+      el.classList.remove('pressing');
+      if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}
+    };
+    el.addEventListener('touchstart',start,{passive:true});
+    el.addEventListener('touchend',cancel);
+    el.addEventListener('touchmove',cancel);
+    el.addEventListener('touchcancel',cancel);
+    el.addEventListener('mousedown',start);
+    el.addEventListener('mouseup',cancel);
+    el.addEventListener('mouseleave',cancel);
+    el.addEventListener('click',(e)=>{
+      if(longPressed){e.preventDefault();e.stopPropagation();longPressed=false;}
+    });
+  });
+}
+
+function openMessageActions(id){
+  const m=chatMessages.find(x=>x.id===id);
+  if(!m)return;
+  const isOwn=m.globalId===currentGlobalId;
+  const actions=['👍','❤️','😂','🔥','😮'];
+  const ov=document.getElementById('confirmOverlay');
+  document.getElementById('confirmTitle').textContent='Действия с сообщением';
+  document.getElementById('confirmText').innerHTML=
+    `<div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px">
+      ${actions.map(a=>`<span style="font-size:1.6rem;cursor:pointer" onclick="toggleReaction('${id}','${a}');document.getElementById('confirmOverlay').classList.remove('show')">${a}</span>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button class="break-btn break-btn-yes" style="padding:.6rem 1rem;font-size:.85rem" onclick="startReply('${id}');document.getElementById('confirmOverlay').classList.remove('show')">↩ Ответить</button>
+      ${isOwn?`<button class="break-btn" style="padding:.6rem 1rem;font-size:.85rem;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.4)" onclick="deleteChatMessage('${id}');document.getElementById('confirmOverlay').classList.remove('show')">🗑 Удалить</button>`:''}
+    </div>`;
+  document.getElementById('confirmYes').classList.add('hidden');
+  document.getElementById('confirmNo').textContent='Закрыть';
+  document.getElementById('confirmNo').onclick=()=>{
+    ov.classList.remove('show');
+    document.getElementById('confirmYes').classList.remove('hidden');
+    document.getElementById('confirmNo').textContent='Отмена';
+  };
+  ov.classList.add('show');
+}
+
+function startReply(id){
+  const m=chatMessages.find(x=>x.id===id);
+  if(!m)return;
+  replyToMessage=id;
+  const rp=document.getElementById('replyPreview');
+  const rt=document.getElementById('replyPreviewText');
+  const name=m.isGlobi?'Globi':(m.displayName||m.globalId);
+  const text=m.type==='sticker'?m.text:plainPreview(m.text||'',60);
+  rt.innerHTML=`↩ <strong>${esc(name)}</strong>: ${esc(text)}`;
+  rp.classList.remove('hidden');
+  document.getElementById('chatInput').focus();
+}
+
+function cancelReply(){
+  replyToMessage=null;
+  document.getElementById('replyPreview').classList.add('hidden');
+}
+
+async function toggleReaction(messageId,emoji){
+  const m=chatMessages.find(x=>x.id===messageId);
+  if(!m)return;
+  const reactions=m.reactions||{};
+  const users=reactions[emoji]||[];
+  if(users.includes(currentGlobalId)){
+    reactions[emoji]=users.filter(u=>u!==currentGlobalId);
+    if(!reactions[emoji].length)delete reactions[emoji];
+  }else{
+    reactions[emoji]=[...users,currentGlobalId];
+  }
+  try{
+    await db.collection('GDZ').doc('chat').collection('messages').doc(messageId).update({
+      reactions
+    });
+  }catch(e){
+    console.warn('reaction error',e);
+    toast('Не удалось поставить реакцию');
+  }
+}
+
+function scrollToMessage(id){
+  const el=document.getElementById('msg-'+id);
+  if(el){
+    el.scrollIntoView({behavior:'smooth',block:'center'});
+    el.style.transition='box-shadow .3s';
+    el.style.boxShadow='0 0 0 3px var(--accent-bright)';
+    setTimeout(()=>{el.style.boxShadow='';},1200);
+  }
+}
+
+function toggleStickerPicker(){
+  const sp=document.getElementById('stickerPicker');
+  if(!sp)return;
+  stickerPickerOpen=!stickerPickerOpen;
+  sp.classList.toggle('show',stickerPickerOpen);
+}
+
+async function sendSticker(sticker){
+  const sp=document.getElementById('stickerPicker');
+  if(sp)sp.classList.remove('show');
+  stickerPickerOpen=false;
+  await pushChatMessage({
+    type:'sticker',
+    text:sticker,
+    photo:'',
+    replyTo:replyToMessage||null
+  });
+  cancelReply();
+}
+
+async function sendChatPhoto(input){
+  const file=input.files&&input.files[0];
+  input.value='';
+  if(!file)return;
+  if(file.size>2*1024*1024){
+    toast('Фото слишком большое (макс 2 МБ)');
+    return;
+  }
+  const reader=new FileReader();
+  reader.onload=async()=>{
+    await pushChatMessage({
+      type:'photo',
+      text:'',
+      photo:reader.result,
+      replyTo:replyToMessage||null
+    });
+    cancelReply();
+  };
+  reader.readAsDataURL(file);
+}
+
+function chatKey(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChatMessage();}
+}
+
+async function sendChatMessage(){
+  const input=document.getElementById('chatInput');
+  if(!input)return;
+  const text=input.value.trim();
+  if(!text)return;
+  input.value='';
+  await pushChatMessage({
+    type:'text',
+    text,
+    photo:'',
+    replyTo:replyToMessage||null
+  });
+  cancelReply();
+}
+
+async function pushChatMessage(msgData){
+  if(isGuest)return;
+  const now=Date.now();
+  const payload={
+    globalId:currentGlobalId,
+    displayName:currentName,
+    type:msgData.type||'text',
+    text:msgData.text||'',
+    photo:msgData.photo||'',
+    replyTo:msgData.replyTo||null,
+    reactions:{},
+    timestamp:now
+  };
+  try{
+    const ref=await db.collection('GDZ').doc('chat').collection('messages').add(payload);
+
+    // ==== АЛГОРИТМ МАТА (без ИИ) ====
+    if(payload.type==='text'){
+      const matCount=detectMat(payload.text);
+      if(matCount>3){
+        matCounter++;
+        if(matCounter>3){
+          matCounter=0;
+          await pushGlobiChatMessage('Хватит уже, блять нахуй сука блять!');
+        }
+      }else{
+        matCounter=0;
+      }
+    }
+
+    // ==== АЛГОРИТМ УПОМИНАНИЯ ГЛОБИ ====
+    if(payload.type==='text'&&isGlobiMention(payload.text)){
+      const now2=Date.now();
+      if(now2-globiMentionCooldown>10000){
+        globiMentionCooldown=now2;
+        setTimeout(()=>globiReplyToChat(payload.text,ref.id),800);
+      }
+    }
+  }catch(e){
+    console.warn('chat send error',e);
+    toast('Не удалось отправить сообщение');
+  }
+}
+
+async function pushGlobiChatMessage(text){
+  try{
+    await db.collection('GDZ').doc('chat').collection('messages').add({
+      globalId:'globi',
+      displayName:'Globi',
+      isGlobi:true,
+      type:'text',
+      text,
+      photo:'',
+      replyTo:null,
+      reactions:{},
+      timestamp:Date.now()
+    });
+  }catch(e){console.warn('globi chat msg error',e);}
+}
+
+async function globiReplyToChat(userText,replyToId){
+  try{
+    const prompt=`Ты — Globi, дружелюбный ИИ-помощник школьного чата. Пользователь ${currentName} написал: "${userText}". Ответь кратко (1-3 предложения), по-дружески, на «ты». Если это вопрос про ДЗ, контрольные или расписание — используй данные сайта. Не используй мат.`;
+    const res=await fetch(GLOBI_PROXY,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prompt})
+    });
+    const data=await res.json();
+    let reply='';
+    if(data.steps){
+      for(const s of data.steps){
+        if(s.type==='model_output'&&s.content){
+          for(const c of s.content){
+            if(c.type==='text'&&c.text)reply+=c.text;
+          }
+        }
+      }
+    }
+    if(!reply)reply='Я тут! Чем помочь?';
+    await db.collection('GDZ').doc('chat').collection('messages').add({
+      globalId:'globi',
+      displayName:'Globi',
+      isGlobi:true,
+      type:'text',
+      text:reply,
+      photo:'',
+      replyTo:replyToId||null,
+      reactions:{},
+      timestamp:Date.now()
+    });
+  }catch(e){
+    console.warn('globi reply error',e);
+  }
+}
+
+async function deleteChatMessage(id){
+  const m=chatMessages.find(x=>x.id===id);
+  if(!m)return;
+  if(m.globalId!==currentGlobalId){toast('Можно удалять только свои сообщения');return;}
+  showConfirm('Удалить сообщение?','Оно исчезнет для всех.',async()=>{
+    try{
+      await db.collection('GDZ').doc('chat').collection('messages').doc(id).delete();
+      toast('Сообщение удалено');
+    }catch(e){toast('Не удалось удалить');}
+  });
+}
+
 /* ==================== ВЫХОД ==================== */
 async function logout(){
   try{
@@ -2921,12 +3438,12 @@ window.addEventListener('scroll',()=>{
 
 /* ==================== ESC ==================== */
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){closeFullscreen();closeDrawer();closeSettings();closeGroupModal();}
+  if(e.key==='Escape'){closeFullscreen();closeDrawer();closeSettings();closeGroupModal();cancelReply();}
 });
 
 /* ==================== RIPPLE INIT ==================== */
 document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelectorAll('.sidebar-nav-btn, .drawer-nav-btn, .sidebar-admin-btn, .sidebar-logout-btn, .sidebar-settings-btn, .burger-btn, .mobile-settings-btn, .fs-btn, .btn-global, .quick-action, .msg-action-btn, .globi-clear-btn, .group-modal-save, .group-modal-cancel').forEach(btn=>{
+  document.querySelectorAll('.sidebar-nav-btn, .drawer-nav-btn, .sidebar-admin-btn, .sidebar-logout-btn, .sidebar-settings-btn, .burger-btn, .mobile-settings-btn, .fs-btn, .btn-global, .quick-action, .msg-action-btn, .globi-clear-btn, .group-modal-save, .group-modal-cancel, .chat-send, .chat-sticker-btn, .chat-photo-btn, .break-btn').forEach(btn=>{
     btn.classList.add('ripple');
     btn.addEventListener('click',addRipple);
   });
