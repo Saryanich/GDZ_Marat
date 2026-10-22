@@ -1371,6 +1371,36 @@ if(!firebase.apps.length){
 }
 const auth=firebase.auth();
 const db=firebase.firestore();
+let deviceRevocationUnsub=null;
+
+function getSharedDeviceToken(){
+  try{
+    let token=localStorage.getItem('itglobal_shared_device_token');
+    if(token)return token;
+    const bytes=new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    token=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+    localStorage.setItem('itglobal_shared_device_token',token);
+    return token;
+  }catch(e){return null;}
+}
+
+function watchDeviceRevocation(user){
+  if(deviceRevocationUnsub){deviceRevocationUnsub();deviceRevocationUnsub=null;}
+  const token=getSharedDeviceToken();
+  if(!user||!token)return;
+  deviceRevocationUnsub=db.collection('users').doc(user.uid).onSnapshot(async snap=>{
+    if(!snap.exists)return;
+    const data=snap.data()||{};
+    if((data.revokedDeviceTokens||[]).includes(token)){
+      if(deviceRevocationUnsub){deviceRevocationUnsub();deviceRevocationUnsub=null;}
+      try{await auth.signOut();}catch(e){}
+      sessionStorage.removeItem('gdz_globalId');
+      sessionStorage.removeItem('gdz_redirect_done');
+      location.replace('staff.html?deviceRevoked=1');
+    }
+  },err=>console.warn('Проверка отзыва устройства недоступна:',err));
+}
 
 /* ==================== КОНСТАНТЫ ==================== */
 const GLOBI_PROXY='https://billowing-disk-bf7d.vasiliy-novikov389.workers.dev/';
@@ -1798,6 +1828,7 @@ async function determineUser(){
         return;
       }
       currentUser=user;
+      watchDeviceRevocation(user);
 
       let globalId='';
       let displayName='';
@@ -1805,6 +1836,13 @@ async function determineUser(){
         const ud=await db.collection('users').doc(user.uid).get();
         if(ud.exists){
           const u=ud.data();
+          const sharedToken=getSharedDeviceToken();
+          if(sharedToken&&(u.revokedDeviceTokens||[]).includes(sharedToken)){
+            try{await auth.signOut();}catch(e){}
+            location.replace('staff.html?deviceRevoked=1');
+            resolve();
+            return;
+          }
           globalId=u.globalId||'';
           displayName=u.displayName||u.nickname||u.fullName||'';
         }
