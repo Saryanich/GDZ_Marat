@@ -138,7 +138,7 @@ input::placeholder{color:var(--text-3)}
 
     <div class="input-group">
       <label>Email или Global ID</label>
-      <input type="text" id="loginIdentifier" placeholder="email@example.com" autocomplete="email">
+      <input type="text" id="loginIdentifier" placeholder="email@example.com" autocomplete="username">
     </div>
     <div class="input-group">
       <label>Пароль</label>
@@ -282,16 +282,36 @@ window.login=async function(){
     let email=identifier;
 
     if(identifier.indexOf('@')===-1){
-      const q=await db.collection('users').where('globalId','==',identifier).get();
-      if(q.empty){
+      const normalizedGlobalId=identifier.trim();
+      let mapping=null;
+      try{
+        const mappingDoc=await db.collection('global_ids').doc(normalizedGlobalId).get();
+        if(mappingDoc.exists) mapping=mappingDoc.data();
+      }catch(lookupError){
+        console.warn('Не удалось прочитать global_ids; пробуем совместимость со старыми аккаунтами:',lookupError);
+      }
+
+      if(mapping&&mapping.email){
+        email=mapping.email;
+      }else{
+        // Совместимость со старыми аккаунтами, у которых ещё нет global_ids/{globalId}.
+        try{
+          const q=await db.collection('users').where('globalId','==',normalizedGlobalId).limit(1).get();
+          if(!q.empty) email=q.docs[0].data().email||'';
+        }catch(legacyError){
+          console.warn('Legacy Global ID lookup failed:',legacyError);
+        }
+      }
+
+      if(!email||email===normalizedGlobalId){
         btn.disabled=false;
         btn.innerHTML='<span>🚀</span><span>Войти</span>';
-        showMessage('Global ID не найден',true);
+        showMessage('Global ID не найден. Проверьте ID или войдите по email.',true);
         return;
       }
-      email=q.docs[0].data().email;
     }
 
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     const userCred=await auth.signInWithEmailAndPassword(email,password);
     await handleUserLogin(userCred.user);
 
