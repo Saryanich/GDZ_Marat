@@ -1906,25 +1906,48 @@ function showFatalError(msg){
 
 /* ==================== ЗАГРУЗКА ==================== */
 async function loadAll(){
+  const failedPaths=[];
+  const safeRead=async(path,loader)=>{
+    try{await loader();}
+    catch(error){
+      failedPaths.push(path);
+      console.error('[GDZ Firebase read denied/failed]',path,error?.code||'',error?.message||error);
+    }
+  };
   const tasks=[
-    db.collection('GDZ').doc('subjects').collection('list').get().then(s=>{
-      subjects=s.docs.map(d=>({id:d.id,...d.data()}));}),
-    db.collection('GDZ').doc('answer').collection('list').get().then(s=>{
-      answers=s.docs.map(d=>({id:d.id,...d.data()}));}),
-    db.collection('GDZ').doc('prep').collection('list').get().then(s=>{
-      prep=s.docs.map(d=>({id:d.id,...d.data()}));}),
-    db.collection('GDZ').doc('file').get().then(f=>{
-      if(f.exists&&f.data().schedule)schedule=f.data().schedule;})
+    safeRead('GDZ/subjects/list',async()=>{
+      const s=await db.collection('GDZ').doc('subjects').collection('list').get();
+      subjects=s.docs.map(d=>({id:d.id,...d.data()}));
+    }),
+    safeRead('GDZ/answer/list',async()=>{
+      const s=await db.collection('GDZ').doc('answer').collection('list').get();
+      answers=s.docs.map(d=>({id:d.id,...d.data()}));
+    }),
+    safeRead('GDZ/prep/list',async()=>{
+      const s=await db.collection('GDZ').doc('prep').collection('list').get();
+      prep=s.docs.map(d=>({id:d.id,...d.data()}));
+    }),
+    safeRead('GDZ/file',async()=>{
+      const f=await db.collection('GDZ').doc('file').get();
+      if(f.exists&&f.data().schedule)schedule=f.data().schedule;
+    })
   ];
   if(!isGuest){
     tasks.push(
-      db.collection('GDZ').doc('tests_answer').collection('list').get().then(s=>{
-        testsAnswers=s.docs.map(d=>({id:d.id,...d.data()}));}),
-      db.collection('GDZ').doc('news').collection('list').get().then(s=>{
-        news=s.docs.map(d=>({id:d.id,...d.data()}));})
+      safeRead('GDZ/tests_answer/list',async()=>{
+        const s=await db.collection('GDZ').doc('tests_answer').collection('list').get();
+        testsAnswers=s.docs.map(d=>({id:d.id,...d.data()}));
+      }),
+      safeRead('GDZ/news/list',async()=>{
+        const s=await db.collection('GDZ').doc('news').collection('list').get();
+        news=s.docs.map(d=>({id:d.id,...d.data()}));
+      })
     );
   }
   await Promise.all(tasks);
+  if(failedPaths.length){
+    toast('Firebase: нет доступа к '+failedPaths.join(', ')+'. Проверьте правила Firestore.');
+  }
 }
 
 /* ==================== ФУНКЦИИ ГРУПП ==================== */
