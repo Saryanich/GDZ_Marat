@@ -137,21 +137,23 @@ input::placeholder{color:var(--text-3)}
     <h1><span>ГДЗ Марат</span></h1>
     <div class="subtitle">Войдите, чтобы продолжить учёбу</div>
 
-    <div class="input-group">
-      <label>Email или Global ID</label>
-      <input type="text" id="loginIdentifier" placeholder="email@example.com" autocomplete="username">
-    </div>
-    <div class="input-group">
-      <label>Пароль</label>
-      <div class="input-wrapper">
-        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
-        <button type="button" class="toggle-password" onclick="togglePassword()">👁</button>
+    <p style="text-align:center;color:var(--text-2);margin:0 0 16px;">Вход, подтверждение почты и двухфакторная защита выполняются через единый аккаунт Global ID.</p>
+    <button class="btn btn-primary" id="loginBtn" onclick="login()" type="button">
+      <span>🔐</span><span>Продолжить через Global ID</span>
+    </button>
+    <div style="display:none">
+      <div class="input-group">
+        <label>Email или Global ID</label>
+        <input type="text" id="loginIdentifier" autocomplete="username">
+      </div>
+      <div class="input-group">
+        <label>Пароль</label>
+        <div class="input-wrapper">
+          <input type="password" id="loginPassword" autocomplete="current-password">
+          <button type="button" class="toggle-password" onclick="togglePassword()">👁</button>
+        </div>
       </div>
     </div>
-
-    <button class="btn btn-primary" id="loginBtn" onclick="login()">
-      <span>🚀</span><span>Войти</span>
-    </button>
 
     <div class="divider">или</div>
 
@@ -240,6 +242,13 @@ async function handleUserLogin(user){
       return;
     }
     const u=ud.data();
+    let deviceToken = null;
+    try { deviceToken = localStorage.getItem('itglobal_shared_device_token'); } catch {}
+    if(u.accountLocked === true || (deviceToken && (u.revokedDeviceTokens || []).includes(deviceToken))){
+      await auth.signOut();
+      redirectToGlobalId();
+      return;
+    }
     const globalId=u.globalId||'';
     if(!globalId){
       showMessage('Global ID не найден',true);
@@ -270,64 +279,13 @@ async function handleUserLogin(user){
 }
 
 /* ==================== ВХОД ==================== */
-window.login=async function(){
-  const identifier=document.getElementById('loginIdentifier').value.trim();
-  const password=document.getElementById('loginPassword').value;
-  if(!identifier||!password){showMessage('Заполните все поля',true);return;}
-
-  const btn=document.getElementById('loginBtn');
-  btn.disabled=true;
-  btn.innerHTML='<span>⏳</span><span>Проверка...</span>';
-
-  try{
-    let email=identifier;
-
-    if(identifier.indexOf('@')===-1){
-      const normalizedGlobalId=identifier.trim();
-      let mapping=null;
-      try{
-        const mappingDoc=await db.collection('global_ids').doc(normalizedGlobalId).get();
-        if(mappingDoc.exists) mapping=mappingDoc.data();
-      }catch(lookupError){
-        console.warn('Не удалось прочитать global_ids; пробуем совместимость со старыми аккаунтами:',lookupError);
-      }
-
-      if(mapping&&mapping.email){
-        email=mapping.email;
-      }else{
-        // Совместимость со старыми аккаунтами, у которых ещё нет global_ids/{globalId}.
-        try{
-          const q=await db.collection('users').where('globalId','==',normalizedGlobalId).limit(1).get();
-          if(!q.empty) email=q.docs[0].data().email||'';
-        }catch(legacyError){
-          console.warn('Legacy Global ID lookup failed:',legacyError);
-        }
-      }
-
-      if(!email||email===normalizedGlobalId){
-        btn.disabled=false;
-        btn.innerHTML='<span>🚀</span><span>Войти</span>';
-        showMessage('Global ID не найден. Проверьте ID или войдите по email.',true);
-        return;
-      }
-    }
-
-    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    const userCred=await auth.signInWithEmailAndPassword(email,password);
-    await handleUserLogin(userCred.user);
-
-  }catch(e){
-    console.error(e);
-    btn.disabled=false;
-    btn.innerHTML='<span>🚀</span><span>Войти</span>';
-    if(e.code==='auth/user-not-found'||e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'){
-      showMessage('Неверный email или пароль',true);
-    }else if(e.code==='auth/invalid-email'){
-      showMessage('Некорректный email',true);
-    }else{
-      showMessage('Ошибка: '+e.message,true);
-    }
-  }
+function redirectToGlobalId() {
+  const target = new URL('/Global-ID/', window.location.origin);
+  target.searchParams.set('continue', window.location.href);
+  window.location.replace(target.href);
+}
+window.login = function() {
+  redirectToGlobalId();
 };
 
 /* ==================== ГОСТЬ ==================== */
@@ -346,7 +304,12 @@ auth.onAuthStateChanged(async function(user){
   hideLoading();
 
   if(user){
-    // Сессия есть — сразу в gdz.html
+    if(!user.emailVerified){
+      await auth.signOut();
+      redirectToGlobalId();
+      return;
+    }
+    // Центральная сессия Global ID уже есть — открываем ГДЗ.
     await handleUserLogin(user);
     return;
   }
