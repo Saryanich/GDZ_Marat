@@ -1790,7 +1790,7 @@ async function checkVacation(){
     const d=doc.data();
     if(d.vacation!=='on' && d.barrier!=='on')return;
     sessionStorage.setItem('vacation_back','gdz.html'+(isGuest?'?guest=1':''));
-    window.location.replace('barrier.html');
+    window.location.replace('vacation.html');
   }catch(e){}
 }
 
