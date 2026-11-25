@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>ГДЗ Марат — Сайт на каникулах</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
 
     <link rel="icon" type="image/jpeg" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
     <meta name="theme-color" content="#052e24">
@@ -143,12 +146,14 @@
 </head>
 <body>
     <div class="container">
-        <div class="icon">🚧</div>
-        <h1>Режим Барьер</h1>
+        <div class="icon">🏖️</div>
+        <h1>Сайт на каникулах</h1>
         <div class="message">
-            Включён режим <strong>Барьер</strong>.<br>
-            Сайт возобновит работу через некоторое время.
+            Сейчас сайт временно закрыт для пользователей.<br>
+            Мы проводим обновление и технические работы.<br>
+            Пожалуйста, загляните позже.
         </div>
+        <div class="status"><span class="status-dot"></span><span>Технические работы</span></div>
     </div>
 
     <script>
@@ -163,36 +168,29 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        let leaving = false;
 
-        const back = sessionStorage.getItem('vacation_back') || 'index.html';
-
-        // Каждые 2 секунды проверяем, завершились ли каникулы
-        async function checkBarrier() {
-            try {
-                const fileDoc = await db.collection('GDZ').doc('file').get();
-                if (!fileDoc.exists) return;
-
-                const data = fileDoc.data();
-                const barrier = data.barrier;
-                const target = data.barrierTarget;
-
-                // Если барьер выключен или это не для нас — возвращаемся
-                const barrierForMe =
-                    barrier === 'on' &&
-                    (target === null || target === undefined || target === myGlobalId);
-
-                if (!barrierForMe) {
-                    // Возвращаемся туда, откуда пришли (или в index)
-                    const back = sessionStorage.getItem('barrier_back') || 'index.html';
-                    window.location.replace(back);
-                }
-            } catch (e) {
-                console.warn('Ошибка проверки барьера:', e);
-            }
+        function returnToSite() {
+            if (leaving) return;
+            leaving = true;
+            const saved = sessionStorage.getItem('vacation_back') || 'index.html';
+            const back = (saved === 'gdz.html' || saved === 'gdz.html?guest=1') ? saved : 'index.html';
+            window.location.replace(back);
         }
 
-        setInterval(checkBarrier, 2000);
-        checkBarrier(); // сразу при загрузке
+        function applyVacationState(doc) {
+            if (doc.metadata && doc.metadata.fromCache) return;
+            const data = doc.exists ? doc.data() : {};
+            const active = data.vacation === 'on' || data.barrier === 'on';
+            if (!active) returnToSite();
+        }
+
+        db.collection('GDZ').doc('file').get({source:'server'})
+            .then(applyVacationState)
+            .catch(error => console.warn('Не удалось проверить статус каникул:', error));
+
+        db.collection('GDZ').doc('file').onSnapshot({includeMetadataChanges:true}, applyVacationState,
+            error => console.warn('Не удалось отслеживать статус каникул:', error));
     </script>
 </body>
 </html>
