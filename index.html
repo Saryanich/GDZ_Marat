@@ -216,21 +216,17 @@ function togglePassword(){
   p.type=p.type==='password'?'text':'password';
 }
 
-/* ==================== ПРОВЕРКА БАРЬЕРА ==================== */
-async function checkBarrier(globalId){
+/* ==================== ПРОВЕРКА КАНИКУЛ ==================== */
+async function checkVacation(){
   try{
     const doc=await db.collection('GDZ').doc('file').get();
     if(!doc.exists)return false;
     const d=doc.data();
-    if(d.barrier!=='on')return false;
-    const target=d.barrierTarget;
-    if(!target||target===globalId){
-      sessionStorage.setItem('barrier_back','index.html');
-      window.location.replace('barrier.html');
-      return true;
-    }
-  }catch(e){}
-  return false;
+    if(d.vacation!=='on' && d.barrier!=='on')return false;
+    sessionStorage.setItem('vacation_back','index.html');
+    window.location.replace('barrier.html');
+    return true;
+  }catch(e){console.warn('Не удалось проверить статус сайта:',e);return false;}
 }
 
 /* ==================== ВХОД → СРАЗУ НА gdz.html ==================== */
@@ -254,9 +250,6 @@ async function handleUserLogin(user){
       showMessage('Global ID не найден',true);
       return;
     }
-
-    // Проверка барьера
-    if(await checkBarrier(globalId))return;
 
     // Обновляем онлайн
     db.collection('GDZ').doc('users').collection('users').doc(globalId).set({
@@ -299,6 +292,7 @@ window.loginAsGuest=function(){
 /* ==================== АВТОВХОД ==================== */
 auth.onAuthStateChanged(async function(user){
   if(authResolved)return;
+  if(await checkVacation())return;
   authResolved=true;
 
   hideLoading();
@@ -319,8 +313,9 @@ auth.onAuthStateChanged(async function(user){
 });
 
 // Страховка
-setTimeout(function(){
+setTimeout(async function(){
   if(!authResolved){
+    if(await checkVacation())return;
     authResolved=true;
     hideLoading();
     document.getElementById('loginScreen').classList.remove('hidden');
