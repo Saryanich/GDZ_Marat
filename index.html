@@ -224,7 +224,7 @@ async function checkVacation(){
     const d=doc.data();
     if(d.vacation!=='on' && d.barrier!=='on')return false;
     sessionStorage.setItem('vacation_back','index.html');
-    window.location.replace('barrier.html');
+    window.location.replace('vacation.html');
     return true;
   }catch(e){console.warn('Не удалось проверить статус сайта:',e);return false;}
 }
