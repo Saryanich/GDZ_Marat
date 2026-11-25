@@ -1460,7 +1460,7 @@ let subjects=[],answers=[],testsAnswers=[],news=[],prep=[],schedule={};
 let globiHistory=[];
 let chatMessages=[];
 let currentView={type:null,id:null};
-let barrierTimer=null,heartbeatTimer=null;
+let vacationUnsubscribe=null,heartbeatTimer=null;
 let breakTimer=null;
 let userGroups={};
 let settings={
@@ -1783,15 +1783,34 @@ function showConfirm(title,text,onYes){
 }
 
 /* ==================== ПРОВЕРКА КАНИКУЛ ==================== */
+let vacationRedirecting=false;
+function redirectToVacation(){
+  if(vacationRedirecting || location.pathname.endsWith('/vacation.html'))return;
+  vacationRedirecting=true;
+  sessionStorage.setItem('vacation_back','gdz.html'+(isGuest?'?guest=1':''));
+  window.location.replace('vacation.html?v=20261125');
+}
 async function checkVacation(){
   try{
-    const doc=await db.collection('GDZ').doc('file').get();
-    if(!doc.exists)return;
-    const d=doc.data();
-    if(d.vacation!=='on' && d.barrier!=='on')return;
-    sessionStorage.setItem('vacation_back','gdz.html'+(isGuest?'?guest=1':''));
-    window.location.replace('vacation.html');
-  }catch(e){}
+    const doc=await db.collection('GDZ').doc('file').get({source:'server'});
+    const d=doc.exists?doc.data():{};
+    if(d.vacation==='on' || d.barrier==='on'){
+      redirectToVacation();
+      return true;
+    }
+    return false;
+  }catch(e){
+    console.warn('Не удалось проверить режим каникул:',e);
+    return false;
+  }
+}
+function watchVacation(){
+  if(vacationUnsubscribe)vacationUnsubscribe();
+  vacationUnsubscribe=db.collection('GDZ').doc('file').onSnapshot({includeMetadataChanges:true},doc=>{
+    if(doc.metadata.fromCache)return;
+    const d=doc.exists?doc.data():{};
+    if(d.vacation==='on' || d.barrier==='on')redirectToVacation();
+  },e=>console.warn('Не удалось отслеживать режим каникул:',e));
 }
 
 /* ==================== HEARTBEAT ==================== */
@@ -3663,12 +3682,14 @@ document.addEventListener('DOMContentLoaded',()=>{
 (async()=>{
   try{
     loadSettings();
+    if(await checkVacation())return;
+    watchVacation();
     await determineUser();
 
     if(!document.getElementById('splash'))return;
     if(!isGuest && !currentGlobalId)return;
 
-    await checkVacation();
+    if(await checkVacation())return;
     await loadAll();
 
     document.getElementById('splash').classList.add('hide');
@@ -3678,7 +3699,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     renderChip();
     renderHome();
 
-    barrierTimer=setInterval(checkVacation,1000);
     if(!isGuest){heartbeat();heartbeatTimer=setInterval(heartbeat,60000);}
 
   }catch(e){
