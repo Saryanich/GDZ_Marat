@@ -357,20 +357,20 @@ textarea{resize:vertical;min-height:90px;line-height:1.5}
       </div>
 
       <div class="section">
-        <div class="section-title">🚧 Режим Барьер</div>
+        <div class="section-title">🏖️ Сайт на каникулах</div>
         <div class="barrier-box off" id="barrierBox">
           <div class="barrier-status off" id="barrierStatus">
-            <span>✅</span><span>Барьер выключен</span>
+            <span>✅</span><span>Сайт работает в обычном режиме</span>
           </div>
-          <div class="hint">Разблокировка только через Firebase Console: <code>GDZ/file → barrier: "off"</code></div>
+          <div class="hint">Во время каникул главная страница, вход и пользовательский раздел недоступны. Админ-панель остаётся доступной для обновлений и технических работ.</div>
         </div>
         <div class="grid-2">
           <div class="field">
-            <label>Global ID (пусто = для всех)</label>
-            <input type="text" id="barrierTarget" placeholder="KXjJ96R1DUA7HQ92Hms6H3" maxlength="20">
+            <label>Доступ</label>
+            <div class="hint">Режим действует для всех пользователей</div>
           </div>
           <div class="field" style="display:flex;align-items:flex-end;">
-            <button class="btn btn-danger" style="width:100%;" onclick="enableBarrier()">🚧 Включить барьер</button>
+            <button class="btn btn-danger" style="width:100%;" onclick="toggleVacation()">🏖️ Включить каникулы</button>
           </div>
         </div>
       </div>
@@ -488,22 +488,7 @@ async function checkAccess(){
   });
 }
 
-/* ==================== БАРЬЕР ==================== */
-async function checkBarrier(){
-  if(isWritingBarrier)return;
-  try{
-    const doc=await db.collection('GDZ').doc('file').get();
-    if(!doc.exists)return;
-    const data=doc.data();
-    if(data.barrier!=='on')return;
-    const target=data.barrierTarget;
-    const forMe=!target||target===currentGlobalId;
-    if(forMe){
-      sessionStorage.setItem('barrier_back','admin.html');
-      window.location.replace('barrier.html');
-    }
-  }catch(e){}
-}
+/* Админ-панель намеренно не блокируется режимом каникул. */
 
 /* ==================== ТАБЫ ==================== */
 function switchTab(tab){
@@ -1290,37 +1275,37 @@ async function loadBarrierStatus(){
   const data=doc.exists?doc.data():{};
   const box=document.getElementById('barrierBox');
   const status=document.getElementById('barrierStatus');
-  if(data.barrier==='on'){
+  if(data.vacation==='on' || data.barrier==='on'){
     box.className='barrier-box on';
     status.className='barrier-status on';
-    status.innerHTML=`<span>🚧</span><span>Барьер ВКЛЮЧЁН ${data.barrierTarget?'→ '+escapeHtml(data.barrierTarget):'(для всех)'}</span>`;
+    status.innerHTML=`<span>🚧</span><span>КАНИКУЛЫ ВКЛЮЧЕНЫ — сайт закрыт для пользователей</span>`;
   }else{
     box.className='barrier-box off';
     status.className='barrier-status off';
-    status.innerHTML=`<span>✅</span><span>Барьер выключен</span>`;
+    status.innerHTML=`<span>✅</span><span>Сайт работает в обычном режиме</span>`;
   }
 }
-async function enableBarrier(){
-  if(!confirm('Включить режим Барьер? Через 5 секунд все будут перенаправлены на красный экран.'))return;
-  isWritingBarrier=true;
-  if(barrierCheckInterval){clearInterval(barrierCheckInterval);barrierCheckInterval=null;}
-  const target=document.getElementById('barrierTarget').value.trim()||null;
-  const btn=event?.target;
-  if(btn){btn.disabled=true;btn.textContent='⏳ Запись...';}
+async function toggleVacation(){
+  const doc=await db.collection('GDZ').doc('file').get();
+  const enabled=!(doc.exists && (doc.data().vacation==='on' || doc.data().barrier==='on'));
+  const question=enabled
+    ? 'Включить «Сайт на каникулах»? Главная страница, вход и пользовательская часть станут недоступны. Админ-панель продолжит работать.'
+    : 'Завершить каникулы и снова открыть сайт всем пользователям?';
+  if(!confirm(question))return;
+  const btn=document.querySelector('[onclick="toggleVacation()"]');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Сохранение...';}
   try{
-    await db.collection('GDZ').doc('file').set({barrier:'on',barrierTarget:target},{merge:true});
-    toast('✅ Барьер включён. Редирект через 5 сек...');
-    loadBarrierStatus();
-    if(btn){btn.textContent='🚧 Барьер включён';}
-    setTimeout(()=>{
-      sessionStorage.setItem('barrier_back','admin.html');
-      window.location.replace('barrier.html');
-    },5000);
+    await db.collection('GDZ').doc('file').set({
+      vacation:enabled?'on':'off',
+      barrier:'off',
+      vacationUpdatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+    await loadBarrierStatus();
+    toast(enabled?'🏖️ Сайт переведён на каникулы. Админ-панель работает.':'✅ Каникулы завершены. Сайт снова открыт.');
+    if(btn){btn.textContent=enabled?'🏖️ Каникулы включены':'🏖️ Включить каникулы';}
   }catch(e){
     toast('Ошибка: '+e.message,true);
-    isWritingBarrier=false;
-    barrierCheckInterval=setInterval(checkBarrier,1000);
-    if(btn){btn.disabled=false;btn.textContent='🚧 Включить барьер';}
+    if(btn){btn.disabled=false;btn.textContent='🏖️ Включить каникулы';}
   }
 }
 
@@ -1336,8 +1321,6 @@ async function enableBarrier(){
   await loadNews();
   await loadPrep();
   listenPending();
-  barrierCheckInterval=setInterval(checkBarrier,1000);
-  checkBarrier();
 })();
 </script>
 </body>
