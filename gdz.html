@@ -1782,19 +1782,15 @@ function showConfirm(title,text,onYes){
   no.onclick=close;
 }
 
-/* ==================== БАРЬЕР ==================== */
-async function checkBarrier(){
+/* ==================== ПРОВЕРКА КАНИКУЛ ==================== */
+async function checkVacation(){
   try{
     const doc=await db.collection('GDZ').doc('file').get();
     if(!doc.exists)return;
     const d=doc.data();
-    if(d.barrier!=='on')return;
-    const target=d.barrierTarget;
-    const forMe=!target||target===currentGlobalId;
-    if(forMe){
-      sessionStorage.setItem('barrier_back','gdz.html'+(isGuest?'?guest=1':''));
-      window.location.replace('barrier.html');
-    }
+    if(d.vacation!=='on' && d.barrier!=='on')return;
+    sessionStorage.setItem('vacation_back','gdz.html'+(isGuest?'?guest=1':''));
+    window.location.replace('barrier.html');
   }catch(e){}
 }
 
@@ -3672,7 +3668,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(!document.getElementById('splash'))return;
     if(!isGuest && !currentGlobalId)return;
 
-    await checkBarrier();
+    await checkVacation();
     await loadAll();
 
     document.getElementById('splash').classList.add('hide');
@@ -3682,7 +3678,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     renderChip();
     renderHome();
 
-    barrierTimer=setInterval(checkBarrier,1000);
+    barrierTimer=setInterval(checkVacation,1000);
     if(!isGuest){heartbeat();heartbeatTimer=setInterval(heartbeat,60000);}
 
   }catch(e){
