@@ -1278,7 +1278,7 @@ async function loadBarrierStatus(){
   if(data.vacation==='on' || data.barrier==='on'){
     box.className='barrier-box on';
     status.className='barrier-status on';
-    status.innerHTML=`<span>🚧</span><span>КАНИКУЛЫ ВКЛЮЧЕНЫ — сайт закрыт для пользователей</span>`;
+    status.innerHTML=`<span>🏖️</span><span>КАНИКУЛЫ ВКЛЮЧЕНЫ — сайт закрыт для пользователей</span>`;
   }else{
     box.className='barrier-box off';
     status.className='barrier-status off';
@@ -1302,7 +1302,7 @@ async function toggleVacation(){
     },{merge:true});
     await loadBarrierStatus();
     toast(enabled?'🏖️ Сайт переведён на каникулы. Админ-панель работает.':'✅ Каникулы завершены. Сайт снова открыт.');
-    if(btn){btn.textContent=enabled?'🏖️ Каникулы включены':'🏖️ Включить каникулы';}
+    if(btn){btn.disabled=false;btn.textContent=enabled?'🏖️ Завершить каникулы':'🏖️ Включить каникулы';}
   }catch(e){
     toast('Ошибка: '+e.message,true);
     if(btn){btn.disabled=false;btn.textContent='🏖️ Включить каникулы';}
