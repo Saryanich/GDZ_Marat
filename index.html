@@ -217,14 +217,20 @@ function togglePassword(){
 }
 
 /* ==================== ПРОВЕРКА КАНИКУЛ ==================== */
+let vacationRedirecting=false;
+function redirectToVacation(){
+  if(vacationRedirecting || location.pathname.endsWith('/vacation.html'))return;
+  vacationRedirecting=true;
+  sessionStorage.setItem('vacation_back','index.html');
+  window.location.replace('vacation.html?v=20261125');
+}
 async function checkVacation(){
   try{
-    const doc=await db.collection('GDZ').doc('file').get();
+    const doc=await db.collection('GDZ').doc('file').get({source:'server'});
     if(!doc.exists)return false;
     const d=doc.data();
     if(d.vacation!=='on' && d.barrier!=='on')return false;
-    sessionStorage.setItem('vacation_back','index.html');
-    window.location.replace('vacation.html');
+    redirectToVacation();
     return true;
   }catch(e){console.warn('Не удалось проверить статус сайта:',e);return false;}
 }
@@ -288,6 +294,13 @@ window.loginAsGuest=function(){
   sessionStorage.setItem('gdz_globalId','guest');
   window.location.replace('gdz.html?guest=1');
 };
+
+/* Мгновенно реагируем на включение каникул без обновления страницы. */
+db.collection('GDZ').doc('file').onSnapshot({includeMetadataChanges:true},function(doc){
+  if(doc.metadata.fromCache)return;
+  const d=doc.exists?doc.data():{};
+  if(d.vacation==='on' || d.barrier==='on')redirectToVacation();
+},function(e){console.warn('Не удалось отслеживать режим каникул:',e);});
 
 /* ==================== АВТОВХОД ==================== */
 auth.onAuthStateChanged(async function(user){
