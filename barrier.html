@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Режим Барьер</title>
+    <title>ГДЗ Марат — Сайт на каникулах</title>
 
     <link rel="icon" type="image/jpeg" href="https://i.ibb.co/mL5KpfC/0800b2f7-2882-4660-8fe3-a7e35bf26abf.jpg">
-    <meta name="theme-color" content="#7f1d1d">
+    <meta name="theme-color" content="#052e24">
 
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
@@ -34,7 +34,7 @@
             inset: -50%;
             background: repeating-linear-gradient(
                 45deg,
-                rgba(255, 255, 255, 0.12) 0px,
+                rgba(52, 211, 153, 0.08) 0px,
                 rgba(255, 255, 255, 0.12) 20px,
                 transparent 20px,
                 transparent 60px
@@ -54,7 +54,7 @@
             content: "";
             position: fixed;
             inset: 0;
-            background: radial-gradient(circle at center, rgba(220, 38, 38, 0.5) 0%, transparent 70%);
+            background: radial-gradient(circle at center, rgba(16, 185, 129, 0.25) 0%, transparent 70%);
             animation: pulseGlow 2s ease-in-out infinite;
             z-index: 0;
             pointer-events: none;
@@ -164,9 +164,9 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        const myGlobalId = sessionStorage.getItem('gdz_globalId') || '';
+        const back = sessionStorage.getItem('vacation_back') || 'index.html';
 
-        // Каждые 2 секунды проверяем, не выключен ли барьер
+        // Каждые 2 секунды проверяем, завершились ли каникулы
         async function checkBarrier() {
             try {
                 const fileDoc = await db.collection('GDZ').doc('file').get();
