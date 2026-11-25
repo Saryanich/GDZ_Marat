@@ -1275,7 +1275,10 @@ async function loadBarrierStatus(){
   const data=doc.exists?doc.data():{};
   const box=document.getElementById('barrierBox');
   const status=document.getElementById('barrierStatus');
-  if(data.vacation==='on' || data.barrier==='on'){
+  const toggleBtn=document.querySelector('[onclick="toggleVacation()"]');
+  const vacationOn=data.vacation==='on' || data.barrier==='on';
+  if(toggleBtn){toggleBtn.disabled=false;toggleBtn.textContent=vacationOn?'🏖️ Завершить каникулы':'🏖️ Включить каникулы';}
+  if(vacationOn){
     box.className='barrier-box on';
     status.className='barrier-status on';
     status.innerHTML=`<span>🏖️</span><span>КАНИКУЛЫ ВКЛЮЧЕНЫ — сайт закрыт для пользователей</span>`;
